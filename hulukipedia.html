@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hulukipedia | Dossier Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto+Mono:wght@400;700&family=Architects+Daughter&family=Satisfy&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* --- Theme Variables --- */
+        :root {
+            --font-main: 'Cinzel', serif;
+            --font-title: 'Satisfy', cursive;
+            --font-mono: 'Roboto Mono', monospace;
+            --font-handwritten: 'Architects Daughter', cursive;
+        }
+
+        /* --- Hulukipedia (Default) Theme --- */
+        body.theme-hulu {
+            --bg-main: #f0fdf4; /* green-50 */
+            --bg-container: #ffffff;
+            --bg-section: rgba(240, 253, 244, 0.8); /* green-50 with transparency */
+            --text-primary: #14532d; /* green-900 */
+            --text-secondary: #064e3b; /* emerald-800 */
+            --accent-gold: #ca8a04; /* yellow-600 */
+            --accent-gold-hover: #a16207; /* yellow-700 */
+            --border-color: #d1d5db; /* gray-300 */
+            --editable-hover-bg: rgba(0,0,0,0.03);
+        }
+
+        /* --- Raven Theme --- */
+        body.theme-raven {
+            --bg-main: #0a0a0a;
+            --bg-container: #111827; /* gray-900 */
+            --bg-section: rgba(31, 41, 55, 0.5);
+            --text-primary: #d8b4fe; /* purple-300 */
+            --text-secondary: #a78bfa; /* violet-400 */
+            --accent-gold: #f59e0b; /* amber-500 */
+            --accent-gold-hover: #d97706; /* amber-600 */
+            --border-color: #4b5563; /* gray-600 */
+            --editable-hover-bg: rgba(255,255,255,0.05);
+            background-image: url('https://www.transparenttextures.com/patterns/dark-feathers.png');
+        }
+
+        /* --- Starling Theme --- */
+        body.theme-starling {
+            --bg-main: #f1f5f9; /* slate-100 */
+            --bg-container: #ffffff;
+            --bg-section: rgba(248, 250, 252, 0.8); /* slate-50 with transparency */
+            --text-primary: #1e293b; /* slate-800 */
+            --text-secondary: #475569; /* slate-600 */
+            --accent-gold: #f59e0b; /* amber-500 */
+            --accent-gold-hover: #d97706; /* amber-600 */
+            --accent-red: #dc2626; /* red-600 */
+            --border-color: #cbd5e1; /* slate-300 */
+            --editable-hover-bg: rgba(0,0,0,0.03);
+        }
+        
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            transition: background-color 0.5s;
+        }
+
+        #main-title {
+            font-family: var(--font-title);
+            font-size: 4.5rem;
+            color: var(--accent-gold);
+            position: relative;
+            display: inline-block;
+        }
+        
+        #main-title::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            animation: shine 5s infinite;
+            opacity: 0;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) skewX(-20deg); opacity: 0; }
+            20% { opacity: 0.6; }
+            40% { transform: translateX(100%) skewX(-20deg); opacity: 0; }
+            100% { transform: translateX(100%) skewX(-20deg); opacity: 0; }
+        }
+
+        .dossier-section h3 {
+            font-family: var(--font-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-gold);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        body.theme-starling .dossier-section h3 {
+            color: var(--accent-red);
+        }
+
+        .loader {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-gold);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        .mini-loader {
+            width: 20px;
+            height: 20px;
+            border-width: 2px;
+            border-style: solid;
+            border-color: var(--border-color);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .btn-mini-loader {
+            border-top-color: var(--bg-container);
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .intel-category, .convo-example {
+            margin-bottom: 1rem;
+        }
+        .intel-category-title, .convo-context {
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+        .intel-entry, .convo-line {
+            padding-left: 1rem;
+            position: relative;
+            color: var(--text-primary);
+            padding-bottom: 0.25rem;
+        }
+        .intel-entry::before {
+            content: '—';
+            position: absolute;
+            left: 0;
+            color: var(--border-color);
+        }
+        .convo-line::before {
+            content: '"';
+            position: absolute;
+            left: 0;
+            color: var(--accent-gold);
+        }
+         .convo-line::after {
+            content: '"';
+            color: var(--accent-gold);
+        }
+        .swot-category {
+             margin-bottom: 0.75rem;
+        }
+        .swot-title {
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+        .swot-entry {
+            padding-left: 1rem;
+            position: relative;
+        }
+        .swot-entry::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--accent-gold);
+        }
+        
+        [contenteditable] {
+            cursor: text;
+            transition: background-color 0.2s;
+            border-radius: 4px;
+            padding: 2px;
+        }
+        [contenteditable]:hover {
+            background-color: var(--editable-hover-bg);
+        }
+        [contenteditable]:focus {
+            outline: 2px solid var(--accent-gold);
+            box-shadow: 0 0 5px var(--accent-gold);
+            background-color: var(--editable-hover-bg);
+        }
+
+        /* --- Decorative Side Pillars --- */
+        #left-pillar, #right-pillar {
+            display: none; /* Hidden by default, shown on large screens */
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: calc((100vw - 1280px) / 2); /* Calculate width of space outside the max-w-7xl container */
+            max-width: 250px;
+            z-index: -10;
+            background-color: var(--bg-main);
+            background-image: 
+                /* Gemstones */
+                repeating-radial-gradient(
+                    circle at center,
+                    var(--accent-gold) 0,
+                    var(--accent-gold) 2px,
+                    transparent 3px,
+                    transparent 80px
+                ),
+                /* Vertical Lines */
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 39px,
+                    var(--border-color) 40px,
+                    var(--border-color) 41px
+                );
+            background-size: 80px 80px, 41px 41px;
+            opacity: 0.25;
+        }
+
+        #left-pillar {
+            left: 0;
+            background-position: 10px 40px, 0 0;
+        }
+
+        #right-pillar {
+            right: 0;
+            background-position: 10px 40px, 0 0;
+        }
+        
+        .agent-select {
+            background-color: var(--bg-section);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        /* Show pillars on large screens where there's enough space */
+        @media (min-width: 1600px) {
+            #left-pillar, #right-pillar {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body class="theme-hulu">
+
+    <div id="left-pillar"></div>
+    <div id="right-pillar"></div>
+
+    <div class="min-h-screen container mx-auto p-4 md:p-8 relative z-10">
+        <header class="text-center mb-8">
+            <h1 id="main-title">Hulukipedia</h1>
+            <p id="subtitle" class="text-secondary mt-2">The Intelligence Hub</p>
+        </header>
+
+        <div id="search-container" class="max-w-2xl mx-auto bg-container/80 backdrop-blur-sm p-6 rounded-lg border border-border-color shadow-md">
+            <form id="dossier-form">
+                <div>
+                    <label for="subject-name" class="block text-sm font-medium text-primary mb-2">TARGET ENTITY NAME</label>
+                    <input type="text" id="subject-name" name="subject-name" placeholder="e.g., Lara Croft, Elon Musk, Geralt of Rivia" class="w-full bg-gray-800 border border-gray-600 rounded-md px-4 py-2 text-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition duration-200" style="background-color: var(--bg-main); border-color: var(--border-color); color: var(--text-primary);" list="subject-history">
+                    <datalist id="subject-history"></datalist>
+                </div>
+                <div class="mt-4">
+                    <label for="subject-details" class="block text-sm font-medium text-primary mb-2">ADDITIONAL CONTEXT (Optional)</label>
+                    <textarea id="subject-details" name="subject-details" rows="3" placeholder="e.g., 'from the Tomb Raider series', 'CEO of SpaceX', 'The White Wolf, a witcher'" class="w-full bg-gray-800 border border-gray-600 rounded-md px-4 py-2 text-purple-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition duration-200" list="context-history" style="background-color: var(--bg-main); border-color: var(--border-color); color: var(--text-primary);"></textarea>
+                    <datalist id="context-history"></datalist>
+                </div>
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button type="submit" id="raven-search-btn" class="w-full flex items-center justify-center bg-purple-800 hover:bg-purple-900 text-amber-400 font-bold py-3 px-6 rounded-md transition duration-200 shadow-lg hover:shadow-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75">
+                        <i data-lucide="feather" class="mr-2 h-5 w-5"></i>
+                        <span>Raven Search (Fictional)</span>
+                    </button>
+                    <button type="submit" id="starling-search-btn" class="w-full flex items-center justify-center bg-red-600 hover:bg-red-700 text-yellow-300 font-bold py-3 px-6 rounded-md transition duration-200 shadow-lg hover:shadow-red-500/30 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75">
+                        <i data-lucide="star" class="mr-2 h-5 w-5"></i>
+                        <span>Starling Search (Real)</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="error-message" class="hidden max-w-2xl mx-auto my-8 bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg" role="alert">
+            <strong class="font-bold">Error:</strong>
+            <span class="block sm:inline" id="error-text"></span>
+        </div>
+
+        <!-- Clarification Modal -->
+        <div id="clarification-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-lg w-full border border-border-color">
+                <h3 class="text-xl font-bold text-accent-gold mb-4">Please Confirm Your Target</h3>
+                <p class="text-text-secondary mb-6">The initial query was ambiguous. Please select the correct entity from the options below, or start a new search.</p>
+                <div id="clarification-options" class="space-y-3">
+                    <!-- Options will be injected here -->
+                </div>
+                <button id="clarification-cancel-btn" class="mt-6 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-200">
+                    New Search
+                </button>
+            </div>
+        </div>
+
+        <!-- API Key Modal -->
+        <div id="api-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-lg w-full border border-border-color">
+                <h3 class="text-xl font-bold text-accent-gold mb-4">Team Tomorrow API Keys</h3>
+                <p class="text-text-secondary mb-6">Enter your API keys below. They will be saved securely in your browser's local storage.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="gemini-key" class="block text-sm font-medium text-primary">Gemini (Monday)</label>
+                        <input type="password" id="gemini-key" placeholder="Enter Gemini API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    </div>
+                    <div>
+                        <label for="tuesday-key" class="block text-sm font-medium text-primary">Tuesday's Key</label>
+                        <input type="password" id="tuesday-key" placeholder="Enter Tuesday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    </div>
+                    <div>
+                        <label for="friday-key" class="block text-sm font-medium text-primary">Friday's Key</label>
+                        <input type="password" id="friday-key" placeholder="Enter Friday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    </div>
+                    <div>
+                        <label for="saturday-key" class="block text-sm font-medium text-primary">Saturday's Key</label>
+                        <input type="password" id="saturday-key" placeholder="Enter Saturday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    </div>
+                </div>
+                <div class="mt-6 flex gap-4">
+                    <button id="api-key-save-btn" class="flex-1 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">Save Keys</button>
+                    <button id="api-key-cancel-btn" class="flex-1 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-200">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="results-container" class="hidden max-w-4xl mx-auto my-8 space-y-8">
+             <header class="flex flex-col sm:flex-row justify-between items-center pb-4 border-b border-border-color gap-4">
+                 <div>
+                     <p class="text-secondary font-mono">COMPILATION FOR:</p>
+                     <h2 class="text-3xl font-bold text-accent-gold" id="dossier-subject"></h2>
+                 </div>
+                 <div class="flex flex-col sm:flex-row items-center gap-2">
+                     <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-purple-200 font-bold py-2 px-4 rounded-md transition duration-200 flex items-center justify-center">
+                         <i data-lucide="search" class="mr-2 h-4 w-4"></i> New Target
+                     </button>
+                     <div class="flex gap-2">
+                        <button id="download-simple-pdf-btn" class="bg-rose-700 hover:bg-rose-800 text-white font-bold py-2 px-2 rounded-md transition duration-200 flex items-center text-xs">
+                            <i data-lucide="file-text" class="mr-1 h-4 w-4"></i> Simple PDF
+                        </button>
+                        <button id="download-visual-pdf-btn" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-2 rounded-md transition duration-200 flex items-center text-xs">
+                            <i data-lucide="camera" class="mr-1 h-4 w-4"></i> Visual PDF
+                        </button>
+                     </div>
+                      <button id="settings-btn" class="p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-purple-200 transition duration-200">
+                        <i data-lucide="settings" class="h-5 w-5"></i>
+                      </button>
+                 </div>
+             </header>
+
+            <div id="dossier-content" class="space-y-8">
+                <div class="bg-bg-container/80 backdrop-blur-sm p-6 md:p-8 rounded-lg border border-border-color shadow-xl space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="md:col-span-1">
+                             <div class="dossier-section">
+                                <h3><i data-lucide="image" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Visual ID</h3>
+                                <div class="flex items-center mb-2">
+                                    <button id="generate-image-btn" class="w-full flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                        <span>✨ Generate</span>
+                                    </button>
+                                    <select id="image-agent-select" class="agent-select">
+                                        <option value="monday">Monday</option>
+                                        <option value="tuesday">Tuesday</option>
+                                    </select>
+                                </div>
+                                 <div id="ai-image-container" class="bg-bg-section rounded-md border border-border-color aspect-square flex items-center justify-center">
+                                     <!-- AI Image will be injected here -->
+                                 </div>
+                                 <div id="image-links-container" class="mt-2 grid grid-cols-2 gap-2">
+                                     <!-- Links will be injected here -->
+                                 </div>
+                             </div>
+                        </div>
+                        <div class="md:col-span-2 dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                            <h3><i data-lucide="archive" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Confirmed Intel</h3>
+                            <div id="intel-content" class="font-mono min-h-[200px] text-sm" contenteditable="true"></div>
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                                <button id="intel-btn" class="generate-section-btn flex-1 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                    <span>✨ Re-Generate</span>
+                                </button>
+                                <div class="flex-1 flex items-center">
+                                    <button id="deep-search-btn" class="w-full generate-section-btn flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                        <i data-lucide="search-code" class="mr-2 h-4 w-4"></i><span>Enhance</span>
+                                    </button>
+                                     <select id="search-agent-select" class="agent-select">
+                                        <option value="monday">Monday</option>
+                                        <option value="tuesday">Tuesday</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                        <div class="flex justify-between items-center">
+                            <h3><i data-lucide="person-standing" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Physical Description</h3>
+                            <select id="physical-agent-select" class="agent-select -mt-4">
+                                <option value="monday">Monday</option>
+                                <option value="tuesday">Tuesday</option>
+                                <option value="friday">Friday</option>
+                                <option value="saturday">Saturday</option>
+                            </select>
+                        </div>
+                        <div id="physical-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
+                        <div id="physical-btn-group" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <button id="physical-btn-blue" class="generate-section-btn flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                <i data-lucide="file-text" class="mr-2 h-4 w-4"></i><span>Clinical</span>
+                            </button>
+                            <button id="physical-btn-green" class="generate-section-btn flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                <i data-lucide="gem" class="mr-2 h-4 w-4"></i><span>Magazine</span>
+                            </button>
+                            <button id="physical-btn-yellow" class="generate-section-btn flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                <i data-lucide="beer" class="mr-2 h-4 w-4"></i><span>Bar Talk</span>
+                            </button>
+                            <button id="physical-btn-red" class="generate-section-btn flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                <i data-lucide="flame" class="mr-2 h-4 w-4"></i><span>Locker Room</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                        <h3><i data-lucide="message-circle" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Communication Profile</h3>
+                        <div id="comm-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
+                        <button id="comm-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                            <span>✨ Generate Profile</span>
+                        </button>
+                    </div>
+                    <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                        <h3><i data-lucide="messages-square" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Conversational Style Examples</h3>
+                        <div id="convo-style-content" class="font-mono min-h-[50px]" contenteditable="true"></div>
+                        <button id="convo-style-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                            <span>✨ Generate Examples</span>
+                        </button>
+                    </div>
+                    <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                        <h3><i data-lucide="brain-circuit" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Psychological Profile</h3>
+                        <div id="psych-content" class="font-handwritten min-h-[50px]" contenteditable="true"></div>
+                        <button id="psych-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                            <span>✨ Generate Analyst Notes</span>
+                        </button>
+                    </div>
+                    <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                        <h3><i data-lucide="crosshair" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Strategic Analysis (SWOT)</h3>
+                        <div id="strategic-content" class="font-mono min-h-[50px]" contenteditable="true"></div>
+                        <button id="strategic-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                            <span>✨ Generate Analysis</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-bg-container/80 backdrop-blur-sm p-6 md:p-8 rounded-lg border border-border-color shadow-xl space-y-6">
+                     <h3 id="addendum-title" class="text-2xl font-bold text-accent-gold text-center font-mono tracking-wider">ADDENDUMS</h3>
+                    <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                        <h3 id="addendum-1-title"><i data-lucide="clipboard-list" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Field Surveillance Log</h3>
+                        <div id="addendum-1-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
+                        <button id="addendum-1-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                            <span>✨ Generate Report</span>
+                        </button>
+                    </div>
+                    <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
+                        <h3 id="addendum-2-title"><i data-lucide="users" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Encounter Simulation</h3>
+                        <div id="addendum-2-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
+                        <button id="addendum-2-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                           <span>✨ Generate Simulation</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer id="footer" class="text-center mt-12 text-gray-500 text-xs" style="font-family: var(--font-title); color: var(--accent-gold);">
+            <p><strong>Disclaimer:</strong> This tool is for entertainment and informational purposes only.</p>
+            <p>Information is generated by an AI model and may contain inaccuracies.</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        lucide.createIcons();
+
+        // --- DOM Elements ---
+        const body = document.body;
+        const searchContainer = document.getElementById('search-container');
+        const form = document.getElementById('dossier-form');
+        const subjectInput = document.getElementById('subject-name');
+        const subjectDetailsInput = document.getElementById('subject-details');
+        const ravenSearchBtn = document.getElementById('raven-search-btn');
+        const starlingSearchBtn = document.getElementById('starling-search-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const dossierSubject = document.getElementById('dossier-subject');
+        const resetBtn = document.getElementById('reset-btn');
+        const downloadSimplePdfBtn = document.getElementById('download-simple-pdf-btn');
+        const downloadVisualPdfBtn = document.getElementById('download-visual-pdf-btn');
+        const errorText = document.getElementById('error-text');
+        const errorMessage = document.getElementById('error-message');
+        const settingsBtn = document.getElementById('settings-btn');
+        
+        const clarificationModal = document.getElementById('clarification-modal');
+        const clarificationOptions = document.getElementById('clarification-options');
+        const clarificationCancelBtn = document.getElementById('clarification-cancel-btn');
+
+        const apiKeyModal = document.getElementById('api-key-modal');
+        const apiKeySaveBtn = document.getElementById('api-key-save-btn');
+        const apiKeyCancelBtn = document.getElementById('api-key-cancel-btn');
+        const geminiKeyInput = document.getElementById('gemini-key');
+        const tuesdayKeyInput = document.getElementById('tuesday-key');
+        const fridayKeyInput = document.getElementById('friday-key');
+        const saturdayKeyInput = document.getElementById('saturday-key');
+
+        const generateImageBtn = document.getElementById('generate-image-btn');
+        const imageAgentSelect = document.getElementById('image-agent-select');
+        const aiImageContainer = document.getElementById('ai-image-container');
+        const imageLinksContainer = document.getElementById('image-links-container');
+
+        const intelBtn = document.getElementById('intel-btn');
+        const deepSearchBtn = document.getElementById('deep-search-btn');
+        const searchAgentSelect = document.getElementById('search-agent-select');
+        const intelContent = document.getElementById('intel-content');
+        
+        const physicalContent = document.getElementById('physical-content');
+        const physicalAgentSelect = document.getElementById('physical-agent-select');
+        const physicalBtnBlue = document.getElementById('physical-btn-blue');
+        const physicalBtnGreen = document.getElementById('physical-btn-green');
+        const physicalBtnYellow = document.getElementById('physical-btn-yellow');
+        const physicalBtnRed = document.getElementById('physical-btn-red');
+
+        const commBtn = document.getElementById('comm-btn');
+        const commContent = document.getElementById('comm-content');
+        const convoStyleBtn = document.getElementById('convo-style-btn');
+        const convoStyleContent = document.getElementById('convo-style-content');
+        const psychBtn = document.getElementById('psych-btn');
+        const psychContent = document.getElementById('psych-content');
+        const strategicBtn = document.getElementById('strategic-btn');
+        const strategicContent = document.getElementById('strategic-content');
+
+        const addendum1Title = document.getElementById('addendum-1-title');
+        const addendum1Content = document.getElementById('addendum-1-content');
+        const addendum1Btn = document.getElementById('addendum-1-btn');
+        const addendum2Title = document.getElementById('addendum-2-title');
+        const addendum2Content = document.getElementById('addendum-2-content');
+        const addendum2Btn = document.getElementById('addendum-2-btn');
+
+
+        // --- Global State & Constants ---
+        let currentMode = 'hulu'; // 'hulu', 'raven', or 'starling'
+        let currentSubjectName = '';
+        let currentSubjectDetails = '';
+        const SUBJECT_HISTORY_KEY = 'hulukipediaSubjectHistory';
+        const CONTEXT_HISTORY_KEY = 'hulukipediaContextHistory';
+        const API_KEYS_KEY = 'hulukipediaApiKeys';
+        const MAX_HISTORY_SIZE = 10;
+
+        // --- Event Listeners ---
+        ravenSearchBtn.addEventListener('click', (e) => handleSearch(e, 'raven'));
+        starlingSearchBtn.addEventListener('click', (e) => handleSearch(e, 'starling'));
+        resetBtn.addEventListener('click', resetUI);
+        downloadSimplePdfBtn.addEventListener('click', downloadSimplePDF);
+        downloadVisualPdfBtn.addEventListener('click', downloadVisualPDF);
+        settingsBtn.addEventListener('click', () => apiKeyModal.classList.remove('hidden'));
+        apiKeySaveBtn.addEventListener('click', saveApiKeys);
+        apiKeyCancelBtn.addEventListener('click', () => apiKeyModal.classList.add('hidden'));
+
+        clarificationCancelBtn.addEventListener('click', () => {
+            clarificationModal.classList.add('hidden');
+            searchContainer.classList.remove('hidden');
+        });
+
+        // Wire up main section buttons
+        generateImageBtn.addEventListener('click', generateAIImage);
+        intelBtn.addEventListener('click', () => generateIntel());
+        deepSearchBtn.addEventListener('click', enhanceIntelWithSearch);
+        
+        physicalBtnBlue.addEventListener('click', () => generateTextSection('physical_blue', physicalContent, physicalBtnBlue, physicalAgentSelect.value));
+        physicalBtnGreen.addEventListener('click', () => generateTextSection('physical_green', physicalContent, physicalBtnGreen, physicalAgentSelect.value));
+        physicalBtnYellow.addEventListener('click', () => generateTextSection('physical_yellow', physicalContent, physicalBtnYellow, physicalAgentSelect.value));
+        physicalBtnRed.addEventListener('click', () => generateTextSection('physical_red', physicalContent, physicalBtnRed, physicalAgentSelect.value));
+
+        commBtn.addEventListener('click', () => generateTextSection('comm', commContent, commBtn));
+        convoStyleBtn.addEventListener('click', () => generateConvoStyle());
+        psychBtn.addEventListener('click', () => generateTextSection('psych', psychContent, psychBtn));
+        strategicBtn.addEventListener('click', () => generateStrategicAnalysis());
+        
+        // Wire up addendum buttons
+        addendum1Btn.addEventListener('click', () => generateTextSection(currentMode === 'raven' ? 'surveillance' : 'timeline', addendum1Content, addendum1Btn));
+        addendum2Btn.addEventListener('click', () => generateTextSection(currentMode === 'raven' ? 'scenario' : 'persona', addendum2Content, addendum2Btn));
+
+
+        // --- Core Functions ---
+        async function handleSearch(e, mode) {
+            e.preventDefault();
+            const subjectName = subjectInput.value.trim();
+            if (!subjectName) {
+                showError("Please enter a target entity name.");
+                return;
+            };
+            
+            currentMode = mode;
+            
+            const btn = e.currentTarget;
+            const originalBtnHTML = btn.innerHTML;
+            btn.innerHTML = `<div class="mini-loader mx-auto"></div>`;
+            btn.disabled = true;
+
+            try {
+                const clarifications = await getClarifications(subjectName, subjectDetailsInput.value.trim(), mode);
+
+                if (clarifications.length === 0) {
+                    showError("No definitive subject could be identified. Please provide more context.");
+                } else if (clarifications.length === 1) {
+                    startDossierGeneration(clarifications[0]);
+                } else {
+                    displayClarificationModal(clarifications);
+                }
+            } catch (error) {
+                console.error("Error during clarification search:", error);
+                showError(error.message);
+            } finally {
+                btn.innerHTML = originalBtnHTML;
+                btn.disabled = false;
+            }
+        }
+
+        function startDossierGeneration(subject) {
+            currentSubjectName = subject.name;
+            currentSubjectDetails = subject.knownFor;
+
+            saveSubjectToHistory(currentSubjectName);
+            if (currentSubjectDetails) {
+                saveContextToHistory(currentSubjectDetails);
+            }
+
+            applyTheme(currentMode);
+            searchContainer.classList.add('hidden');
+            clarificationModal.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            dossierSubject.textContent = currentSubjectName.toUpperCase();
+            
+            const contentDivs = document.querySelectorAll('#dossier-content div[id$="-content"], #ai-image-container');
+            contentDivs.forEach(div => div.innerHTML = '');
+
+            setupAddendums();
+            setupImageSearchLink();
+            generateIntel();
+        }
+
+        function displayClarificationModal(options) {
+            clarificationOptions.innerHTML = '';
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-4 rounded-md border border-border-color hover:bg-bg-section transition duration-200';
+                
+                let detailsHTML = option.keyDetails.map(detail => `<span class="text-xs font-mono bg-bg-section px-2 py-1 rounded">${detail}</span>`).join(' ');
+
+                button.innerHTML = `
+                    <div class="font-bold text-accent-gold">${option.name}</div>
+                    <div class="text-sm text-text-secondary italic mb-2">${option.knownFor}</div>
+                    <div class="flex flex-wrap gap-2">${detailsHTML}</div>
+                `;
+                button.addEventListener('click', () => startDossierGeneration(option));
+                clarificationOptions.appendChild(button);
+            });
+            searchContainer.classList.add('hidden');
+            clarificationModal.classList.remove('hidden');
+        }
+
+        function resetUI() {
+            currentMode = 'hulu';
+            applyTheme('hulu');
+            currentSubjectName = '';
+            currentSubjectDetails = '';
+            subjectInput.value = '';
+            subjectDetailsInput.value = '';
+            resultsContainer.classList.add('hidden');
+            searchContainer.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+            clarificationModal.classList.add('hidden');
+            const contentDivs = document.querySelectorAll('#dossier-content div[id$="-content"], #ai-image-container');
+            contentDivs.forEach(div => div.innerHTML = '');
+        }
+        
+        // --- Dynamic Content Setup ---
+        function setupAddendums() {
+            if (currentMode === 'raven') {
+                addendum1Title.innerHTML = `<i data-lucide="clipboard-list" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Field Surveillance Log`;
+                addendum1Btn.querySelector('span').textContent = `✨ Generate "A Day in the Life" Report`;
+                addendum2Title.innerHTML = `<i data-lucide="users" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Encounter Simulation`;
+                addendum2Btn.querySelector('span').textContent = `✨ Generate Simulation`;
+            } else { // starling
+                addendum1Title.innerHTML = `<i data-lucide="trending-up" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Career Timeline`;
+                addendum1Btn.querySelector('span').textContent = `✨ Generate Timeline`;
+                addendum2Title.innerHTML = `<i data-lucide="presentation" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Public Persona Analysis`;
+                addendum2Btn.querySelector('span').textContent = `✨ Generate Analysis`;
+            }
+            lucide.createIcons();
+        }
+
+        // --- Theming ---
+        function applyTheme(themeName) {
+            body.className = `theme-${themeName}`;
+            if (themeName === 'raven') {
+                document.getElementById('subtitle').textContent = "Fictional Character Division";
+            } else if (themeName === 'starling') {
+                 document.getElementById('subtitle').textContent = "Real-World Entity Division";
+            } else {
+                 document.getElementById('subtitle').textContent = "The Intelligence Hub";
+            }
+        }
+
+        // --- API & Prompts ---
+        function getPromptForSection(section, searchContext = '') {
+            const context = currentSubjectDetails ? ` (${currentSubjectDetails})` : '';
+            const subject = `"${currentSubjectName}"${context}`;
+
+            const basePrompts = {
+                clarification: `Based on the name "${subjectInput.value.trim()}" and context "${subjectDetailsInput.value.trim()}", identify up to 3 distinct potential subjects this could refer to. For each, provide a primary name, a brief 'knownFor' description, and a few key details (like affiliations, roles, or notable achievements). If you are highly confident there is only one possible subject, return only that one.`,
+                intel: `You are a fact-checking intelligence analyst. Your task is to generate a list of confirmed intelligence data points for the subject: ${subject}.
+CRITICAL INSTRUCTIONS:
+1.  Only include information you are highly certain is accurate and widely established. For fictional characters, use only canon source material. For real people, use reputable public sources.
+2.  DO NOT HALLUCINATE or invent details.
+3.  If you cannot find a specific detail for any category, you MUST explicitly write 'Information not available' for that entry instead of omitting the category or hallucinating an answer.
+4.  Prioritize core, verifiable information.
+Based *only* on your most reliable internal knowledge, provide details for the following fields if applicable. Structure the output as an array of objects, where each object has a "category" (string) and "entries" (array of strings).`,
+                physical_blue: `Generate a clinical, technical physical description of ${subject}. Focus on objective, measurable, or observable facts. Present the output as a list of key-value pairs. Include: Eye Color, Hair Color, Estimated Height, Build (e.g., Ectomorph, Mesomorph, Endomorph; Slender, Athletic, Stocky), Skin Tone, and any known distinguishing marks (scars, tattoos, etc.).`,
+                physical_green: `Generate a respectful yet engaging physical description for ${subject}, about three paragraphs long. The tone should be similar to a feature in a high-quality magazine like Vanity Fair or GQ, focusing on what makes them visually striking and appealing.
+- Paragraph 1: Describe their general appearance, build, and stature.
+- Paragraph 2: Detail their distinct facial features, hair, and typical expression in public appearances.
+- Paragraph 3: Describe their known public style (e.g., red carpet, casual) and how they present themselves.`,
+                physical_yellow: `You are writing a physical assessment of the subject: ${subject}. The tone should be direct, objectifying, appreciative, and blunt, like a candid feature in a magazine like GQ or Esquire.
+CRITICAL INSTRUCTIONS:
+-   Do not use poetic, delicate, or vague language. Use straightforward, confident, and matter-of-fact language.
+-   Focus on the most noticeable and physically appealing features that contribute to their public image.
+-   Directly comment on their physique, the shape of their body, their most striking facial features, and their overall physical appearence.
+-   Be specific. Instead of "handsome," say "has a sharp jawline and intense eyes." Instead of "good style," describe the specific style they are known for.
+-   The goal is a confident, unfiltered, yet still professional description of their physical appeal.`,
+                physical_red: `You are writing a physical assessment of the subject: ${subject}. The tone should be extremely direct, blunt, and objectifying, like two friends talking candidly at a bar.
+CRITICAL INSTRUCTIONS:
+-   Do not use polite, delicate, or vague language. Use straightforward, dirty, confident, and informal "locker room talk."
+-   Focus exclusively on the most noticeable sexual and physically appealing features.
+-   Directly comment on their body, breasts, butt, overall body shape, face, and any standout eyecatching details.
+-   Be specific. Instead of "charming," say "gorgeous smile with doe eyes." Instead of "strong," say "has toned, athletic body with perky curves."
+-   The goal is a raw, appreciative, and unfiltered description of their physical presence.`,
+                comm: `Provide a comprehensive analysis of the communication style of ${subject}. Detail their typical tone of voice, speech patterns, vocabulary, verbal tics, and non-verbal communication like body language and gestures.`,
+                convo_style: `You are a script writer. Your task is to emulate the voice of the subject: ${subject}. Generate a series of short, in-character example lines of dialogue they might say in various situations.
+CRITICAL INSTRUCTIONS:
+1.  Generate 4-6 unique examples.
+2.  Each example must have a "context" (e.g., "Entering a hostile area," "A quiet, personal moment," "Making a sarcastic joke") and a "line" (the dialogue itself).
+3.  The line must perfectly capture the subject's personality, vocabulary, and tone. Do not use generic phrases.
+4.  Structure the output as a JSON array of objects, where each object has a "context" (string) and "line" (string).`,
+                psych: `Provide a multi-paragraph psychological profile for ${subject}. Write it in the style of an analyst's notes. Analyze their personality, motivations, values, fears, and stress behaviors.`,
+                strategic: `Analyze ${subject} and generate a SWOT analysis (Strengths, Weaknesses, Opportunities, Threats). Provide 2-4 distinct points for each category.`,
+                timeline: `Create a concise career timeline for ${subject}, listing major milestones, releases, or achievements chronologically.`,
+                persona: `Provide a brief analysis of how ${subject} is generally perceived by the public and media. What are the key elements of their brand or public image?`,
+                surveillance: `Create a detailed 'A Day in the Life' surveillance report for ${subject}. Assume the role of a field agent. Detail their typical routine from waking to sleeping, using timestamps (e.g., 07:00, 13:30).`,
+                scenario: `Write a brief narrative scenario (2-3 paragraphs) describing a field agent's peaceful, overt first contact with ${subject} in a neutral, public setting. Focus on the most likely outcome of the interaction.`,
+                image_details: `Analyze the known physical appearance of ${subject}. Extract only their most defining, core visual traits. Return a JSON object with the following keys: "hairColor", "hairStyle", "eyeColor", "skinTone", "build", "distinguishingFeatures" (as an array of strings, e.g., ["scar over left eye", "cybernetic arm"]). If a detail is not widely known or varies significantly, return null for that key.`
+            };
+
+            const modeSpecifics = {
+                raven: {
+                    clarification: basePrompts.clarification.replace('subjects', 'fictional characters'),
+                    intel: basePrompts.intel + `\n- Category: "Full Name", "Known Aliases", "Species/Classification", "Origin", "Status History", "Known Affiliations", "Key Relationships", "Core Occupations/Roles", "Core Abilities/Skills", "Notable Equipment/Possessions", "Moral Alignment/Ethos", "Weaknesses/Vulnerabilities", "Home/Homes", "Criminal History", "Usual Outfits/Style", "Key Events", "Character Arc"`,
+                    strategic: basePrompts.strategic + ` Strengths and weaknesses should be internal (abilities, personality flaws). Opportunities and threats should be external (allies, rival organizations, changing world events).`
+                },
+                starling: {
+                    clarification: basePrompts.clarification.replace('subjects', 'real-world public figures'),
+                    intel: basePrompts.intel + `\n- Category: "Full Name", "Known For", "Date of Birth", "Place of Birth", "Nationality", "Key Relationships", "Education", "Career Highlights", "Notable Awards/Honors", "Public Stances/Advocacy", "Philanthropy", "Business Ventures", "Estimated Net Worth (Public Record)", "Legal/Criminal History"`,
+                    strategic: basePrompts.strategic + ` Strengths and weaknesses should be internal (reputation, skill set). Opportunities and threats should be external (market trends, competition, public opinion shifts).`,
+                    convo_style: basePrompts.convo_style.replace('a script writer', 'a public relations expert').replace('in-character example lines of dialogue', 'plausible example lines they might say in various public contexts'),
+                }
+            };
+            
+            let finalPrompt = modeSpecifics[currentMode][section] || basePrompts[section];
+
+            if (searchContext) {
+                finalPrompt = `Using the following search results as primary context, ${finalPrompt}\n\nSEARCH RESULTS:\n${searchContext}`;
+            }
+
+            return finalPrompt;
+        }
+        
+        // --- HISTORY & API KEY FUNCTIONS ---
+        function saveToHistory(key, value, maxSize) {
+            let history = JSON.parse(localStorage.getItem(key)) || [];
+            history = history.filter(item => item !== value);
+            history.unshift(value);
+            history = history.slice(0, maxSize);
+            localStorage.setItem(key, JSON.stringify(history));
+        }
+
+        function loadFromHistory(key, datalistElement) {
+            const history = JSON.parse(localStorage.getItem(key)) || [];
+            datalistElement.innerHTML = '';
+            history.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                datalistElement.appendChild(option);
+            });
+        }
+
+        function saveSubjectToHistory(subject) {
+            saveToHistory(SUBJECT_HISTORY_KEY, subject, MAX_HISTORY_SIZE);
+        }
+
+        function loadSubjectHistory() {
+            loadFromHistory(SUBJECT_HISTORY_KEY, document.getElementById('subject-history'));
+        }
+
+        function saveContextToHistory(context) {
+            saveToHistory(CONTEXT_HISTORY_KEY, context, MAX_HISTORY_SIZE);
+        }
+
+        function loadContextHistory() {
+            loadFromHistory(CONTEXT_HISTORY_KEY, document.getElementById('context-history'));
+        }
+        
+        function saveApiKeys() {
+            const keys = {
+                gemini: geminiKeyInput.value.trim(),
+                tuesday: tuesdayKeyInput.value.trim(),
+                friday: fridayKeyInput.value.trim(),
+                saturday: saturdayKeyInput.value.trim(),
+            };
+            localStorage.setItem(API_KEYS_KEY, JSON.stringify(keys));
+            apiKeyModal.classList.add('hidden');
+        }
+
+        function loadApiKeys() {
+            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
+            geminiKeyInput.value = keys.gemini || '';
+            tuesdayKeyInput.value = keys.tuesday || '';
+            fridayKeyInput.value = keys.friday || '';
+            saturdayKeyInput.value = keys.saturday || '';
+        }
+
+        function getApiKey(agent) {
+            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
+            if (agent === 'monday') return keys.gemini || '';
+            return keys[agent] || '';
+        }
+
+        // --- TEAM TOMORROW API ROUTING ---
+        async function callTeamTomorrowAPI(agent, prompt, config) {
+            const apiKey = getApiKey(agent);
+            if (!apiKey && agent !== 'monday') { // 'monday' can use the environment key
+                throw new Error(`API Key for ${agent} is not set. Please add it in Settings.`);
+            }
+
+            // This is the central routing function.
+            // It simulates calling different APIs based on the selected agent.
+            // In a real application, you would replace the placeholder comments
+            // with actual fetch calls to the respective API endpoints.
+            switch (agent) {
+                case 'monday': // Gemini
+                    return callGeminiAPI(prompt, config?.generationConfig, apiKey);
+                case 'tuesday': // Researcher - SIMULATED
+                    // Placeholder for Tuesday's API call.
+                    // You would replace this with the actual fetch logic for Tuesday's service.
+                    console.log(`Simulating call to Tuesday with key: ${apiKey ? 'provided' : 'not provided'}`);
+                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
+                case 'friday': // All-Rounder - SIMULATED
+                    // Placeholder for Friday's API call.
+                    console.log(`Simulating call to Friday with key: ${apiKey ? 'provided' : 'not provided'}`);
+                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
+                case 'saturday': // Unconventional - SIMULATED
+                     // Placeholder for Saturday's API call.
+                    console.log(`Simulating call to Saturday with key: ${apiKey ? 'provided' : 'not provided'}`);
+                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
+                default:
+                    throw new Error(`Unknown agent: ${agent}`);
+            }
+        }
+        
+        // --- GEMINI API CALLS ---
+        async function callGeminiAPI(prompt, generationConfig = null, apiKeyOverride = '') {
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            if (generationConfig) {
+                payload.generationConfig = generationConfig;
+            }
+            const apiKey = apiKeyOverride || ""; // Use override or let environment handle it
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const response = await fetch(apiUrl, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                let errorDetails = responseText;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
+                } catch (e) { /* It's not JSON */ }
+                throw new Error(`API request failed (${response.status}): ${errorDetails}`);
+            }
+            
+            if (!responseText) {
+                throw new Error("API returned a successful but empty response.");
+            }
+            return JSON.parse(responseText);
+        }
+
+        async function callImagenAPI(prompt, agent) {
+            const apiKey = getApiKey(agent);
+            if (!apiKey && agent !== 'monday') {
+                 throw new Error(`API Key for ${agent} is not set for image generation.`);
+            }
+
+            // SIMULATION: In a real app, you might route to different image models.
+            // For now, all agents use the Gemini/Imagen model via this function.
+            const payload = { instances: [{ prompt: prompt }], parameters: { "sampleCount": 1} };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey || ""}`;
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                let errorDetails = responseText;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
+                } catch (e) { /* Not JSON */ }
+                throw new Error(`Image API request failed (${response.status}): ${errorDetails}`);
+            }
+            
+            if (!responseText) {
+                 throw new Error("Image API returned a successful but empty response.");
+            }
+            return JSON.parse(responseText);
+        }
+
+        // --- CONTENT GENERATION FUNCTIONS ---
+
+        async function getClarifications(subject, context, mode) {
+            const prompt = getPromptForSection('clarification');
+            const schema = {
+                type: "ARRAY",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        "name": { "type": "STRING" },
+                        "knownFor": { "type": "STRING" },
+                        "keyDetails": { "type": "ARRAY", "items": { "type": "STRING" } }
+                    }
+                }
+            };
+            const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
+            const result = await callTeamTomorrowAPI('monday', prompt, { generationConfig }); // Clarification always uses Monday
+
+            if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                return JSON.parse(result.candidates[0].content.parts[0].text);
+            }
+            return [];
+        }
+
+        function setupImageSearchLink() {
+            imageLinksContainer.innerHTML = '';
+            let searchSites = [];
+
+            if (currentMode === 'raven') {
+                searchSites = [
+                    { name: 'Google', url: 'https://www.google.com/search?tbm=isch&q=' },
+                    { name: 'Bing', url: 'https://www.bing.com/images/search?q=' },
+                    { name: 'Pinterest', url: 'https://www.pinterest.com/search/pins/?q=' },
+                    { name: 'Rule 34', url: 'https://rule34.xxx/index.php?page=post&s=list&tags=', nsfw: true }
+                ];
+            } else { // starling
+                searchSites = [
+                    { name: 'Google', url: 'https://www.google.com/search?tbm=isch&q=' },
+                    { name: 'Bing', url: 'https://www.bing.com/images/search?q=' },
+                    { name: 'Pinterest', url: 'https://www.pinterest.com/search/pins/?q=' },
+                    { name: 'Celeb Jihad', url: 'https://celebjihad.com/?s=', nsfw: true, customQuery: true }
+                ];
+            }
+            
+            const searchTerm = currentSubjectName.trim();
+
+            searchSites.forEach(site => {
+                const link = document.createElement('a');
+                let finalUrl;
+                if (site.customQuery) {
+                    finalUrl = `${site.url}${searchTerm.toUpperCase().replace(/ /g, '+')}`;
+                } else {
+                    finalUrl = `${site.url}${encodeURIComponent(searchTerm)}`;
+                }
+                link.href = finalUrl;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.className = 'flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-2 rounded-md transition duration-200 text-center text-xs shadow-md';
+                link.textContent = site.name;
+                if (site.nsfw) {
+                    link.innerHTML += ' <i data-lucide="alert-triangle" class="ml-1 h-3 w-3 text-red-800"></i>';
+                }
+                imageLinksContainer.appendChild(link);
+            });
+            lucide.createIcons();
+        }
+
+        async function generateAIImage() {
+            const agent = imageAgentSelect.value;
+            generateImageBtn.disabled = true;
+            const originalButtonHTML = generateImageBtn.innerHTML;
+            generateImageBtn.innerHTML = `<div class="mini-loader btn-mini-loader mx-auto"></div>`;
+            aiImageContainer.innerHTML = `<div class="loader mx-auto"></div>`;
+
+            try {
+                const detailsPrompt = getPromptForSection('image_details');
+                const schema = { type: "OBJECT", properties: { "hairColor": { "type": "STRING" }, "hairStyle": { "type": "STRING" }, "eyeColor": { "type": "STRING" }, "skinTone": { "type": "STRING" }, "build": { "type": "STRING" }, "distinguishingFeatures": { "type": "ARRAY", "items": { "type": "STRING" } } } };
+                const detailsResult = await callTeamTomorrowAPI('monday', detailsPrompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                
+                let descriptionParts = [];
+                if (detailsResult.candidates?.[0]?.content?.parts?.[0]) {
+                    const details = JSON.parse(detailsResult.candidates[0].content.parts[0].text);
+                    Object.values(details).flat().forEach(detail => { if(detail) descriptionParts.push(detail); });
+                }
+
+                const context = currentSubjectDetails ? `, ${currentSubjectDetails}` : '';
+                const basePromptStyle = currentMode === 'raven' ? `cinematic portrait of the fictional character ${currentSubjectName}${context}` : `photorealistic portrait of the public figure ${currentSubjectName}${context}`;
+                const finalDetails = descriptionParts.length > 0 ? `, with ${descriptionParts.join(', ')}` : '';
+                const finalPrompt = `${basePromptStyle}${finalDetails}, detailed face, intricate details, epic lighting, sharp focus`;
+                
+                const result = await callImagenAPI(finalPrompt, agent);
+
+                if (result.predictions?.[0]?.bytesBase64Encoded) {
+                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                    aiImageContainer.innerHTML = `<img src="${imageUrl}" alt="AI-generated visual of ${currentSubjectName}" class="w-full h-full object-cover rounded-md">`;
+                } else {
+                    let reason = "Image generation failed. The prompt may have been rejected by safety filters or an unknown error occurred.";
+                    console.error("Imagen Response Details:", JSON.stringify(result, null, 2));
+                    throw new Error(reason);
+                }
+            } catch (error) {
+                console.error("Error generating AI Image:", error);
+                aiImageContainer.innerHTML = `<span class="text-red-500 text-xs text-center p-4">Error: ${error.message}</span>`;
+            } finally {
+                generateImageBtn.disabled = false;
+                generateImageBtn.innerHTML = originalButtonHTML;
+                lucide.createIcons();
+            }
+        }
+
+        async function generateIntel(searchContext = '') {
+            const agent = 'monday'; // Intel generation is a core Monday task for now
+            const buttons = [intelBtn, deepSearchBtn];
+            buttons.forEach(btn => btn.disabled = true);
+            intelContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
+            
+            try {
+                const prompt = getPromptForSection('intel', searchContext);
+                const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "category": { "type": "STRING" }, "entries": { "type": "ARRAY", "items": { "type": "STRING" } } } } };
+                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                intelContent.innerHTML = '';
+                if (result.candidates?.[0]?.content?.parts?.[0]) {
+                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                    if (data && data.length > 0) {
+                        data.forEach(cat => {
+                            if (cat.entries && cat.entries.length > 0) {
+                                const categoryDiv = document.createElement('div');
+                                categoryDiv.className = 'intel-category';
+                                const title = document.createElement('div');
+                                title.className = 'intel-category-title';
+                                title.textContent = cat.category;
+                                categoryDiv.appendChild(title);
+                                cat.entries.forEach(entryText => {
+                                    const entryDiv = document.createElement('div');
+                                    entryDiv.className = 'intel-entry';
+                                    entryDiv.textContent = entryText;
+                                    categoryDiv.appendChild(entryDiv);
+                                });
+                                intelContent.appendChild(categoryDiv);
+                            }
+                        });
+                    } else {
+                        intelContent.textContent = "No confirmed intelligence data available.";
+                    }
+                } else {
+                     throw new Error("Could not parse the intelligence data from the AI's response.");
+                }
+            } catch(error) {
+                console.error("Error generating intel:", error);
+                intelContent.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+            } finally {
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        async function enhanceIntelWithSearch() {
+            const agent = searchAgentSelect.value;
+            intelContent.innerHTML = `<div class="mini-loader mx-auto"></div><p class="text-center text-sm text-text-secondary mt-2">Performing deep search via ${agent}... (Simulated)</p>`;
+            
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const simulatedSearchResults = `According to online sources found by ${agent}, ${currentSubjectName} (${currentSubjectDetails}) is known for... [simulated search data would go here]`;
+            await generateIntel(simulatedSearchResults);
+        }
+        
+        async function generateConvoStyle() {
+            const agent = 'monday'; // Defaulting to Monday for consistency
+            convoStyleBtn.disabled = true;
+            convoStyleContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
+            try {
+                const prompt = getPromptForSection('convo_style');
+                const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "context": { "type": "STRING" }, "line": { "type": "STRING" } } } };
+                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                convoStyleContent.innerHTML = '';
+                if (result.candidates?.[0]?.content?.parts?.[0]) {
+                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                    if (data && data.length > 0) {
+                        data.forEach(item => {
+                            const exampleDiv = document.createElement('div');
+                            exampleDiv.className = 'convo-example';
+                            
+                            const context = document.createElement('div');
+                            context.className = 'convo-context';
+                            context.textContent = item.context;
+                            exampleDiv.appendChild(context);
+
+                            const line = document.createElement('div');
+                            line.className = 'convo-line';
+                            line.textContent = item.line;
+                            exampleDiv.appendChild(line);
+
+                            convoStyleContent.appendChild(exampleDiv);
+                        });
+                    } else {
+                        convoStyleContent.textContent = "No conversational examples could be generated.";
+                    }
+                } else {
+                     throw new Error("Could not parse the conversational examples from the AI's response.");
+                }
+            } catch(error) {
+                console.error("Error generating conversational style:", error);
+                convoStyleContent.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+            } finally {
+                convoStyleBtn.disabled = false;
+            }
+        }
+
+        async function generateStrategicAnalysis() {
+            const agent = 'monday'; // Default
+            strategicBtn.disabled = true;
+            strategicContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
+            try {
+                const prompt = getPromptForSection('strategic');
+                const schema = { type: "OBJECT", properties: { "strengths": { "type": "ARRAY", "items": { "type": "STRING" } }, "weaknesses": { "type": "ARRAY", "items": { "type": "STRING" } }, "opportunities": { "type": "ARRAY", "items": { "type": "STRING" } }, "threats": { "type": "ARRAY", "items": { "type": "STRING" } } } };
+                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                strategicContent.innerHTML = '';
+
+                if (result.candidates?.[0]?.content?.parts?.[0]) {
+                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                    const categories = ['strengths', 'weaknesses', 'opportunities', 'threats'];
+                    
+                    categories.forEach(catKey => {
+                        const entries = data[catKey];
+                        if (entries && entries.length > 0) {
+                            const categoryDiv = document.createElement('div');
+                            categoryDiv.className = 'swot-category';
+                            
+                            const title = document.createElement('div');
+                            title.className = 'swot-title';
+                            title.textContent = catKey.charAt(0).toUpperCase() + catKey.slice(1);
+                            categoryDiv.appendChild(title);
+
+                            entries.forEach(entryText => {
+                                const entryDiv = document.createElement('div');
+                                entryDiv.className = 'swot-entry';
+                                entryDiv.textContent = entryText;
+                                categoryDiv.appendChild(entryDiv);
+                            });
+                            strategicContent.appendChild(categoryDiv);
+                        }
+                    });
+                } else {
+                    throw new Error("Could not parse the strategic analysis from the AI's response.");
+                }
+            } catch(error) {
+                console.error("Error generating strategic analysis:", error);
+                strategicContent.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+            } finally {
+                strategicBtn.disabled = false;
+            }
+        }
+
+        async function generateTextSection(section, contentElement, buttonElement, agent = 'monday') {
+            buttonElement.disabled = true;
+            const originalButtonHTML = buttonElement.innerHTML;
+            buttonElement.innerHTML = `<div class="mini-loader btn-mini-loader"></div>`;
+            contentElement.innerHTML = `<div class="mini-loader mx-auto"></div>`;
+            try {
+                const prompt = getPromptForSection(section);
+                const result = await callTeamTomorrowAPI(agent, prompt);
+                if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    contentElement.innerHTML = result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+                } else {
+                    throw new Error("No content received from analysis API.");
+                }
+            } catch(error) {
+                console.error(`Error generating ${section}:`, error);
+                contentElement.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+            } finally {
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalButtonHTML;
+                lucide.createIcons();
+            }
+        }
+        
+        async function downloadSimplePDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const subjectName = currentSubjectName || 'Dossier';
+            const fileName = `${subjectName.replace(/ /g, '_')}-Dossier.pdf`;
+            const originalButtonHTML = downloadSimplePdfBtn.innerHTML;
+            downloadSimplePdfBtn.disabled = true;
+            downloadSimplePdfBtn.innerHTML = '<div class="mini-loader btn-mini-loader mx-auto"></div>';
+            
+            try {
+                let currentY = 20;
+                const leftMargin = 15;
+                const rightMargin = 15;
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const usableWidth = pdf.internal.pageSize.getWidth() - leftMargin - rightMargin;
+
+                const checkPageBreak = (neededHeight = 10) => {
+                    if (currentY + neededHeight > pageHeight - 20) {
+                        pdf.addPage();
+                        currentY = 20;
+                    }
+                };
+
+                pdf.setFontSize(22);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(`Dossier: ${currentSubjectName}`, leftMargin, currentY);
+                currentY += 15;
+
+                const intelElement = document.getElementById('intel-content');
+                if (intelElement && intelElement.textContent.trim() !== '' && !intelElement.querySelector('.loader')) {
+                    checkPageBreak(20);
+                    pdf.setFontSize(14);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text("Confirmed Intel", leftMargin, currentY);
+                    currentY += 6;
+                    pdf.setLineWidth(0.3);
+                    pdf.line(leftMargin, currentY, leftMargin + usableWidth, currentY);
+                    currentY += 8;
+
+                    const categories = intelElement.querySelectorAll('.intel-category');
+                    categories.forEach(cat => {
+                        const title = cat.querySelector('.intel-category-title').textContent;
+                        const entries = Array.from(cat.querySelectorAll('.intel-entry')).map(e => e.textContent);
+                        
+                        checkPageBreak(8);
+                        pdf.setFontSize(11);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.text(title, leftMargin, currentY);
+                        currentY += 5;
+
+                        pdf.setFont('helvetica', 'normal');
+                        entries.forEach(entry => {
+                            const lines = pdf.splitTextToSize(`- ${entry}`, usableWidth - 5);
+                            checkPageBreak(lines.length * 5);
+                            pdf.text(lines, leftMargin + 5, currentY);
+                            currentY += (lines.length * 5);
+                        });
+                        currentY += 3;
+                    });
+                }
+
+                currentY += 10;
+
+                const mainSections = [
+                    { title: "Physical Description", contentId: "physical-content", type: "text" },
+                    { title: "Communication Profile", contentId: "comm-content", type: "text" },
+                    { title: "Conversational Style Examples", contentId: "convo-style-content", type: "convo_style" },
+                    { title: "Psychological Profile", contentId: "psych-content", type: "text", style: "italic" },
+                    { title: "Strategic Analysis (SWOT)", contentId: "strategic-content", type: "swot" }
+                ];
+
+                const addendumSections = [
+                    { title: addendum1Title.textContent, contentId: "addendum-1-content", type: "text" },
+                    { title: addendum2Title.textContent, contentId: "addendum-2-content", type: "text" }
+                ];
+
+                const processSections = (sections, isAddendum = false) => {
+                    if (isAddendum) {
+                        const hasContent = sections.some(section => {
+                            const el = document.getElementById(section.contentId);
+                            return el && el.textContent.trim() !== '' && !el.querySelector('.loader');
+                        });
+                        if (!hasContent) return; 
+
+                        checkPageBreak(20);
+                        pdf.setFontSize(18);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.text("ADDENDUMS", leftMargin, currentY);
+                        currentY += 15;
+                    }
+
+                    for (const section of sections) {
+                        const contentElement = document.getElementById(section.contentId);
+                        if (contentElement && contentElement.textContent.trim() !== '' && !contentElement.querySelector('.loader')) {
+                            checkPageBreak(20);
+                            pdf.setFontSize(14);
+                            pdf.setFont('helvetica', 'bold');
+                            pdf.text(section.title, leftMargin, currentY);
+                            currentY += 6;
+                            pdf.setLineWidth(0.3);
+                            pdf.line(leftMargin, currentY, leftMargin + usableWidth, currentY);
+                            currentY += 8;
+                            
+                            const text = contentElement.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
+                            
+                            if (section.type === 'swot') {
+                                const swotCategories = contentElement.querySelectorAll('.swot-category');
+                                swotCategories.forEach(cat => {
+                                    const title = cat.querySelector('.swot-title').textContent;
+                                    const entries = Array.from(cat.querySelectorAll('.swot-entry')).map(e => e.textContent);
+                                    checkPageBreak(8);
+                                    pdf.setFontSize(11);
+                                    pdf.setFont('helvetica', 'bold');
+                                    pdf.text(title, leftMargin, currentY);
+                                    currentY += 5;
+                                    pdf.setFont('helvetica', 'normal');
+                                    entries.forEach(entry => {
+                                        const lines = pdf.splitTextToSize(`• ${entry}`, usableWidth - 5);
+                                        checkPageBreak(lines.length * 4);
+                                        pdf.text(lines, leftMargin + 5, currentY);
+                                        currentY += (lines.length * 4);
+                                    });
+                                    currentY += 3;
+                                });
+                            } else if (section.type === 'convo_style') {
+                                const convoExamples = contentElement.querySelectorAll('.convo-example');
+                                convoExamples.forEach(ex => {
+                                    const context = ex.querySelector('.convo-context').textContent;
+                                    const line = ex.querySelector('.convo-line').textContent;
+                                    checkPageBreak(10);
+                                    pdf.setFontSize(11);
+                                    pdf.setFont('helvetica', 'bold');
+                                    pdf.text(context, leftMargin, currentY);
+                                    currentY += 5;
+                                    pdf.setFont('helvetica', 'italic');
+                                    const lineText = pdf.splitTextToSize(`"${line}"`, usableWidth - 5);
+                                    pdf.text(lineText, leftMargin + 5, currentY);
+                                    currentY += (lineText.length * 5) + 3;
+                                });
+                            } else {
+                                pdf.setFontSize(11);
+                                pdf.setFont('helvetica', section.style || 'normal');
+                                const lines = pdf.splitTextToSize(text, usableWidth);
+                                checkPageBreak(lines.length * 5);
+                                pdf.text(lines, leftMargin, currentY);
+                                currentY += lines.length * 5;
+                            }
+                            currentY += 10;
+                        }
+                    }
+                };
+
+                processSections(mainSections);
+                processSections(addendumSections, true);
+
+                pdf.save(fileName);
+            } catch (error) {
+                console.error("Error generating text-based PDF:", error);
+                showError("Failed to generate PDF. Please try again.");
+            } finally {
+                downloadSimplePdfBtn.disabled = false;
+                downloadSimplePdfBtn.innerHTML = originalButtonHTML;
+                lucide.createIcons();
+            }
+        }
+
+        async function downloadVisualPDF() {
+            const originalButtonHTML = downloadVisualPdfBtn.innerHTML;
+            downloadVisualPdfBtn.disabled = true;
+            downloadVisualPdfBtn.innerHTML = '<div class="mini-loader btn-mini-loader mx-auto"></div>';
+
+            try {
+                const dossierElement = document.getElementById('results-container');
+                const canvas = await html2canvas(dossierElement, {
+                    backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-main'),
+                    useCORS: true, 
+                    logging: true,
+                    onclone: (document) => {
+                        // Ensure the container is visible for the screenshot
+                        document.getElementById('results-container').style.display = 'block';
+                    }
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                const fileName = `${currentSubjectName.replace(/ /g, '_')}-Visual_Dossier.pdf`;
+                pdf.save(fileName);
+
+            } catch (error) {
+                console.error("Error generating visual PDF:", error);
+                showError("Failed to generate visual PDF. Check console for details.");
+            } finally {
+                downloadVisualPdfBtn.disabled = false;
+                downloadVisualPdfBtn.innerHTML = originalButtonHTML;
+                lucide.createIcons();
+            }
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+        
+        // --- Initial Load ---
+        loadSubjectHistory();
+        loadContextHistory();
+        loadApiKeys();
+
+    </script>
+</body>
+</html>
+
