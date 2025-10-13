@@ -316,31 +316,30 @@
             </div>
         </div>
 
-        <!-- API Key Modal -->
+        <!-- Settings Modal -->
         <div id="api-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-lg w-full border border-border-color">
-                <h3 class="text-xl font-bold text-accent-gold mb-4">Team Tomorrow API Keys</h3>
-                <p class="text-text-secondary mb-6">Enter your API keys below. They will be saved securely in your browser's local storage.</p>
-                <div class="space-y-4">
+            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-xl w-full border border-border-color">
+                <h3 class="text-xl font-bold text-accent-gold mb-4">Team Tomorrow Control Center</h3>
+                <p class="text-text-secondary mb-6">
+                    Configure the Hulukipedia gateway URL and assign model providers to each agent. Secrets stay on the server — liteLLM resolves API keys from the environment.
+                </p>
+                <div class="space-y-6">
                     <div>
-                        <label for="gemini-key" class="block text-sm font-medium text-primary">Gemini (Monday)</label>
-                        <input type="password" id="gemini-key" placeholder="Enter Gemini API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                        <label for="api-base-url" class="block text-sm font-medium text-primary">Gateway URL</label>
+                        <input type="url" id="api-base-url" placeholder="http://localhost:8000" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section" />
+                        <p class="text-xs text-text-secondary mt-2">Point this to the FastAPI + liteLLM service (defaults to <code>http://localhost:8000</code>).</p>
                     </div>
                     <div>
-                        <label for="tuesday-key" class="block text-sm font-medium text-primary">Tuesday's Key</label>
-                        <input type="password" id="tuesday-key" placeholder="Enter Tuesday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
-                    </div>
-                    <div>
-                        <label for="friday-key" class="block text-sm font-medium text-primary">Friday's Key</label>
-                        <input type="password" id="friday-key" placeholder="Enter Friday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
-                    </div>
-                    <div>
-                        <label for="saturday-key" class="block text-sm font-medium text-primary">Saturday's Key</label>
-                        <input type="password" id="saturday-key" placeholder="Enter Saturday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm font-semibold text-primary">Agent provider routing</p>
+                            <button id="provider-refresh-btn" class="text-xs px-2 py-1 rounded-md bg-gray-700 hover:bg-gray-600 text-purple-200 transition duration-200">Refresh</button>
+                        </div>
+                        <div id="agent-provider-list" class="space-y-3"></div>
+                        <p class="text-xs text-text-secondary mt-2">Providers are discovered from the gateway's <code>/v1/providers</code> endpoint.</p>
                     </div>
                 </div>
                 <div class="mt-6 flex gap-4">
-                    <button id="api-key-save-btn" class="flex-1 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">Save Keys</button>
+                    <button id="api-key-save-btn" class="flex-1 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">Save Configuration</button>
                     <button id="api-key-cancel-btn" class="flex-1 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-200">Cancel</button>
                 </div>
             </div>
@@ -521,10 +520,9 @@
         const apiKeyModal = document.getElementById('api-key-modal');
         const apiKeySaveBtn = document.getElementById('api-key-save-btn');
         const apiKeyCancelBtn = document.getElementById('api-key-cancel-btn');
-        const geminiKeyInput = document.getElementById('gemini-key');
-        const tuesdayKeyInput = document.getElementById('tuesday-key');
-        const fridayKeyInput = document.getElementById('friday-key');
-        const saturdayKeyInput = document.getElementById('saturday-key');
+        const apiBaseUrlInput = document.getElementById('api-base-url');
+        const agentProviderList = document.getElementById('agent-provider-list');
+        const providerRefreshBtn = document.getElementById('provider-refresh-btn');
 
         const generateImageBtn = document.getElementById('generate-image-btn');
         const imageAgentSelect = document.getElementById('image-agent-select');
@@ -566,8 +564,24 @@
         let currentSubjectDetails = '';
         const SUBJECT_HISTORY_KEY = 'hulukipediaSubjectHistory';
         const CONTEXT_HISTORY_KEY = 'hulukipediaContextHistory';
-        const API_KEYS_KEY = 'hulukipediaApiKeys';
+        const API_BASE_URL_KEY = 'hulukipediaApiBaseUrl';
+        const PROVIDER_MAP_KEY = 'hulukipediaProviderMap';
+        const DEFAULT_GATEWAY_URL = 'http://localhost:8000';
         const MAX_HISTORY_SIZE = 10;
+        const AGENT_DISPLAY_NAMES = {
+            monday: 'Monday – Mission Control',
+            tuesday: 'Tuesday – Research',
+            friday: 'Friday – Analysis',
+            saturday: 'Saturday – Wildcard',
+        };
+        const DEFAULT_AGENT_ROUTING = {
+            monday: 'hulukipedia-gemini',
+            tuesday: 'hulukipedia-claude',
+            friday: 'hulukipedia-openai',
+            saturday: 'hulukipedia-openai',
+            images: 'hulukipedia-gemini',
+        };
+        let providerOptions = [];
 
         // --- Event Listeners ---
         ravenSearchBtn.addEventListener('click', (e) => handleSearch(e, 'raven'));
@@ -575,9 +589,18 @@
         resetBtn.addEventListener('click', resetUI);
         downloadSimplePdfBtn.addEventListener('click', downloadSimplePDF);
         downloadVisualPdfBtn.addEventListener('click', downloadVisualPDF);
-        settingsBtn.addEventListener('click', () => apiKeyModal.classList.remove('hidden'));
-        apiKeySaveBtn.addEventListener('click', saveApiKeys);
+        settingsBtn.addEventListener('click', () => {
+            openSettingsModal().catch(error => {
+                console.error('Failed to open settings modal:', error);
+                showError(error.message);
+            });
+        });
+        apiKeySaveBtn.addEventListener('click', saveProviderConfiguration);
         apiKeyCancelBtn.addEventListener('click', () => apiKeyModal.classList.add('hidden'));
+        providerRefreshBtn.addEventListener('click', async () => {
+            await refreshProviderOptions(true, apiBaseUrlInput.value);
+            renderProviderSelectors();
+        });
 
         clarificationCancelBtn.addEventListener('click', () => {
             clarificationModal.classList.add('hidden');
@@ -832,152 +855,278 @@ CRITICAL INSTRUCTIONS:
         function loadContextHistory() {
             loadFromHistory(CONTEXT_HISTORY_KEY, document.getElementById('context-history'));
         }
-        
-        function saveApiKeys() {
-            const keys = {
-                gemini: geminiKeyInput.value.trim(),
-                tuesday: tuesdayKeyInput.value.trim(),
-                friday: fridayKeyInput.value.trim(),
-                saturday: saturdayKeyInput.value.trim(),
-            };
-            localStorage.setItem(API_KEYS_KEY, JSON.stringify(keys));
+
+        function getApiBaseUrl() {
+            return localStorage.getItem(API_BASE_URL_KEY) || '';
+        }
+
+        function setApiBaseUrl(url) {
+            if (url) {
+                localStorage.setItem(API_BASE_URL_KEY, url);
+            } else {
+                localStorage.removeItem(API_BASE_URL_KEY);
+            }
+        }
+
+        function getStoredProviderMap() {
+            return JSON.parse(localStorage.getItem(PROVIDER_MAP_KEY) || '{}');
+        }
+
+        function setStoredProviderMap(map) {
+            localStorage.setItem(PROVIDER_MAP_KEY, JSON.stringify(map));
+        }
+
+        function ensureProviderSelections() {
+            const map = getStoredProviderMap();
+            let updated = false;
+            Object.keys(AGENT_DISPLAY_NAMES).forEach(agent => {
+                if (!map[agent] && DEFAULT_AGENT_ROUTING[agent]) {
+                    map[agent] = DEFAULT_AGENT_ROUTING[agent];
+                    updated = true;
+                }
+            });
+            if (updated) {
+                setStoredProviderMap(map);
+            }
+        }
+
+        function getAgentProvider(agent) {
+            const map = getStoredProviderMap();
+            return map[agent] || DEFAULT_AGENT_ROUTING[agent];
+        }
+
+        async function refreshProviderOptions(showErrors = false, baseOverride = null) {
+            const override = typeof baseOverride === 'string' ? baseOverride.trim() : '';
+            const baseUrl = override || getApiBaseUrl() || DEFAULT_GATEWAY_URL;
+            if (!baseUrl) {
+                providerOptions = [];
+                return;
+            }
+            try {
+                const response = await fetch(`${baseUrl.replace(/\/$/, '')}/v1/providers`);
+                if (!response.ok) {
+                    throw new Error(`Provider request failed with status ${response.status}`);
+                }
+                providerOptions = await response.json();
+            } catch (error) {
+                console.error('Failed to load providers:', error);
+                providerOptions = [];
+                if (showErrors) {
+                    showError(`Unable to load providers: ${error.message}`);
+                }
+            }
+        }
+
+        function renderProviderSelectors() {
+            agentProviderList.innerHTML = '';
+            const map = getStoredProviderMap();
+            const available = providerOptions.length > 0 ? providerOptions : [];
+            let mapChanged = false;
+
+            Object.entries(AGENT_DISPLAY_NAMES).forEach(([agent, label]) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'bg-bg-section border border-border-color rounded-md p-3';
+
+                const title = document.createElement('label');
+                title.className = 'block text-sm font-medium text-primary mb-2';
+                title.textContent = label;
+                title.setAttribute('for', `provider-select-${agent}`);
+
+                const select = document.createElement('select');
+                select.id = `provider-select-${agent}`;
+                select.dataset.agent = agent;
+                select.className = 'w-full p-2 rounded-md border border-border-color bg-bg-container text-sm';
+
+                if (available.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No providers available';
+                    select.appendChild(option);
+                    select.disabled = true;
+                } else {
+                    available.forEach(provider => {
+                        const option = document.createElement('option');
+                        option.value = provider.alias;
+                        option.textContent = provider.display_name || provider.alias;
+                        option.dataset.provider = provider.provider || '';
+                        option.dataset.capabilities = (provider.capabilities || []).join(',');
+                        select.appendChild(option);
+                    });
+                    let currentValue = map[agent] || DEFAULT_AGENT_ROUTING[agent] || available[0].alias;
+                    if (!available.some(provider => provider.alias === currentValue)) {
+                        currentValue = available[0].alias;
+                        map[agent] = currentValue;
+                        mapChanged = true;
+                    }
+                    select.value = currentValue;
+                }
+
+                wrapper.appendChild(title);
+                wrapper.appendChild(select);
+                agentProviderList.appendChild(wrapper);
+            });
+
+            if (mapChanged) {
+                setStoredProviderMap(map);
+            }
+        }
+
+        function collectProviderSelections() {
+            const selects = agentProviderList.querySelectorAll('select[data-agent]');
+            const map = {};
+            selects.forEach(select => {
+                if (select.value) {
+                    map[select.dataset.agent] = select.value;
+                }
+            });
+            return map;
+        }
+
+        async function openSettingsModal() {
+            apiBaseUrlInput.value = getApiBaseUrl() || DEFAULT_GATEWAY_URL;
+            ensureProviderSelections();
+            await refreshProviderOptions(true, apiBaseUrlInput.value);
+            renderProviderSelectors();
+            apiKeyModal.classList.remove('hidden');
+        }
+
+        async function initializeSettings() {
+            if (!getApiBaseUrl()) {
+                setApiBaseUrl(DEFAULT_GATEWAY_URL);
+            }
+            ensureProviderSelections();
+            await refreshProviderOptions();
+            renderProviderSelectors();
+        }
+
+        function saveProviderConfiguration() {
+            const baseUrl = apiBaseUrlInput.value.trim();
+            if (!baseUrl) {
+                showError('Please provide a gateway URL (e.g., http://localhost:8000).');
+                return;
+            }
+            setApiBaseUrl(baseUrl);
+            const selections = collectProviderSelections();
+            setStoredProviderMap(selections);
             apiKeyModal.classList.add('hidden');
         }
 
-        function loadApiKeys() {
-            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
-            geminiKeyInput.value = keys.gemini || '';
-            tuesdayKeyInput.value = keys.tuesday || '';
-            fridayKeyInput.value = keys.friday || '';
-            saturdayKeyInput.value = keys.saturday || '';
-        }
-
-        function getApiKey(agent) {
-            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
-            if (agent === 'monday') return keys.gemini || '';
-            return keys[agent] || '';
+        function getApiBaseUrlOrThrow() {
+            const url = getApiBaseUrl();
+            if (!url) {
+                throw new Error('Set the gateway URL in Settings before generating content.');
+            }
+            return url.replace(/\/$/, '');
         }
 
         // --- TEAM TOMORROW API ROUTING ---
-        async function callTeamTomorrowAPI(agent, prompt, config) {
-            const apiKey = getApiKey(agent);
-            if (!apiKey && agent !== 'monday') { // 'monday' can use the environment key
-                throw new Error(`API Key for ${agent} is not set. Please add it in Settings.`);
+        async function callTeamTomorrowAPI(agent, prompt, requestOptions = {}) {
+            const baseUrl = getApiBaseUrlOrThrow();
+            const providerAlias = requestOptions.provider || getAgentProvider(agent);
+            if (!providerAlias) {
+                throw new Error(`No provider configured for ${agent}. Update the settings panel.`);
             }
 
-            // This is the central routing function.
-            // It simulates calling different APIs based on the selected agent.
-            // In a real application, you would replace the placeholder comments
-            // with actual fetch calls to the respective API endpoints.
-            switch (agent) {
-                case 'monday': // Gemini
-                    return callGeminiAPI(prompt, config?.generationConfig, apiKey);
-                case 'tuesday': // Researcher - SIMULATED
-                    // Placeholder for Tuesday's API call.
-                    // You would replace this with the actual fetch logic for Tuesday's service.
-                    console.log(`Simulating call to Tuesday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                case 'friday': // All-Rounder - SIMULATED
-                    // Placeholder for Friday's API call.
-                    console.log(`Simulating call to Friday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                case 'saturday': // Unconventional - SIMULATED
-                     // Placeholder for Saturday's API call.
-                    console.log(`Simulating call to Saturday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                default:
-                    throw new Error(`Unknown agent: ${agent}`);
+            const payload = {
+                agent,
+                prompt,
+                provider: providerAlias,
+                options: requestOptions.options || {},
+            };
+
+            if (requestOptions.model) {
+                payload.model = requestOptions.model;
             }
-        }
-        
-        // --- GEMINI API CALLS ---
-        async function callGeminiAPI(prompt, generationConfig = null, apiKeyOverride = '') {
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-            if (generationConfig) {
-                payload.generationConfig = generationConfig;
-            }
-            const apiKey = apiKeyOverride || ""; // Use override or let environment handle it
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            
-            const response = await fetch(apiUrl, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload) 
+
+            const response = await fetch(`${baseUrl}/v1/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             });
 
-            const responseText = await response.text();
+            let responseBody = {};
+            try {
+                responseBody = await response.json();
+            } catch (error) {
+                // ignore JSON parse errors – handled below
+            }
 
             if (!response.ok) {
-                let errorDetails = responseText;
-                try {
-                    const errorData = JSON.parse(responseText);
-                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
-                } catch (e) { /* It's not JSON */ }
-                throw new Error(`API request failed (${response.status}): ${errorDetails}`);
+                const detail = responseBody?.detail || `Gateway request failed (${response.status}).`;
+                throw new Error(detail);
             }
-            
-            if (!responseText) {
-                throw new Error("API returned a successful but empty response.");
-            }
-            return JSON.parse(responseText);
+
+            return responseBody;
         }
 
         async function callImagenAPI(prompt, agent) {
-            const apiKey = getApiKey(agent);
-            if (!apiKey && agent !== 'monday') {
-                 throw new Error(`API Key for ${agent} is not set for image generation.`);
+            const baseUrl = getApiBaseUrlOrThrow();
+            const providerAlias = getAgentProvider(agent) || DEFAULT_AGENT_ROUTING.images;
+            if (!providerAlias) {
+                throw new Error('No image-capable provider configured.');
             }
 
-            // SIMULATION: In a real app, you might route to different image models.
-            // For now, all agents use the Gemini/Imagen model via this function.
-            const payload = { instances: [{ prompt: prompt }], parameters: { "sampleCount": 1} };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey || ""}`;
-            
-            const response = await fetch(apiUrl, {
+            const response = await fetch(`${baseUrl}/v1/images`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ prompt, agent, provider: providerAlias }),
             });
 
-            const responseText = await response.text();
+            let responseBody = {};
+            try {
+                responseBody = await response.json();
+            } catch (error) {
+                // ignore JSON parse errors – handled below
+            }
 
             if (!response.ok) {
-                let errorDetails = responseText;
-                try {
-                    const errorData = JSON.parse(responseText);
-                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
-                } catch (e) { /* Not JSON */ }
-                throw new Error(`Image API request failed (${response.status}): ${errorDetails}`);
+                const detail = responseBody?.detail || `Image request failed (${response.status}).`;
+                throw new Error(detail);
             }
-            
-            if (!responseText) {
-                 throw new Error("Image API returned a successful but empty response.");
+
+            return responseBody;
+        }
+
+        function extractContentText(response) {
+            if (!response) return '';
+            if (typeof response.content === 'string') {
+                return response.content;
             }
-            return JSON.parse(responseText);
+            if (Array.isArray(response.content)) {
+                return response.content
+                    .map(part => {
+                        if (typeof part === 'string') return part;
+                        if (part && typeof part === 'object') {
+                            if (typeof part.text === 'string') return part.text;
+                            if (Array.isArray(part)) {
+                                return part.filter(Boolean).join(' ');
+                            }
+                        }
+                        return '';
+                    })
+                    .filter(Boolean)
+                    .join(' ');
+            }
+            return '';
+        }
+
+        function parseJsonSafely(text, fallback) {
+            if (!text) return fallback;
+            try {
+                return JSON.parse(text);
+            } catch (error) {
+                console.warn('Failed to parse JSON response:', error);
+                return fallback;
+            }
         }
 
         // --- CONTENT GENERATION FUNCTIONS ---
 
         async function getClarifications(subject, context, mode) {
             const prompt = getPromptForSection('clarification');
-            const schema = {
-                type: "ARRAY",
-                items: {
-                    type: "OBJECT",
-                    properties: {
-                        "name": { "type": "STRING" },
-                        "knownFor": { "type": "STRING" },
-                        "keyDetails": { "type": "ARRAY", "items": { "type": "STRING" } }
-                    }
-                }
-            };
-            const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
-            const result = await callTeamTomorrowAPI('monday', prompt, { generationConfig }); // Clarification always uses Monday
-
-            if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                return JSON.parse(result.candidates[0].content.parts[0].text);
-            }
-            return [];
+            const result = await callTeamTomorrowAPI('monday', prompt);
+            const clarifications = parseJsonSafely(extractContentText(result), []);
+            return Array.isArray(clarifications) ? clarifications : [];
         }
 
         function setupImageSearchLink() {
@@ -1032,13 +1181,12 @@ CRITICAL INSTRUCTIONS:
 
             try {
                 const detailsPrompt = getPromptForSection('image_details');
-                const schema = { type: "OBJECT", properties: { "hairColor": { "type": "STRING" }, "hairStyle": { "type": "STRING" }, "eyeColor": { "type": "STRING" }, "skinTone": { "type": "STRING" }, "build": { "type": "STRING" }, "distinguishingFeatures": { "type": "ARRAY", "items": { "type": "STRING" } } } };
-                const detailsResult = await callTeamTomorrowAPI('monday', detailsPrompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
-                
+                const detailsResult = await callTeamTomorrowAPI('monday', detailsPrompt);
+
                 let descriptionParts = [];
-                if (detailsResult.candidates?.[0]?.content?.parts?.[0]) {
-                    const details = JSON.parse(detailsResult.candidates[0].content.parts[0].text);
-                    Object.values(details).flat().forEach(detail => { if(detail) descriptionParts.push(detail); });
+                const parsedDetails = parseJsonSafely(extractContentText(detailsResult), null);
+                if (parsedDetails && typeof parsedDetails === 'object') {
+                    Object.values(parsedDetails).flat().forEach(detail => { if(detail) descriptionParts.push(detail); });
                 }
 
                 const context = currentSubjectDetails ? `, ${currentSubjectDetails}` : '';
@@ -1048,12 +1196,12 @@ CRITICAL INSTRUCTIONS:
                 
                 const result = await callImagenAPI(finalPrompt, agent);
 
-                if (result.predictions?.[0]?.bytesBase64Encoded) {
-                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                if (result.image_b64) {
+                    const imageUrl = `data:image/png;base64,${result.image_b64}`;
                     aiImageContainer.innerHTML = `<img src="${imageUrl}" alt="AI-generated visual of ${currentSubjectName}" class="w-full h-full object-cover rounded-md">`;
                 } else {
                     let reason = "Image generation failed. The prompt may have been rejected by safety filters or an unknown error occurred.";
-                    console.error("Imagen Response Details:", JSON.stringify(result, null, 2));
+                    console.error("Image Response Details:", JSON.stringify(result, null, 2));
                     throw new Error(reason);
                 }
             } catch (error) {
@@ -1074,34 +1222,29 @@ CRITICAL INSTRUCTIONS:
             
             try {
                 const prompt = getPromptForSection('intel', searchContext);
-                const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "category": { "type": "STRING" }, "entries": { "type": "ARRAY", "items": { "type": "STRING" } } } } };
-                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                const result = await callTeamTomorrowAPI(agent, prompt);
                 intelContent.innerHTML = '';
-                if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
-                    if (data && data.length > 0) {
-                        data.forEach(cat => {
-                            if (cat.entries && cat.entries.length > 0) {
-                                const categoryDiv = document.createElement('div');
-                                categoryDiv.className = 'intel-category';
-                                const title = document.createElement('div');
-                                title.className = 'intel-category-title';
-                                title.textContent = cat.category;
-                                categoryDiv.appendChild(title);
-                                cat.entries.forEach(entryText => {
-                                    const entryDiv = document.createElement('div');
-                                    entryDiv.className = 'intel-entry';
-                                    entryDiv.textContent = entryText;
-                                    categoryDiv.appendChild(entryDiv);
-                                });
-                                intelContent.appendChild(categoryDiv);
-                            }
-                        });
-                    } else {
-                        intelContent.textContent = "No confirmed intelligence data available.";
-                    }
+                const data = parseJsonSafely(extractContentText(result), []);
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(cat => {
+                        if (cat.entries && cat.entries.length > 0) {
+                            const categoryDiv = document.createElement('div');
+                            categoryDiv.className = 'intel-category';
+                            const title = document.createElement('div');
+                            title.className = 'intel-category-title';
+                            title.textContent = cat.category;
+                            categoryDiv.appendChild(title);
+                            cat.entries.forEach(entryText => {
+                                const entryDiv = document.createElement('div');
+                                entryDiv.className = 'intel-entry';
+                                entryDiv.textContent = entryText;
+                                categoryDiv.appendChild(entryDiv);
+                            });
+                            intelContent.appendChild(categoryDiv);
+                        }
+                    });
                 } else {
-                     throw new Error("Could not parse the intelligence data from the AI's response.");
+                    intelContent.textContent = "No confirmed intelligence data available.";
                 }
             } catch(error) {
                 console.error("Error generating intel:", error);
@@ -1126,33 +1269,28 @@ CRITICAL INSTRUCTIONS:
             convoStyleContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
             try {
                 const prompt = getPromptForSection('convo_style');
-                const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "context": { "type": "STRING" }, "line": { "type": "STRING" } } } };
-                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                const result = await callTeamTomorrowAPI(agent, prompt);
                 convoStyleContent.innerHTML = '';
-                if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
-                    if (data && data.length > 0) {
-                        data.forEach(item => {
-                            const exampleDiv = document.createElement('div');
-                            exampleDiv.className = 'convo-example';
-                            
-                            const context = document.createElement('div');
-                            context.className = 'convo-context';
-                            context.textContent = item.context;
-                            exampleDiv.appendChild(context);
+                const data = parseJsonSafely(extractContentText(result), []);
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(item => {
+                        const exampleDiv = document.createElement('div');
+                        exampleDiv.className = 'convo-example';
 
-                            const line = document.createElement('div');
-                            line.className = 'convo-line';
-                            line.textContent = item.line;
-                            exampleDiv.appendChild(line);
+                        const context = document.createElement('div');
+                        context.className = 'convo-context';
+                        context.textContent = item.context;
+                        exampleDiv.appendChild(context);
 
-                            convoStyleContent.appendChild(exampleDiv);
-                        });
-                    } else {
-                        convoStyleContent.textContent = "No conversational examples could be generated.";
-                    }
+                        const line = document.createElement('div');
+                        line.className = 'convo-line';
+                        line.textContent = item.line;
+                        exampleDiv.appendChild(line);
+
+                        convoStyleContent.appendChild(exampleDiv);
+                    });
                 } else {
-                     throw new Error("Could not parse the conversational examples from the AI's response.");
+                    convoStyleContent.textContent = "No conversational examples could be generated.";
                 }
             } catch(error) {
                 console.error("Error generating conversational style:", error);
@@ -1168,20 +1306,19 @@ CRITICAL INSTRUCTIONS:
             strategicContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
             try {
                 const prompt = getPromptForSection('strategic');
-                const schema = { type: "OBJECT", properties: { "strengths": { "type": "ARRAY", "items": { "type": "STRING" } }, "weaknesses": { "type": "ARRAY", "items": { "type": "STRING" } }, "opportunities": { "type": "ARRAY", "items": { "type": "STRING" } }, "threats": { "type": "ARRAY", "items": { "type": "STRING" } } } };
-                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                const result = await callTeamTomorrowAPI(agent, prompt);
                 strategicContent.innerHTML = '';
 
-                if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                const data = parseJsonSafely(extractContentText(result), null);
+                if (data && typeof data === 'object') {
                     const categories = ['strengths', 'weaknesses', 'opportunities', 'threats'];
-                    
+
                     categories.forEach(catKey => {
                         const entries = data[catKey];
                         if (entries && entries.length > 0) {
                             const categoryDiv = document.createElement('div');
                             categoryDiv.className = 'swot-category';
-                            
+
                             const title = document.createElement('div');
                             title.className = 'swot-title';
                             title.textContent = catKey.charAt(0).toUpperCase() + catKey.slice(1);
@@ -1215,8 +1352,9 @@ CRITICAL INSTRUCTIONS:
             try {
                 const prompt = getPromptForSection(section);
                 const result = await callTeamTomorrowAPI(agent, prompt);
-                if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    contentElement.innerHTML = result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+                const text = extractContentText(result);
+                if (text) {
+                    contentElement.innerHTML = text.replace(/\n/g, '<br>');
                 } else {
                     throw new Error("No content received from analysis API.");
                 }
@@ -1444,7 +1582,10 @@ CRITICAL INSTRUCTIONS:
         // --- Initial Load ---
         loadSubjectHistory();
         loadContextHistory();
-        loadApiKeys();
+        initializeSettings().catch(error => {
+            console.error('Failed to initialize provider settings:', error);
+            showError(error.message);
+        });
 
     </script>
 </body>

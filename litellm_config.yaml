@@ -1,0 +1,39 @@
+litellm_secret_manager: environment_variables
+
+model_list:
+  - model_name: hulukipedia-openai
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: OPENAI_API_KEY
+    metadata:
+      display_name: OpenAI | GPT-4o mini
+      provider: openai
+      description: Balanced reasoning model suited for dossier drafting.
+      capabilities: [text]
+
+  - model_name: hulukipedia-claude
+    litellm_params:
+      model: claude-3-haiku-20240307
+      api_key: ANTHROPIC_API_KEY
+    metadata:
+      display_name: Anthropic | Claude 3 Haiku
+      provider: anthropic
+      description: Fast researcher tuned for factual synthesis.
+      capabilities: [text]
+
+  - model_name: hulukipedia-gemini
+    litellm_params:
+      model: gemini/gemini-1.5-flash
+      api_key: GEMINI_API_KEY
+    metadata:
+      display_name: Google | Gemini 1.5 Flash
+      provider: google
+      description: Multimodal model powering imagery and creative beats.
+      capabilities: [text, image]
+
+hulukipedia_defaults:
+  monday: hulukipedia-gemini
+  tuesday: hulukipedia-claude
+  friday: hulukipedia-openai
+  saturday: hulukipedia-openai
+  images: hulukipedia-gemini
