@@ -9,7 +9,28 @@ This repository houses the Team Tomorrow Hulukipedia project - a comprehensive d
 ### Setup Instructions
 1. Clone this repository to your local development environment
 2. Ensure you have the necessary dependencies installed
-3. Follow the agent integration guidelines below
+3. Configure access to your LiteLLM proxy (see **LiteLLM Configuration** below)
+4. Follow the agent integration guidelines below
+
+### LiteLLM Configuration
+Hulukipedia now routes all language and image generation through a LiteLLM proxy so that provider secrets stay on the server.
+
+1. Launch your LiteLLM proxy and gather the **Base URL**, an optional **Proxy Token**, and (if you are using multi-tenancy) the **Tenant ID**.
+2. Open the in-app **Settings** modal.
+3. Enter the LiteLLM connection details and select **Save LiteLLM Config**.
+4. Use the **Test Connection** button to verify connectivity.
+5. Upload provider API keys directly to LiteLLM from the modal – they are not stored in local storage.
+
+Each Team Tomorrow agent maps to a different LiteLLM model:
+
+| Agent | Provider | Default Model |
+|-------|----------|---------------|
+| Monday | Google Gemini | `gemini/gemini-2.0-flash` |
+| Tuesday | OpenAI | `openai/gpt-4o-mini` |
+| Friday | Anthropic Claude | `anthropic/claude-3-5-sonnet-20241022` |
+| Saturday | Mistral AI | `mistral/mistral-large-latest` |
+
+Images are generated through the LiteLLM `/images/generations` endpoint using the appropriate model for the selected agent (falling back to Monday’s Gemini image stack when required).
 
 ### Development Process
 - All code should be paste-ready and modular

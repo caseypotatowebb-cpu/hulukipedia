@@ -297,9 +297,9 @@
             </form>
         </div>
         
-        <div id="error-message" class="hidden max-w-2xl mx-auto my-8 bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg" role="alert">
-            <strong class="font-bold">Error:</strong>
-            <span class="block sm:inline" id="error-text"></span>
+        <div id="status-banner" class="hidden" data-base-classes="max-w-2xl mx-auto my-8 px-4 py-3 rounded-lg border transition-all duration-300" role="alert">
+            <strong class="font-bold" id="status-banner-label">Status:</strong>
+            <span class="block sm:inline" id="status-banner-text"></span>
         </div>
 
         <!-- Clarification Modal -->
@@ -316,32 +316,38 @@
             </div>
         </div>
 
-        <!-- API Key Modal -->
+        <!-- liteLLM Configuration Modal -->
         <div id="api-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-lg w-full border border-border-color">
-                <h3 class="text-xl font-bold text-accent-gold mb-4">Team Tomorrow API Keys</h3>
-                <p class="text-text-secondary mb-6">Enter your API keys below. They will be saved securely in your browser's local storage.</p>
-                <div class="space-y-4">
-                    <div>
-                        <label for="gemini-key" class="block text-sm font-medium text-primary">Gemini (Monday)</label>
-                        <input type="password" id="gemini-key" placeholder="Enter Gemini API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-2xl w-full border border-border-color">
+                <h3 class="text-xl font-bold text-accent-gold mb-4">LiteLLM Configuration</h3>
+                <p class="text-text-secondary mb-6">Configure the LiteLLM proxy that brokers all Team Tomorrow agent requests. Provider secrets are sent directly to LiteLLM and are never stored in your browser.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="litellm-base-url" class="block text-sm font-medium text-primary">LiteLLM Base URL</label>
+                        <input type="url" id="litellm-base-url" placeholder="https://litellm.your-domain.com" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
                     </div>
                     <div>
-                        <label for="tuesday-key" class="block text-sm font-medium text-primary">Tuesday's Key</label>
-                        <input type="password" id="tuesday-key" placeholder="Enter Tuesday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                        <label for="litellm-proxy-key" class="block text-sm font-medium text-primary">LiteLLM Proxy Token</label>
+                        <input type="password" id="litellm-proxy-key" placeholder="Proxy token for authenticated calls" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
                     </div>
                     <div>
-                        <label for="friday-key" class="block text-sm font-medium text-primary">Friday's Key</label>
-                        <input type="password" id="friday-key" placeholder="Enter Friday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
-                    </div>
-                    <div>
-                        <label for="saturday-key" class="block text-sm font-medium text-primary">Saturday's Key</label>
-                        <input type="password" id="saturday-key" placeholder="Enter Saturday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                        <label for="litellm-tenant-id" class="block text-sm font-medium text-primary">Tenant ID</label>
+                        <input type="text" id="litellm-tenant-id" placeholder="default" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
                     </div>
                 </div>
-                <div class="mt-6 flex gap-4">
-                    <button id="api-key-save-btn" class="flex-1 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">Save Keys</button>
-                    <button id="api-key-cancel-btn" class="flex-1 w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-200">Cancel</button>
+                <div class="mt-6 border border-border-color rounded-md divide-y divide-border-color bg-bg-section">
+                    <div class="p-4">
+                        <h4 class="text-lg font-semibold text-accent-gold">Provider Secrets</h4>
+                        <p class="text-sm text-text-secondary mt-1">Submit or rotate provider API keys directly to LiteLLM. Inputs are cleared after successful upload.</p>
+                    </div>
+                    <div class="p-4 space-y-4" id="litellm-secret-forms">
+                        <!-- Secret forms injected via script -->
+                    </div>
+                </div>
+                <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                    <button id="litellm-save-config-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">Save LiteLLM Config</button>
+                    <button id="litellm-test-connection-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">Test Connection</button>
+                    <button id="api-key-cancel-btn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-200">Close</button>
                 </div>
             </div>
         </div>
@@ -381,8 +387,10 @@
                                         <span>✨ Generate</span>
                                     </button>
                                     <select id="image-agent-select" class="agent-select">
-                                        <option value="monday">Monday</option>
-                                        <option value="tuesday">Tuesday</option>
+                                        <option value="monday">Monday • Gemini Flash</option>
+                                        <option value="tuesday">Tuesday • OpenAI Researcher</option>
+                                        <option value="friday">Friday • Claude Analyst</option>
+                                        <option value="saturday">Saturday • Mistral Maverick</option>
                                     </select>
                                 </div>
                                  <div id="ai-image-container" class="bg-bg-section rounded-md border border-border-color aspect-square flex items-center justify-center">
@@ -405,8 +413,10 @@
                                         <i data-lucide="search-code" class="mr-2 h-4 w-4"></i><span>Enhance</span>
                                     </button>
                                      <select id="search-agent-select" class="agent-select">
-                                        <option value="monday">Monday</option>
-                                        <option value="tuesday">Tuesday</option>
+                                        <option value="monday">Monday • Gemini Flash</option>
+                                        <option value="tuesday">Tuesday • OpenAI Researcher</option>
+                                        <option value="friday">Friday • Claude Analyst</option>
+                                        <option value="saturday">Saturday • Mistral Maverick</option>
                                     </select>
                                 </div>
                             </div>
@@ -416,10 +426,10 @@
                         <div class="flex justify-between items-center">
                             <h3><i data-lucide="person-standing" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Physical Description</h3>
                             <select id="physical-agent-select" class="agent-select -mt-4">
-                                <option value="monday">Monday</option>
-                                <option value="tuesday">Tuesday</option>
-                                <option value="friday">Friday</option>
-                                <option value="saturday">Saturday</option>
+                                <option value="monday">Monday • Gemini Flash</option>
+                                <option value="tuesday">Tuesday • OpenAI Researcher</option>
+                                <option value="friday">Friday • Claude Analyst</option>
+                                <option value="saturday">Saturday • Mistral Maverick</option>
                             </select>
                         </div>
                         <div id="physical-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
@@ -510,8 +520,10 @@
         const resetBtn = document.getElementById('reset-btn');
         const downloadSimplePdfBtn = document.getElementById('download-simple-pdf-btn');
         const downloadVisualPdfBtn = document.getElementById('download-visual-pdf-btn');
-        const errorText = document.getElementById('error-text');
-        const errorMessage = document.getElementById('error-message');
+        const statusBanner = document.getElementById('status-banner');
+        const statusBannerBaseClasses = statusBanner?.dataset?.baseClasses || '';
+        const statusBannerLabel = document.getElementById('status-banner-label');
+        const statusBannerText = document.getElementById('status-banner-text');
         const settingsBtn = document.getElementById('settings-btn');
         
         const clarificationModal = document.getElementById('clarification-modal');
@@ -519,12 +531,13 @@
         const clarificationCancelBtn = document.getElementById('clarification-cancel-btn');
 
         const apiKeyModal = document.getElementById('api-key-modal');
-        const apiKeySaveBtn = document.getElementById('api-key-save-btn');
         const apiKeyCancelBtn = document.getElementById('api-key-cancel-btn');
-        const geminiKeyInput = document.getElementById('gemini-key');
-        const tuesdayKeyInput = document.getElementById('tuesday-key');
-        const fridayKeyInput = document.getElementById('friday-key');
-        const saturdayKeyInput = document.getElementById('saturday-key');
+        const litellmSaveConfigBtn = document.getElementById('litellm-save-config-btn');
+        const litellmTestConnectionBtn = document.getElementById('litellm-test-connection-btn');
+        const litellmBaseUrlInput = document.getElementById('litellm-base-url');
+        const litellmProxyKeyInput = document.getElementById('litellm-proxy-key');
+        const litellmTenantIdInput = document.getElementById('litellm-tenant-id');
+        const litellmSecretFormsContainer = document.getElementById('litellm-secret-forms');
 
         const generateImageBtn = document.getElementById('generate-image-btn');
         const imageAgentSelect = document.getElementById('image-agent-select');
@@ -566,7 +579,38 @@
         let currentSubjectDetails = '';
         const SUBJECT_HISTORY_KEY = 'hulukipediaSubjectHistory';
         const CONTEXT_HISTORY_KEY = 'hulukipediaContextHistory';
-        const API_KEYS_KEY = 'hulukipediaApiKeys';
+        const LITELLM_CONFIG_KEY = 'hulukipediaLiteLLMConfig';
+        const DEFAULT_LITELLM_CONFIG = { baseUrl: '', proxyKey: '', tenantId: 'default' };
+        const AGENT_REGISTRY = {
+            monday: {
+                label: 'Monday • Gemini Flash',
+                model: 'gemini/gemini-2.0-flash',
+                secretName: 'GEMINI_API_KEY',
+                secretDescription: 'Google Gemini (text + imagen) provider key',
+                imageModel: 'gemini/gemini-1.5-flash'
+            },
+            tuesday: {
+                label: 'Tuesday • OpenAI Researcher',
+                model: 'openai/gpt-4o-mini',
+                secretName: 'OPENAI_API_KEY',
+                secretDescription: 'OpenAI API key for GPT-4o mini',
+                imageModel: 'openai/gpt-image-1'
+            },
+            friday: {
+                label: 'Friday • Claude Analyst',
+                model: 'anthropic/claude-3-5-sonnet-20241022',
+                secretName: 'ANTHROPIC_API_KEY',
+                secretDescription: 'Anthropic Claude 3.5 Sonnet key',
+                imageModel: null
+            },
+            saturday: {
+                label: 'Saturday • Mistral Maverick',
+                model: 'mistral/mistral-large-latest',
+                secretName: 'MISTRAL_API_KEY',
+                secretDescription: 'Mistral AI large model key',
+                imageModel: null
+            }
+        };
         const MAX_HISTORY_SIZE = 10;
 
         // --- Event Listeners ---
@@ -575,8 +619,13 @@
         resetBtn.addEventListener('click', resetUI);
         downloadSimplePdfBtn.addEventListener('click', downloadSimplePDF);
         downloadVisualPdfBtn.addEventListener('click', downloadVisualPDF);
-        settingsBtn.addEventListener('click', () => apiKeyModal.classList.remove('hidden'));
-        apiKeySaveBtn.addEventListener('click', saveApiKeys);
+        settingsBtn.addEventListener('click', () => {
+            populateLiteLLMConfigForm();
+            renderLiteLLMSecretForms();
+            apiKeyModal.classList.remove('hidden');
+        });
+        litellmSaveConfigBtn.addEventListener('click', saveLiteLLMConfigFromForm);
+        litellmTestConnectionBtn.addEventListener('click', testLiteLLMConnection);
         apiKeyCancelBtn.addEventListener('click', () => apiKeyModal.classList.add('hidden'));
 
         clarificationCancelBtn.addEventListener('click', () => {
@@ -833,127 +882,365 @@ CRITICAL INSTRUCTIONS:
             loadFromHistory(CONTEXT_HISTORY_KEY, document.getElementById('context-history'));
         }
         
-        function saveApiKeys() {
-            const keys = {
-                gemini: geminiKeyInput.value.trim(),
-                tuesday: tuesdayKeyInput.value.trim(),
-                friday: fridayKeyInput.value.trim(),
-                saturday: saturdayKeyInput.value.trim(),
+        function loadLiteLLMConfigFromStorage() {
+            try {
+                const stored = JSON.parse(localStorage.getItem(LITELLM_CONFIG_KEY));
+                if (stored && typeof stored === 'object') {
+                    return { ...DEFAULT_LITELLM_CONFIG, ...stored };
+                }
+            } catch (error) {
+                console.warn('Failed to parse LiteLLM config from storage. Using defaults.', error);
+            }
+            return { ...DEFAULT_LITELLM_CONFIG };
+        }
+
+        function persistLiteLLMConfig(config) {
+            localStorage.setItem(LITELLM_CONFIG_KEY, JSON.stringify(config));
+        }
+
+        class LiteLLMClient {
+            constructor() {
+                this.config = loadLiteLLMConfigFromStorage();
+            }
+
+            getConfig() {
+                return { ...this.config };
+            }
+
+            updateConfig(partialConfig) {
+                this.config = { ...this.config, ...partialConfig };
+                persistLiteLLMConfig(this.config);
+                return this.getConfig();
+            }
+
+            getBaseUrl() {
+                return (this.config.baseUrl || '').replace(/\/+$/, '');
+            }
+
+            ensureConfigured() {
+                if (!this.getBaseUrl()) {
+                    throw new Error('LiteLLM base URL is not configured. Open Settings to connect the proxy.');
+                }
+            }
+
+            buildHeaders(additional = {}) {
+                const headers = { 'Content-Type': 'application/json', ...additional };
+                if (this.config.proxyKey) {
+                    headers['Authorization'] = `Bearer ${this.config.proxyKey}`;
+                }
+                if (this.config.tenantId) {
+                    headers['x-tenant-id'] = this.config.tenantId;
+                }
+                return headers;
+            }
+
+            async request(path, options = {}) {
+                this.ensureConfigured();
+                const response = await fetch(`${this.getBaseUrl()}${path}`, {
+                    method: options.method || 'POST',
+                    headers: this.buildHeaders(options.headers || {}),
+                    body: options.body !== undefined ? options.body : undefined
+                });
+
+                const responseText = await response.text();
+
+                if (!response.ok) {
+                    let errorDetails = responseText;
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        errorDetails = errorData?.error?.message || errorData?.message || JSON.stringify(errorData);
+                    } catch (error) {
+                        // Ignore JSON parse errors
+                    }
+                    throw new Error(`LiteLLM request failed (${response.status}): ${errorDetails}`);
+                }
+
+                if (!responseText) {
+                    return null;
+                }
+
+                try {
+                    return JSON.parse(responseText);
+                } catch (error) {
+                    return responseText;
+                }
+            }
+
+            async chatCompletion(agentKey, prompt, config = {}) {
+                const payload = buildLiteLLMChatPayload(agentKey, prompt, config?.generationConfig || null);
+                const data = await this.request('/chat/completions', { body: JSON.stringify(payload) });
+                const text = this.extractTextFromResponse(data);
+                return { text, raw: data };
+            }
+
+            extractTextFromResponse(data) {
+                if (!data) return '';
+                if (Array.isArray(data?.choices) && data.choices.length > 0) {
+                    const choice = data.choices[0];
+                    if (choice.message?.content) {
+                        if (Array.isArray(choice.message.content)) {
+                            return choice.message.content.map(part => {
+                                if (typeof part === 'string') return part;
+                                if (typeof part?.text === 'string') return part.text;
+                                return '';
+                            }).join('').trim();
+                        }
+                        if (typeof choice.message.content === 'string') {
+                            return choice.message.content.trim();
+                        }
+                        if (typeof choice.message.content?.text === 'string') {
+                            return choice.message.content.text.trim();
+                        }
+                    }
+                    if (typeof choice.text === 'string') {
+                        return choice.text.trim();
+                    }
+                }
+                if (typeof data?.output_text === 'string') {
+                    return data.output_text.trim();
+                }
+                return '';
+            }
+
+            async imageGeneration(agentKey, prompt) {
+                const agentConfig = AGENT_REGISTRY[agentKey] || AGENT_REGISTRY.monday;
+                const model = agentConfig?.imageModel || AGENT_REGISTRY.monday.imageModel;
+                if (!model) {
+                    throw new Error('No image model is configured for the selected agent.');
+                }
+                const payload = { model, prompt, n: 1, size: '1024x1024' };
+                const data = await this.request('/images/generations', { body: JSON.stringify(payload) });
+                const images = data?.data || data?.images;
+                if (Array.isArray(images) && images.length > 0) {
+                    const first = images[0];
+                    if (first.url) {
+                        return { url: first.url, raw: data };
+                    }
+                    if (first.b64_json) {
+                        return { b64_json: first.b64_json, raw: data };
+                    }
+                }
+                throw new Error('LiteLLM image generation returned no usable content.');
+            }
+
+            async upsertSecret(agentKey, secretValue) {
+                const agentConfig = AGENT_REGISTRY[agentKey];
+                if (!agentConfig?.secretName) {
+                    throw new Error(`No secret configuration found for agent ${agentKey}.`);
+                }
+                const payload = {
+                    secret_name: agentConfig.secretName,
+                    secret_value: secretValue,
+                    tenant_id: this.config.tenantId || DEFAULT_LITELLM_CONFIG.tenantId
+                };
+                await this.request('/tenant/new_secret', { body: JSON.stringify(payload) });
+            }
+
+            async testConnection() {
+                this.ensureConfigured();
+                const baseUrl = this.getBaseUrl();
+                const probes = ['/health', '/config', '/'];
+                for (const path of probes) {
+                    try {
+                        const response = await fetch(`${baseUrl}${path}`, {
+                            method: 'GET',
+                            headers: this.buildHeaders({ 'Content-Type': 'application/json' })
+                        });
+                        if (response.ok) {
+                            return true;
+                        }
+                    } catch (error) {
+                        // Try next probe
+                    }
+                }
+                throw new Error('Unable to reach LiteLLM proxy. Verify the base URL and proxy status.');
+            }
+        }
+
+        const liteLLMClient = new LiteLLMClient();
+
+        function renderLiteLLMSecretForms() {
+            litellmSecretFormsContainer.innerHTML = '';
+            Object.entries(AGENT_REGISTRY).forEach(([agent, config]) => {
+                if (!config.secretName) {
+                    return;
+                }
+                const wrapper = document.createElement('div');
+                wrapper.className = 'border border-border-color rounded-md p-4 bg-bg-container/60 space-y-3';
+                wrapper.innerHTML = `
+                    <div>
+                        <p class="text-sm font-semibold text-accent-gold">${config.label}</p>
+                        <p class="text-xs text-text-secondary mt-1">Secret name: <span class="font-mono">${config.secretName}</span>. ${config.secretDescription}</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="password" id="secret-input-${agent}" class="flex-1 p-2 rounded-md border border-border-color bg-bg-section" placeholder="Paste provider key" autocomplete="off">
+                        <button id="secret-save-${agent}" class="sm:w-44 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-md transition duration-200">Upload Secret</button>
+                    </div>
+                `;
+                litellmSecretFormsContainer.appendChild(wrapper);
+
+                const input = wrapper.querySelector(`#secret-input-${agent}`);
+                const button = wrapper.querySelector(`#secret-save-${agent}`);
+
+                button.addEventListener('click', async () => {
+                    const value = input.value.trim();
+                    if (!value) {
+                        showBannerMessage('Please enter a provider key before uploading.', 'warning');
+                        return;
+                    }
+
+                    const originalLabel = button.textContent;
+                    button.disabled = true;
+                    button.textContent = 'Uploading...';
+
+                    try {
+                        await liteLLMClient.upsertSecret(agent, value);
+                        input.value = '';
+                        showBannerMessage(`${config.label} secret stored with LiteLLM.`, 'success');
+                    } catch (error) {
+                        console.error('Failed to upload secret', error);
+                        showBannerMessage(error.message, 'error');
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = originalLabel;
+                    }
+                });
+            });
+        }
+
+        function populateLiteLLMConfigForm() {
+            const config = liteLLMClient.getConfig();
+            litellmBaseUrlInput.value = config.baseUrl || '';
+            litellmProxyKeyInput.value = config.proxyKey || '';
+            litellmTenantIdInput.value = config.tenantId || '';
+        }
+
+        function saveLiteLLMConfigFromForm() {
+            const nextConfig = {
+                baseUrl: litellmBaseUrlInput.value.trim(),
+                proxyKey: litellmProxyKeyInput.value.trim(),
+                tenantId: litellmTenantIdInput.value.trim() || DEFAULT_LITELLM_CONFIG.tenantId
             };
-            localStorage.setItem(API_KEYS_KEY, JSON.stringify(keys));
-            apiKeyModal.classList.add('hidden');
+            liteLLMClient.updateConfig(nextConfig);
+            showBannerMessage('LiteLLM configuration saved.', 'success');
         }
 
-        function loadApiKeys() {
-            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
-            geminiKeyInput.value = keys.gemini || '';
-            tuesdayKeyInput.value = keys.tuesday || '';
-            fridayKeyInput.value = keys.friday || '';
-            saturdayKeyInput.value = keys.saturday || '';
+        async function testLiteLLMConnection(event) {
+            const button = event.currentTarget;
+            const nextConfig = {
+                baseUrl: litellmBaseUrlInput.value.trim(),
+                proxyKey: litellmProxyKeyInput.value.trim(),
+                tenantId: litellmTenantIdInput.value.trim() || DEFAULT_LITELLM_CONFIG.tenantId
+            };
+            liteLLMClient.updateConfig(nextConfig);
+
+            const originalLabel = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = `<div class="mini-loader btn-mini-loader mx-auto"></div>`;
+
+            try {
+                await liteLLMClient.testConnection();
+                showBannerMessage('Successfully reached the LiteLLM proxy.', 'success');
+            } catch (error) {
+                console.error('LiteLLM connectivity test failed', error);
+                showBannerMessage(error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalLabel;
+            }
         }
 
-        function getApiKey(agent) {
-            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
-            if (agent === 'monday') return keys.gemini || '';
-            return keys[agent] || '';
+        function buildLiteLLMChatPayload(agentKey, prompt, generationConfig = null) {
+            const agentConfig = AGENT_REGISTRY[agentKey];
+            if (!agentConfig) {
+                throw new Error(`Unknown agent: ${agentKey}`);
+            }
+
+            const payload = {
+                model: agentConfig.model,
+                messages: [{ role: 'user', content: prompt }]
+            };
+
+            if (generationConfig) {
+                const converted = convertGenerationConfigToLiteLLM(generationConfig, agentKey);
+                Object.assign(payload, converted);
+            }
+
+            return payload;
+        }
+
+        function convertGenerationConfigToLiteLLM(config, agentKey) {
+            const payload = {};
+            const extraBody = {};
+
+            if (typeof config.temperature === 'number') {
+                payload.temperature = config.temperature;
+            }
+            if (typeof config.topP === 'number') {
+                payload.top_p = config.topP;
+            }
+            if (typeof config.topK === 'number') {
+                extraBody.top_k = config.topK;
+            }
+            if (typeof config.maxOutputTokens === 'number') {
+                payload.max_tokens = config.maxOutputTokens;
+            }
+
+            if (config.responseMimeType === 'application/json') {
+                if (config.responseSchema) {
+                    payload.response_format = {
+                        type: 'json_schema',
+                        json_schema: {
+                            name: `${agentKey}_schema`,
+                            schema: normalizeGeminiSchema(config.responseSchema)
+                        }
+                    };
+                } else {
+                    payload.response_format = { type: 'json_object' };
+                }
+            } else if (config.responseMimeType) {
+                extraBody.response_mime_type = config.responseMimeType;
+            }
+
+            if (Object.keys(extraBody).length > 0) {
+                payload.extra_body = extraBody;
+            }
+
+            return payload;
+        }
+
+        function normalizeGeminiSchema(schema) {
+            if (schema === null || schema === undefined) {
+                return schema;
+            }
+            if (Array.isArray(schema)) {
+                return schema.map(normalizeGeminiSchema);
+            }
+            if (typeof schema === 'object') {
+                const normalized = {};
+                Object.entries(schema).forEach(([key, value]) => {
+                    if (key === 'type' && typeof value === 'string') {
+                        normalized[key] = value.toLowerCase();
+                    } else {
+                        normalized[key] = normalizeGeminiSchema(value);
+                    }
+                });
+                return normalized;
+            }
+            return schema;
         }
 
         // --- TEAM TOMORROW API ROUTING ---
         async function callTeamTomorrowAPI(agent, prompt, config) {
-            const apiKey = getApiKey(agent);
-            if (!apiKey && agent !== 'monday') { // 'monday' can use the environment key
-                throw new Error(`API Key for ${agent} is not set. Please add it in Settings.`);
+            const result = await liteLLMClient.chatCompletion(agent, prompt, config || {});
+            if (!result.text) {
+                throw new Error('LiteLLM returned an empty response.');
             }
-
-            // This is the central routing function.
-            // It simulates calling different APIs based on the selected agent.
-            // In a real application, you would replace the placeholder comments
-            // with actual fetch calls to the respective API endpoints.
-            switch (agent) {
-                case 'monday': // Gemini
-                    return callGeminiAPI(prompt, config?.generationConfig, apiKey);
-                case 'tuesday': // Researcher - SIMULATED
-                    // Placeholder for Tuesday's API call.
-                    // You would replace this with the actual fetch logic for Tuesday's service.
-                    console.log(`Simulating call to Tuesday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                case 'friday': // All-Rounder - SIMULATED
-                    // Placeholder for Friday's API call.
-                    console.log(`Simulating call to Friday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                case 'saturday': // Unconventional - SIMULATED
-                     // Placeholder for Saturday's API call.
-                    console.log(`Simulating call to Saturday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                default:
-                    throw new Error(`Unknown agent: ${agent}`);
-            }
-        }
-        
-        // --- GEMINI API CALLS ---
-        async function callGeminiAPI(prompt, generationConfig = null, apiKeyOverride = '') {
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-            if (generationConfig) {
-                payload.generationConfig = generationConfig;
-            }
-            const apiKey = apiKeyOverride || ""; // Use override or let environment handle it
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            
-            const response = await fetch(apiUrl, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload) 
-            });
-
-            const responseText = await response.text();
-
-            if (!response.ok) {
-                let errorDetails = responseText;
-                try {
-                    const errorData = JSON.parse(responseText);
-                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
-                } catch (e) { /* It's not JSON */ }
-                throw new Error(`API request failed (${response.status}): ${errorDetails}`);
-            }
-            
-            if (!responseText) {
-                throw new Error("API returned a successful but empty response.");
-            }
-            return JSON.parse(responseText);
+            return result;
         }
 
         async function callImagenAPI(prompt, agent) {
-            const apiKey = getApiKey(agent);
-            if (!apiKey && agent !== 'monday') {
-                 throw new Error(`API Key for ${agent} is not set for image generation.`);
-            }
-
-            // SIMULATION: In a real app, you might route to different image models.
-            // For now, all agents use the Gemini/Imagen model via this function.
-            const payload = { instances: [{ prompt: prompt }], parameters: { "sampleCount": 1} };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey || ""}`;
-            
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const responseText = await response.text();
-
-            if (!response.ok) {
-                let errorDetails = responseText;
-                try {
-                    const errorData = JSON.parse(responseText);
-                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
-                } catch (e) { /* Not JSON */ }
-                throw new Error(`Image API request failed (${response.status}): ${errorDetails}`);
-            }
-            
-            if (!responseText) {
-                 throw new Error("Image API returned a successful but empty response.");
-            }
-            return JSON.parse(responseText);
+            return liteLLMClient.imageGeneration(agent, prompt);
         }
 
         // --- CONTENT GENERATION FUNCTIONS ---
@@ -972,10 +1259,14 @@ CRITICAL INSTRUCTIONS:
                 }
             };
             const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
-            const result = await callTeamTomorrowAPI('monday', prompt, { generationConfig }); // Clarification always uses Monday
+            const { text } = await callTeamTomorrowAPI('monday', prompt, { generationConfig });
 
-            if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                return JSON.parse(result.candidates[0].content.parts[0].text);
+            if (text) {
+                try {
+                    return JSON.parse(text);
+                } catch (error) {
+                    console.warn('Failed to parse clarification response as JSON', error, text);
+                }
             }
             return [];
         }
@@ -1034,11 +1325,21 @@ CRITICAL INSTRUCTIONS:
                 const detailsPrompt = getPromptForSection('image_details');
                 const schema = { type: "OBJECT", properties: { "hairColor": { "type": "STRING" }, "hairStyle": { "type": "STRING" }, "eyeColor": { "type": "STRING" }, "skinTone": { "type": "STRING" }, "build": { "type": "STRING" }, "distinguishingFeatures": { "type": "ARRAY", "items": { "type": "STRING" } } } };
                 const detailsResult = await callTeamTomorrowAPI('monday', detailsPrompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
-                
+
                 let descriptionParts = [];
-                if (detailsResult.candidates?.[0]?.content?.parts?.[0]) {
-                    const details = JSON.parse(detailsResult.candidates[0].content.parts[0].text);
-                    Object.values(details).flat().forEach(detail => { if(detail) descriptionParts.push(detail); });
+                if (detailsResult.text) {
+                    try {
+                        const details = JSON.parse(detailsResult.text);
+                        Object.values(details).forEach(value => {
+                            if (Array.isArray(value)) {
+                                value.filter(Boolean).forEach(item => descriptionParts.push(item));
+                            } else if (value) {
+                                descriptionParts.push(value);
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('Failed to parse image detail payload', error, detailsResult.text);
+                    }
                 }
 
                 const context = currentSubjectDetails ? `, ${currentSubjectDetails}` : '';
@@ -1048,13 +1349,14 @@ CRITICAL INSTRUCTIONS:
                 
                 const result = await callImagenAPI(finalPrompt, agent);
 
-                if (result.predictions?.[0]?.bytesBase64Encoded) {
-                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                if (result.url) {
+                    aiImageContainer.innerHTML = `<img src="${result.url}" alt="AI-generated visual of ${currentSubjectName}" class="w-full h-full object-cover rounded-md">`;
+                } else if (result.b64_json) {
+                    const imageUrl = `data:image/png;base64,${result.b64_json}`;
                     aiImageContainer.innerHTML = `<img src="${imageUrl}" alt="AI-generated visual of ${currentSubjectName}" class="w-full h-full object-cover rounded-md">`;
                 } else {
-                    let reason = "Image generation failed. The prompt may have been rejected by safety filters or an unknown error occurred.";
-                    console.error("Imagen Response Details:", JSON.stringify(result, null, 2));
-                    throw new Error(reason);
+                    console.error("LiteLLM image response payload:", result?.raw || result);
+                    throw new Error("Image generation failed. The LiteLLM proxy did not return a usable image payload.");
                 }
             } catch (error) {
                 console.error("Error generating AI Image:", error);
@@ -1077,31 +1379,36 @@ CRITICAL INSTRUCTIONS:
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "category": { "type": "STRING" }, "entries": { "type": "ARRAY", "items": { "type": "STRING" } } } } };
                 const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
                 intelContent.innerHTML = '';
-                if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
-                    if (data && data.length > 0) {
-                        data.forEach(cat => {
-                            if (cat.entries && cat.entries.length > 0) {
-                                const categoryDiv = document.createElement('div');
-                                categoryDiv.className = 'intel-category';
-                                const title = document.createElement('div');
-                                title.className = 'intel-category-title';
-                                title.textContent = cat.category;
-                                categoryDiv.appendChild(title);
-                                cat.entries.forEach(entryText => {
-                                    const entryDiv = document.createElement('div');
-                                    entryDiv.className = 'intel-entry';
-                                    entryDiv.textContent = entryText;
-                                    categoryDiv.appendChild(entryDiv);
-                                });
-                                intelContent.appendChild(categoryDiv);
-                            }
-                        });
-                    } else {
-                        intelContent.textContent = "No confirmed intelligence data available.";
+                if (result.text) {
+                    try {
+                        const data = JSON.parse(result.text);
+                        if (Array.isArray(data) && data.length > 0) {
+                            data.forEach(cat => {
+                                if (cat.entries && cat.entries.length > 0) {
+                                    const categoryDiv = document.createElement('div');
+                                    categoryDiv.className = 'intel-category';
+                                    const title = document.createElement('div');
+                                    title.className = 'intel-category-title';
+                                    title.textContent = cat.category;
+                                    categoryDiv.appendChild(title);
+                                    cat.entries.forEach(entryText => {
+                                        const entryDiv = document.createElement('div');
+                                        entryDiv.className = 'intel-entry';
+                                        entryDiv.textContent = entryText;
+                                        categoryDiv.appendChild(entryDiv);
+                                    });
+                                    intelContent.appendChild(categoryDiv);
+                                }
+                            });
+                        } else {
+                            intelContent.textContent = "No confirmed intelligence data available.";
+                        }
+                    } catch (error) {
+                        console.warn('Failed to parse intel payload', error, result.text);
+                        throw new Error("Could not parse the intelligence data from the AI's response.");
                     }
                 } else {
-                     throw new Error("Could not parse the intelligence data from the AI's response.");
+                    throw new Error("No content received from the intelligence API.");
                 }
             } catch(error) {
                 console.error("Error generating intel:", error);
@@ -1129,30 +1436,35 @@ CRITICAL INSTRUCTIONS:
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "context": { "type": "STRING" }, "line": { "type": "STRING" } } } };
                 const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
                 convoStyleContent.innerHTML = '';
-                if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
-                    if (data && data.length > 0) {
-                        data.forEach(item => {
-                            const exampleDiv = document.createElement('div');
-                            exampleDiv.className = 'convo-example';
-                            
-                            const context = document.createElement('div');
-                            context.className = 'convo-context';
-                            context.textContent = item.context;
-                            exampleDiv.appendChild(context);
+                if (result.text) {
+                    try {
+                        const data = JSON.parse(result.text);
+                        if (Array.isArray(data) && data.length > 0) {
+                            data.forEach(item => {
+                                const exampleDiv = document.createElement('div');
+                                exampleDiv.className = 'convo-example';
 
-                            const line = document.createElement('div');
-                            line.className = 'convo-line';
-                            line.textContent = item.line;
-                            exampleDiv.appendChild(line);
+                                const context = document.createElement('div');
+                                context.className = 'convo-context';
+                                context.textContent = item.context;
+                                exampleDiv.appendChild(context);
 
-                            convoStyleContent.appendChild(exampleDiv);
-                        });
-                    } else {
-                        convoStyleContent.textContent = "No conversational examples could be generated.";
+                                const line = document.createElement('div');
+                                line.className = 'convo-line';
+                                line.textContent = item.line;
+                                exampleDiv.appendChild(line);
+
+                                convoStyleContent.appendChild(exampleDiv);
+                            });
+                        } else {
+                            convoStyleContent.textContent = "No conversational examples could be generated.";
+                        }
+                    } catch (error) {
+                        console.warn('Failed to parse conversation payload', error, result.text);
+                        throw new Error("Could not parse the conversational examples from the AI's response.");
                     }
                 } else {
-                     throw new Error("Could not parse the conversational examples from the AI's response.");
+                    throw new Error("No content received from the conversational API.");
                 }
             } catch(error) {
                 console.error("Error generating conversational style:", error);
@@ -1172,32 +1484,37 @@ CRITICAL INSTRUCTIONS:
                 const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
                 strategicContent.innerHTML = '';
 
-                if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
-                    const categories = ['strengths', 'weaknesses', 'opportunities', 'threats'];
-                    
-                    categories.forEach(catKey => {
-                        const entries = data[catKey];
-                        if (entries && entries.length > 0) {
-                            const categoryDiv = document.createElement('div');
-                            categoryDiv.className = 'swot-category';
-                            
-                            const title = document.createElement('div');
-                            title.className = 'swot-title';
-                            title.textContent = catKey.charAt(0).toUpperCase() + catKey.slice(1);
-                            categoryDiv.appendChild(title);
+                if (result.text) {
+                    try {
+                        const data = JSON.parse(result.text);
+                        const categories = ['strengths', 'weaknesses', 'opportunities', 'threats'];
 
-                            entries.forEach(entryText => {
-                                const entryDiv = document.createElement('div');
-                                entryDiv.className = 'swot-entry';
-                                entryDiv.textContent = entryText;
-                                categoryDiv.appendChild(entryDiv);
-                            });
-                            strategicContent.appendChild(categoryDiv);
-                        }
-                    });
+                        categories.forEach(catKey => {
+                            const entries = data?.[catKey];
+                            if (entries && entries.length > 0) {
+                                const categoryDiv = document.createElement('div');
+                                categoryDiv.className = 'swot-category';
+
+                                const title = document.createElement('div');
+                                title.className = 'swot-title';
+                                title.textContent = catKey.charAt(0).toUpperCase() + catKey.slice(1);
+                                categoryDiv.appendChild(title);
+
+                                entries.forEach(entryText => {
+                                    const entryDiv = document.createElement('div');
+                                    entryDiv.className = 'swot-entry';
+                                    entryDiv.textContent = entryText;
+                                    categoryDiv.appendChild(entryDiv);
+                                });
+                                strategicContent.appendChild(categoryDiv);
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('Failed to parse strategic payload', error, result.text);
+                        throw new Error("Could not parse the strategic analysis from the AI's response.");
+                    }
                 } else {
-                    throw new Error("Could not parse the strategic analysis from the AI's response.");
+                    throw new Error("No content received from the strategic analysis API.");
                 }
             } catch(error) {
                 console.error("Error generating strategic analysis:", error);
@@ -1215,8 +1532,9 @@ CRITICAL INSTRUCTIONS:
             try {
                 const prompt = getPromptForSection(section);
                 const result = await callTeamTomorrowAPI(agent, prompt);
-                if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    contentElement.innerHTML = result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+                if (result.text) {
+                    const sanitized = result.text.replace(/\n/g, '<br>');
+                    contentElement.innerHTML = sanitized;
                 } else {
                     throw new Error("No content received from analysis API.");
                 }
@@ -1436,15 +1754,46 @@ CRITICAL INSTRUCTIONS:
             }
         }
 
-        function showError(message) {
-            errorText.textContent = message;
-            errorMessage.classList.remove('hidden');
+        let statusBannerTimeoutId = null;
+
+        function showBannerMessage(message, variant = 'info') {
+            if (!statusBanner) return;
+            const variants = {
+                error: { classes: 'bg-red-900/50 border border-red-500 text-red-200 shadow', label: 'Error' },
+                success: { classes: 'bg-emerald-900/50 border border-emerald-500 text-emerald-200 shadow', label: 'Success' },
+                warning: { classes: 'bg-amber-900/50 border border-amber-500 text-amber-200 shadow', label: 'Warning' },
+                info: { classes: 'bg-sky-900/40 border border-sky-500 text-sky-200 shadow', label: 'Status' }
+            };
+            const variantMeta = variants[variant] || variants.info;
+            statusBanner.className = `${statusBannerBaseClasses} ${variantMeta.classes}`.trim();
+            statusBannerLabel.textContent = `${variantMeta.label}:`;
+            statusBannerText.textContent = message;
+            statusBanner.classList.remove('hidden');
+
+            if (statusBannerTimeoutId) {
+                clearTimeout(statusBannerTimeoutId);
+            }
+            statusBannerTimeoutId = setTimeout(() => {
+                statusBanner.classList.add('hidden');
+            }, 6000);
         }
-        
+
+        function hideBannerMessage() {
+            if (!statusBanner) return;
+            statusBanner.classList.add('hidden');
+            if (statusBannerTimeoutId) {
+                clearTimeout(statusBannerTimeoutId);
+                statusBannerTimeoutId = null;
+            }
+        }
+
+        function showError(message) {
+            showBannerMessage(message, 'error');
+        }
+
         // --- Initial Load ---
         loadSubjectHistory();
         loadContextHistory();
-        loadApiKeys();
 
     </script>
 </body>
