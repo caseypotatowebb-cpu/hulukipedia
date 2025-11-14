@@ -22,45 +22,45 @@
 
         /* --- Hulukipedia (Default) Theme --- */
         body.theme-hulu {
-            --bg-main: #f0fdf4; /* green-50 */
+            --bg-main: #f0fdf4;
             --bg-container: #ffffff;
-            --bg-section: rgba(240, 253, 244, 0.8); /* green-50 with transparency */
-            --text-primary: #14532d; /* green-900 */
-            --text-secondary: #064e3b; /* emerald-800 */
-            --accent-gold: #ca8a04; /* yellow-600 */
-            --accent-gold-hover: #a16207; /* yellow-700 */
-            --border-color: #d1d5db; /* gray-300 */
+            --bg-section: rgba(240, 253, 244, 0.8);
+            --text-primary: #14532d;
+            --text-secondary: #064e3b;
+            --accent-gold: #ca8a04;
+            --accent-gold-hover: #a16207;
+            --border-color: #d1d5db;
             --editable-hover-bg: rgba(0,0,0,0.03);
         }
 
         /* --- Raven Theme --- */
         body.theme-raven {
             --bg-main: #0a0a0a;
-            --bg-container: #111827; /* gray-900 */
+            --bg-container: #111827;
             --bg-section: rgba(31, 41, 55, 0.5);
-            --text-primary: #d8b4fe; /* purple-300 */
-            --text-secondary: #a78bfa; /* violet-400 */
-            --accent-gold: #f59e0b; /* amber-500 */
-            --accent-gold-hover: #d97706; /* amber-600 */
-            --border-color: #4b5563; /* gray-600 */
+            --text-primary: #d8b4fe;
+            --text-secondary: #a78bfa;
+            --accent-gold: #f59e0b;
+            --accent-gold-hover: #d97706;
+            --border-color: #4b5563;
             --editable-hover-bg: rgba(255,255,255,0.05);
             background-image: url('https://www.transparenttextures.com/patterns/dark-feathers.png');
         }
 
         /* --- Starling Theme --- */
         body.theme-starling {
-            --bg-main: #f1f5f9; /* slate-100 */
+            --bg-main: #f1f5f9;
             --bg-container: #ffffff;
-            --bg-section: rgba(248, 250, 252, 0.8); /* slate-50 with transparency */
-            --text-primary: #1e293b; /* slate-800 */
-            --text-secondary: #475569; /* slate-600 */
-            --accent-gold: #f59e0b; /* amber-500 */
-            --accent-gold-hover: #d97706; /* amber-600 */
-            --accent-red: #dc2626; /* red-600 */
-            --border-color: #cbd5e1; /* slate-300 */
+            --bg-section: rgba(248, 250, 252, 0.8);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-gold: #f59e0b;
+            --accent-gold-hover: #d97706;
+            --accent-red: #dc2626;
+            --border-color: #cbd5e1;
             --editable-hover-bg: rgba(0,0,0,0.03);
         }
-        
+
         body {
             font-family: var(--font-main);
             background-color: var(--bg-main);
@@ -75,7 +75,7 @@
             position: relative;
             display: inline-block;
         }
-        
+
         #main-title::after {
             content: '';
             position: absolute;
@@ -186,7 +186,7 @@
             left: 0;
             color: var(--accent-gold);
         }
-        
+
         [contenteditable] {
             cursor: text;
             transition: background-color 0.2s;
@@ -204,16 +204,15 @@
 
         /* --- Decorative Side Pillars --- */
         #left-pillar, #right-pillar {
-            display: none; /* Hidden by default, shown on large screens */
+            display: none;
             position: fixed;
             top: 0;
             bottom: 0;
-            width: calc((100vw - 1280px) / 2); /* Calculate width of space outside the max-w-7xl container */
+            width: calc((100vw - 1280px) / 2);
             max-width: 250px;
             z-index: -10;
             background-color: var(--bg-main);
-            background-image: 
-                /* Gemstones */
+            background-image:
                 repeating-radial-gradient(
                     circle at center,
                     var(--accent-gold) 0,
@@ -221,7 +220,6 @@
                     transparent 3px,
                     transparent 80px
                 ),
-                /* Vertical Lines */
                 repeating-linear-gradient(
                     90deg,
                     transparent,
@@ -242,7 +240,7 @@
             right: 0;
             background-position: 10px 40px, 0 0;
         }
-        
+
         .agent-select {
             background-color: var(--bg-section);
             color: var(--text-primary);
@@ -253,7 +251,16 @@
             margin-left: 0.5rem;
         }
 
-        /* Show pillars on large screens where there's enough space */
+        .api-status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+        }
+        .api-active { background: #10b981; }
+        .api-inactive { background: #ef4444; }
+
         @media (min-width: 1600px) {
             #left-pillar, #right-pillar {
                 display: block;
@@ -296,7 +303,7 @@
                 </div>
             </form>
         </div>
-        
+
         <div id="error-message" class="hidden max-w-2xl mx-auto my-8 bg-red-900/50 border border-red-500 text-red-300 px-4 py-3 rounded-lg" role="alert">
             <strong class="font-bold">Error:</strong>
             <span class="block sm:inline" id="error-text"></span>
@@ -316,27 +323,69 @@
             </div>
         </div>
 
-        <!-- API Key Modal -->
-        <div id="api-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-lg w-full border border-border-color">
-                <h3 class="text-xl font-bold text-accent-gold mb-4">Team Tomorrow API Keys</h3>
-                <p class="text-text-secondary mb-6">Enter your API keys below. They will be saved securely in your browser's local storage.</p>
+        <!-- Enhanced API Key Modal -->
+        <div id="api-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div class="bg-bg-container text-text-primary rounded-lg shadow-xl p-6 max-w-2xl w-full border border-border-color my-8">
+                <h3 class="text-xl font-bold text-accent-gold mb-4 flex items-center">
+                    <i data-lucide="key" class="mr-2 h-6 w-6"></i>
+                    Team Tomorrow API Configuration
+                </h3>
+                <p class="text-text-secondary mb-6 text-sm">Configure your API keys below. Keys are stored securely in your browser's local storage and never sent to external servers.</p>
                 <div class="space-y-4">
-                    <div>
-                        <label for="gemini-key" class="block text-sm font-medium text-primary">Gemini (Monday)</label>
-                        <input type="password" id="gemini-key" placeholder="Enter Gemini API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    <div class="bg-bg-section p-4 rounded-lg border border-border-color">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="gemini-key" class="block text-sm font-bold text-primary flex items-center">
+                                Monday (Gemini)
+                                <span id="gemini-status" class="api-status-indicator api-inactive ml-2"></span>
+                            </label>
+                            <span class="text-xs text-text-secondary">Text & Image Generation</span>
+                        </div>
+                        <input type="password" id="gemini-key" placeholder="AIza..." class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-main text-text-primary text-sm font-mono">
+                        <p class="text-xs text-text-secondary mt-1">Get key at: <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-accent-gold hover:underline">Google AI Studio</a></p>
                     </div>
-                    <div>
-                        <label for="tuesday-key" class="block text-sm font-medium text-primary">Tuesday's Key</label>
-                        <input type="password" id="tuesday-key" placeholder="Enter Tuesday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    <div class="bg-bg-section p-4 rounded-lg border border-border-color">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="perplexity-key" class="block text-sm font-bold text-primary flex items-center">
+                                Tuesday (Perplexity)
+                                <span id="perplexity-status" class="api-status-indicator api-inactive ml-2"></span>
+                            </label>
+                            <span class="text-xs text-text-secondary">Research & Search</span>
+                        </div>
+                        <input type="password" id="perplexity-key" placeholder="pplx-..." class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-main text-text-primary text-sm font-mono">
+                        <p class="text-xs text-text-secondary mt-1">Get key at: <a href="https://www.perplexity.ai/settings/api" target="_blank" class="text-accent-gold hover:underline">Perplexity API</a></p>
                     </div>
-                    <div>
-                        <label for="friday-key" class="block text-sm font-medium text-primary">Friday's Key</label>
-                        <input type="password" id="friday-key" placeholder="Enter Friday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    <div class="bg-bg-section p-4 rounded-lg border border-border-color">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="claude-key" class="block text-sm font-bold text-primary flex items-center">
+                                Wednesday (Claude)
+                                <span id="claude-status" class="api-status-indicator api-inactive ml-2"></span>
+                            </label>
+                            <span class="text-xs text-text-secondary">Analysis & Writing</span>
+                        </div>
+                        <input type="password" id="claude-key" placeholder="sk-ant-..." class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-main text-text-primary text-sm font-mono">
+                        <p class="text-xs text-text-secondary mt-1">Get key at: <a href="https://console.anthropic.com/" target="_blank" class="text-accent-gold hover:underline">Anthropic Console</a></p>
                     </div>
-                    <div>
-                        <label for="saturday-key" class="block text-sm font-medium text-primary">Saturday's Key</label>
-                        <input type="password" id="saturday-key" placeholder="Enter Saturday's API Key" class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-section">
+                    <div class="bg-bg-section p-4 rounded-lg border border-border-color">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="openai-key" class="block text-sm font-bold text-primary flex items-center">
+                                Friday (OpenAI)
+                                <span id="openai-status" class="api-status-indicator api-inactive ml-2"></span>
+                            </label>
+                            <span class="text-xs text-text-secondary">All-Purpose GPT</span>
+                        </div>
+                        <input type="password" id="openai-key" placeholder="sk-..." class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-main text-text-primary text-sm font-mono">
+                        <p class="text-xs text-text-secondary mt-1">Get key at: <a href="https://platform.openai.com/api-keys" target="_blank" class="text-accent-gold hover:underline">OpenAI Platform</a></p>
+                    </div>
+                    <div class="bg-bg-section p-4 rounded-lg border border-border-color">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="venice-key" class="block text-sm font-bold text-primary flex items-center">
+                                Saturday (Venice)
+                                <span id="venice-status" class="api-status-indicator api-inactive ml-2"></span>
+                            </label>
+                            <span class="text-xs text-text-secondary">Uncensored Content</span>
+                        </div>
+                        <input type="password" id="venice-key" placeholder="vn-..." class="w-full mt-1 p-2 rounded-md border border-border-color bg-bg-main text-text-primary text-sm font-mono">
+                        <p class="text-xs text-text-secondary mt-1">Get key at: <a href="https://venice.ai/" target="_blank" class="text-accent-gold hover:underline">Venice AI</a></p>
                     </div>
                 </div>
                 <div class="mt-6 flex gap-4">
@@ -345,7 +394,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="results-container" class="hidden max-w-4xl mx-auto my-8 space-y-8">
              <header class="flex flex-col sm:flex-row justify-between items-center pb-4 border-b border-border-color gap-4">
                  <div>
@@ -382,7 +431,7 @@
                                     </button>
                                     <select id="image-agent-select" class="agent-select">
                                         <option value="monday">Monday</option>
-                                        <option value="tuesday">Tuesday</option>
+                                        <option value="friday">Friday</option>
                                     </select>
                                 </div>
                                  <div id="ai-image-container" class="bg-bg-section rounded-md border border-border-color aspect-square flex items-center justify-center">
@@ -397,16 +446,23 @@
                             <h3><i data-lucide="archive" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Confirmed Intel</h3>
                             <div id="intel-content" class="font-mono min-h-[200px] text-sm" contenteditable="true"></div>
                             <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                                <button id="intel-btn" class="generate-section-btn flex-1 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
-                                    <span>✨ Re-Generate</span>
-                                </button>
+                                <div class="flex-1 flex items-center">
+                                    <button id="intel-btn" class="generate-section-btn flex-1 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
+                                        <span>✨ Generate</span>
+                                    </button>
+                                    <select id="intel-agent-select" class="agent-select">
+                                        <option value="monday">Monday</option>
+                                        <option value="perplexity">Tuesday</option>
+                                        <option value="claude">Wednesday</option>
+                                    </select>
+                                </div>
                                 <div class="flex-1 flex items-center">
                                     <button id="deep-search-btn" class="w-full generate-section-btn flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
-                                        <i data-lucide="search-code" class="mr-2 h-4 w-4"></i><span>Enhance</span>
+                                        <i data-lucide="search-code" class="mr-2 h-4 w-4"></i><span>Search Enhance</span>
                                     </button>
                                      <select id="search-agent-select" class="agent-select">
+                                        <option value="perplexity">Tuesday</option>
                                         <option value="monday">Monday</option>
-                                        <option value="tuesday">Tuesday</option>
                                     </select>
                                 </div>
                             </div>
@@ -417,9 +473,9 @@
                             <h3><i data-lucide="person-standing" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Physical Description</h3>
                             <select id="physical-agent-select" class="agent-select -mt-4">
                                 <option value="monday">Monday</option>
-                                <option value="tuesday">Tuesday</option>
+                                <option value="claude">Wednesday</option>
                                 <option value="friday">Friday</option>
-                                <option value="saturday">Saturday</option>
+                                <option value="venice">Saturday</option>
                             </select>
                         </div>
                         <div id="physical-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
@@ -439,28 +495,56 @@
                         </div>
                     </div>
                     <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
-                        <h3><i data-lucide="message-circle" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Communication Profile</h3>
+                        <div class="flex justify-between items-center">
+                            <h3><i data-lucide="message-circle" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Communication Profile</h3>
+                            <select id="comm-agent-select" class="agent-select -mt-4">
+                                <option value="claude">Wednesday</option>
+                                <option value="friday">Friday</option>
+                                <option value="monday">Monday</option>
+                            </select>
+                        </div>
                         <div id="comm-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
                         <button id="comm-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
                             <span>✨ Generate Profile</span>
                         </button>
                     </div>
                     <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
-                        <h3><i data-lucide="messages-square" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Conversational Style Examples</h3>
+                        <div class="flex justify-between items-center">
+                            <h3><i data-lucide="messages-square" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Conversational Style Examples</h3>
+                            <select id="convo-agent-select" class="agent-select -mt-4">
+                                <option value="claude">Wednesday</option>
+                                <option value="friday">Friday</option>
+                                <option value="monday">Monday</option>
+                            </select>
+                        </div>
                         <div id="convo-style-content" class="font-mono min-h-[50px]" contenteditable="true"></div>
                         <button id="convo-style-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
                             <span>✨ Generate Examples</span>
                         </button>
                     </div>
                     <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
-                        <h3><i data-lucide="brain-circuit" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Psychological Profile</h3>
+                        <div class="flex justify-between items-center">
+                            <h3><i data-lucide="brain-circuit" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Psychological Profile</h3>
+                            <select id="psych-agent-select" class="agent-select -mt-4">
+                                <option value="claude">Wednesday</option>
+                                <option value="friday">Friday</option>
+                                <option value="monday">Monday</option>
+                            </select>
+                        </div>
                         <div id="psych-content" class="font-handwritten min-h-[50px]" contenteditable="true"></div>
                         <button id="psych-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
                             <span>✨ Generate Analyst Notes</span>
                         </button>
                     </div>
                     <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
-                        <h3><i data-lucide="crosshair" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Strategic Analysis (SWOT)</h3>
+                        <div class="flex justify-between items-center">
+                            <h3><i data-lucide="crosshair" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Strategic Analysis (SWOT)</h3>
+                            <select id="strategic-agent-select" class="agent-select -mt-4">
+                                <option value="friday">Friday</option>
+                                <option value="claude">Wednesday</option>
+                                <option value="monday">Monday</option>
+                            </select>
+                        </div>
                         <div id="strategic-content" class="font-mono min-h-[50px]" contenteditable="true"></div>
                         <button id="strategic-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
                             <span>✨ Generate Analysis</span>
@@ -471,14 +555,28 @@
                 <div class="bg-bg-container/80 backdrop-blur-sm p-6 md:p-8 rounded-lg border border-border-color shadow-xl space-y-6">
                      <h3 id="addendum-title" class="text-2xl font-bold text-accent-gold text-center font-mono tracking-wider">ADDENDUMS</h3>
                     <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
-                        <h3 id="addendum-1-title"><i data-lucide="clipboard-list" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Field Surveillance Log</h3>
+                        <div class="flex justify-between items-center">
+                            <h3 id="addendum-1-title"><i data-lucide="clipboard-list" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Field Surveillance Log</h3>
+                            <select id="addendum1-agent-select" class="agent-select -mt-4">
+                                <option value="claude">Wednesday</option>
+                                <option value="friday">Friday</option>
+                                <option value="monday">Monday</option>
+                            </select>
+                        </div>
                         <div id="addendum-1-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
                         <button id="addendum-1-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
                             <span>✨ Generate Report</span>
                         </button>
                     </div>
                     <div class="dossier-section bg-bg-section p-4 rounded-md border border-border-color">
-                        <h3 id="addendum-2-title"><i data-lucide="users" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Encounter Simulation</h3>
+                        <div class="flex justify-between items-center">
+                            <h3 id="addendum-2-title"><i data-lucide="users" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Encounter Simulation</h3>
+                            <select id="addendum2-agent-select" class="agent-select -mt-4">
+                                <option value="claude">Wednesday</option>
+                                <option value="friday">Friday</option>
+                                <option value="monday">Monday</option>
+                            </select>
+                        </div>
                         <div id="addendum-2-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
                         <button id="addendum-2-btn" class="generate-section-btn mt-4 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
                            <span>✨ Generate Simulation</span>
@@ -513,7 +611,7 @@
         const errorText = document.getElementById('error-text');
         const errorMessage = document.getElementById('error-message');
         const settingsBtn = document.getElementById('settings-btn');
-        
+
         const clarificationModal = document.getElementById('clarification-modal');
         const clarificationOptions = document.getElementById('clarification-options');
         const clarificationCancelBtn = document.getElementById('clarification-cancel-btn');
@@ -522,9 +620,10 @@
         const apiKeySaveBtn = document.getElementById('api-key-save-btn');
         const apiKeyCancelBtn = document.getElementById('api-key-cancel-btn');
         const geminiKeyInput = document.getElementById('gemini-key');
-        const tuesdayKeyInput = document.getElementById('tuesday-key');
-        const fridayKeyInput = document.getElementById('friday-key');
-        const saturdayKeyInput = document.getElementById('saturday-key');
+        const perplexityKeyInput = document.getElementById('perplexity-key');
+        const claudeKeyInput = document.getElementById('claude-key');
+        const openaiKeyInput = document.getElementById('openai-key');
+        const veniceKeyInput = document.getElementById('venice-key');
 
         const generateImageBtn = document.getElementById('generate-image-btn');
         const imageAgentSelect = document.getElementById('image-agent-select');
@@ -532,10 +631,11 @@
         const imageLinksContainer = document.getElementById('image-links-container');
 
         const intelBtn = document.getElementById('intel-btn');
+        const intelAgentSelect = document.getElementById('intel-agent-select');
         const deepSearchBtn = document.getElementById('deep-search-btn');
         const searchAgentSelect = document.getElementById('search-agent-select');
         const intelContent = document.getElementById('intel-content');
-        
+
         const physicalContent = document.getElementById('physical-content');
         const physicalAgentSelect = document.getElementById('physical-agent-select');
         const physicalBtnBlue = document.getElementById('physical-btn-blue');
@@ -544,30 +644,65 @@
         const physicalBtnRed = document.getElementById('physical-btn-red');
 
         const commBtn = document.getElementById('comm-btn');
+        const commAgentSelect = document.getElementById('comm-agent-select');
         const commContent = document.getElementById('comm-content');
         const convoStyleBtn = document.getElementById('convo-style-btn');
+        const convoAgentSelect = document.getElementById('convo-agent-select');
         const convoStyleContent = document.getElementById('convo-style-content');
         const psychBtn = document.getElementById('psych-btn');
+        const psychAgentSelect = document.getElementById('psych-agent-select');
         const psychContent = document.getElementById('psych-content');
         const strategicBtn = document.getElementById('strategic-btn');
+        const strategicAgentSelect = document.getElementById('strategic-agent-select');
         const strategicContent = document.getElementById('strategic-content');
 
         const addendum1Title = document.getElementById('addendum-1-title');
         const addendum1Content = document.getElementById('addendum-1-content');
         const addendum1Btn = document.getElementById('addendum-1-btn');
+        const addendum1AgentSelect = document.getElementById('addendum1-agent-select');
         const addendum2Title = document.getElementById('addendum-2-title');
         const addendum2Content = document.getElementById('addendum-2-content');
         const addendum2Btn = document.getElementById('addendum-2-btn');
+        const addendum2AgentSelect = document.getElementById('addendum2-agent-select');
 
 
         // --- Global State & Constants ---
-        let currentMode = 'hulu'; // 'hulu', 'raven', or 'starling'
+        let currentMode = 'hulu';
         let currentSubjectName = '';
         let currentSubjectDetails = '';
         const SUBJECT_HISTORY_KEY = 'hulukipediaSubjectHistory';
         const CONTEXT_HISTORY_KEY = 'hulukipediaContextHistory';
         const API_KEYS_KEY = 'hulukipediaApiKeys';
         const MAX_HISTORY_SIZE = 10;
+
+        // --- API Configuration ---
+        const API_CONFIG = {
+            monday: {
+                name: 'Gemini',
+                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/',
+                model: 'gemini-2.0-flash'
+            },
+            perplexity: {
+                name: 'Perplexity',
+                endpoint: 'https://api.perplexity.ai/chat/completions',
+                model: 'llama-3.1-sonar-large-128k-online'
+            },
+            claude: {
+                name: 'Claude',
+                endpoint: 'https://api.anthropic.com/v1/messages',
+                model: 'claude-3-5-sonnet-20241022'
+            },
+            friday: {
+                name: 'OpenAI',
+                endpoint: 'https://api.openai.com/v1/chat/completions',
+                model: 'gpt-4o'
+            },
+            venice: {
+                name: 'Venice',
+                endpoint: 'https://api.venice.ai/api/v1/chat/completions',
+                model: 'llama-3.3-70b'
+            }
+        };
 
         // --- Event Listeners ---
         ravenSearchBtn.addEventListener('click', (e) => handleSearch(e, 'raven'));
@@ -588,20 +723,20 @@
         generateImageBtn.addEventListener('click', generateAIImage);
         intelBtn.addEventListener('click', () => generateIntel());
         deepSearchBtn.addEventListener('click', enhanceIntelWithSearch);
-        
+
         physicalBtnBlue.addEventListener('click', () => generateTextSection('physical_blue', physicalContent, physicalBtnBlue, physicalAgentSelect.value));
         physicalBtnGreen.addEventListener('click', () => generateTextSection('physical_green', physicalContent, physicalBtnGreen, physicalAgentSelect.value));
         physicalBtnYellow.addEventListener('click', () => generateTextSection('physical_yellow', physicalContent, physicalBtnYellow, physicalAgentSelect.value));
         physicalBtnRed.addEventListener('click', () => generateTextSection('physical_red', physicalContent, physicalBtnRed, physicalAgentSelect.value));
 
-        commBtn.addEventListener('click', () => generateTextSection('comm', commContent, commBtn));
-        convoStyleBtn.addEventListener('click', () => generateConvoStyle());
-        psychBtn.addEventListener('click', () => generateTextSection('psych', psychContent, psychBtn));
-        strategicBtn.addEventListener('click', () => generateStrategicAnalysis());
-        
+        commBtn.addEventListener('click', () => generateTextSection('comm', commContent, commBtn, commAgentSelect.value));
+        convoStyleBtn.addEventListener('click', () => generateConvoStyle(convoAgentSelect.value));
+        psychBtn.addEventListener('click', () => generateTextSection('psych', psychContent, psychBtn, psychAgentSelect.value));
+        strategicBtn.addEventListener('click', () => generateStrategicAnalysis(strategicAgentSelect.value));
+
         // Wire up addendum buttons
-        addendum1Btn.addEventListener('click', () => generateTextSection(currentMode === 'raven' ? 'surveillance' : 'timeline', addendum1Content, addendum1Btn));
-        addendum2Btn.addEventListener('click', () => generateTextSection(currentMode === 'raven' ? 'scenario' : 'persona', addendum2Content, addendum2Btn));
+        addendum1Btn.addEventListener('click', () => generateTextSection(currentMode === 'raven' ? 'surveillance' : 'timeline', addendum1Content, addendum1Btn, addendum1AgentSelect.value));
+        addendum2Btn.addEventListener('click', () => generateTextSection(currentMode === 'raven' ? 'scenario' : 'persona', addendum2Content, addendum2Btn, addendum2AgentSelect.value));
 
 
         // --- Core Functions ---
@@ -612,9 +747,9 @@
                 showError("Please enter a target entity name.");
                 return;
             };
-            
+
             currentMode = mode;
-            
+
             const btn = e.currentTarget;
             const originalBtnHTML = btn.innerHTML;
             btn.innerHTML = `<div class="mini-loader mx-auto"></div>`;
@@ -654,7 +789,7 @@
             resultsContainer.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             dossierSubject.textContent = currentSubjectName.toUpperCase();
-            
+
             const contentDivs = document.querySelectorAll('#dossier-content div[id$="-content"], #ai-image-container');
             contentDivs.forEach(div => div.innerHTML = '');
 
@@ -668,7 +803,7 @@
             options.forEach(option => {
                 const button = document.createElement('button');
                 button.className = 'w-full text-left p-4 rounded-md border border-border-color hover:bg-bg-section transition duration-200';
-                
+
                 let detailsHTML = option.keyDetails.map(detail => `<span class="text-xs font-mono bg-bg-section px-2 py-1 rounded">${detail}</span>`).join(' ');
 
                 button.innerHTML = `
@@ -697,7 +832,7 @@
             const contentDivs = document.querySelectorAll('#dossier-content div[id$="-content"], #ai-image-container');
             contentDivs.forEach(div => div.innerHTML = '');
         }
-        
+
         // --- Dynamic Content Setup ---
         function setupAddendums() {
             if (currentMode === 'raven') {
@@ -705,7 +840,7 @@
                 addendum1Btn.querySelector('span').textContent = `✨ Generate "A Day in the Life" Report`;
                 addendum2Title.innerHTML = `<i data-lucide="users" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Encounter Simulation`;
                 addendum2Btn.querySelector('span').textContent = `✨ Generate Simulation`;
-            } else { // starling
+            } else {
                 addendum1Title.innerHTML = `<i data-lucide="trending-up" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Career Timeline`;
                 addendum1Btn.querySelector('span').textContent = `✨ Generate Timeline`;
                 addendum2Title.innerHTML = `<i data-lucide="presentation" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Public Persona Analysis`;
@@ -726,7 +861,359 @@
             }
         }
 
-        // --- API & Prompts ---
+        // --- API KEY FUNCTIONS ---
+        function updateApiStatusIndicators() {
+            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
+            const statusElements = {
+                gemini: document.getElementById('gemini-status'),
+                perplexity: document.getElementById('perplexity-status'),
+                claude: document.getElementById('claude-status'),
+                openai: document.getElementById('openai-status'),
+                venice: document.getElementById('venice-status')
+            };
+
+            Object.keys(statusElements).forEach(key => {
+                const hasKey = keys[key] && keys[key].trim().length > 0;
+                if (hasKey) {
+                    statusElements[key].classList.remove('api-inactive');
+                    statusElements[key].classList.add('api-active');
+                } else {
+                    statusElements[key].classList.remove('api-active');
+                    statusElements[key].classList.add('api-inactive');
+                }
+            });
+        }
+
+        function saveApiKeys() {
+            const keys = {
+                gemini: geminiKeyInput.value.trim(),
+                perplexity: perplexityKeyInput.value.trim(),
+                claude: claudeKeyInput.value.trim(),
+                openai: openaiKeyInput.value.trim(),
+                venice: veniceKeyInput.value.trim(),
+            };
+            localStorage.setItem(API_KEYS_KEY, JSON.stringify(keys));
+            updateApiStatusIndicators();
+            apiKeyModal.classList.add('hidden');
+        }
+
+        function loadApiKeys() {
+            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
+            geminiKeyInput.value = keys.gemini || '';
+            perplexityKeyInput.value = keys.perplexity || '';
+            claudeKeyInput.value = keys.claude || '';
+            openaiKeyInput.value = keys.openai || '';
+            veniceKeyInput.value = keys.venice || '';
+            updateApiStatusIndicators();
+        }
+
+        function getApiKey(agent) {
+            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
+            if (agent === 'monday') return keys.gemini || '';
+            if (agent === 'friday') return keys.openai || '';
+            return keys[agent] || '';
+        }
+
+        // --- UNIFIED API CALL HANDLER ---
+        async function callTeamTomorrowAPI(agent, prompt, config = {}) {
+            const apiKey = getApiKey(agent);
+            if (!apiKey) {
+                throw new Error(`API Key for ${API_CONFIG[agent].name} (${agent}) is not set. Please configure it in Settings.`);
+            }
+
+            console.log(`Calling ${agent} (${API_CONFIG[agent].name}) API...`);
+
+            switch (agent) {
+                case 'monday':
+                    return callGeminiAPI(prompt, config.generationConfig, apiKey);
+                case 'perplexity':
+                    return callPerplexityAPI(prompt, apiKey);
+                case 'claude':
+                    return callClaudeAPI(prompt, apiKey);
+                case 'friday':
+                    return callOpenAIAPI(prompt, apiKey);
+                case 'venice':
+                    return callVeniceAPI(prompt, apiKey);
+                default:
+                    throw new Error(`Unknown agent: ${agent}`);
+            }
+        }
+
+        // --- GEMINI API ---
+        async function callGeminiAPI(prompt, generationConfig = null, apiKey) {
+            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+            if (generationConfig) {
+                payload.generationConfig = generationConfig;
+            }
+            const apiUrl = `${API_CONFIG.monday.endpoint}${API_CONFIG.monday.model}:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                let errorDetails = responseText;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
+                } catch (e) { }
+                throw new Error(`Gemini API failed (${response.status}): ${errorDetails}`);
+            }
+
+            if (!responseText) {
+                throw new Error("Gemini API returned empty response.");
+            }
+            return JSON.parse(responseText);
+        }
+
+        // --- PERPLEXITY API ---
+        async function callPerplexityAPI(prompt, apiKey) {
+            const response = await fetch(API_CONFIG.perplexity.endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: API_CONFIG.perplexity.model,
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                let errorDetails = responseText;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorDetails = errorData?.error?.message || errorData?.message || JSON.stringify(errorData);
+                } catch (e) { }
+                throw new Error(`Perplexity API failed (${response.status}): ${errorDetails}`);
+            }
+
+            const data = JSON.parse(responseText);
+            const content = data.choices?.[0]?.message?.content;
+            if (!content) {
+                throw new Error("Perplexity API returned no content");
+            }
+
+            // Convert to Gemini-like format
+            return {
+                candidates: [{
+                    content: {
+                        parts: [{ text: content }]
+                    }
+                }]
+            };
+        }
+
+        // --- CLAUDE API ---
+        async function callClaudeAPI(prompt, apiKey) {
+            const response = await fetch(API_CONFIG.claude.endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: API_CONFIG.claude.model,
+                    max_tokens: 4096,
+                    messages: [{ role: 'user', content: prompt }]
+                })
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                let errorDetails = responseText;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
+                } catch (e) { }
+                throw new Error(`Claude API failed (${response.status}): ${errorDetails}`);
+            }
+
+            const data = JSON.parse(responseText);
+            const content = data.content?.[0]?.text;
+            if (!content) {
+                throw new Error("Claude API returned no content");
+            }
+
+            // Convert to Gemini-like format
+            return {
+                candidates: [{
+                    content: {
+                        parts: [{ text: content }]
+                    }
+                }]
+            };
+        }
+
+        // --- OPENAI API ---
+        async function callOpenAIAPI(prompt, apiKey) {
+            const response = await fetch(API_CONFIG.friday.endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: API_CONFIG.friday.model,
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                let errorDetails = responseText;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
+                } catch (e) { }
+                throw new Error(`OpenAI API failed (${response.status}): ${errorDetails}`);
+            }
+
+            const data = JSON.parse(responseText);
+            const content = data.choices?.[0]?.message?.content;
+            if (!content) {
+                throw new Error("OpenAI API returned no content");
+            }
+
+            // Convert to Gemini-like format
+            return {
+                candidates: [{
+                    content: {
+                        parts: [{ text: content }]
+                    }
+                }]
+            };
+        }
+
+        // --- VENICE API ---
+        async function callVeniceAPI(prompt, apiKey) {
+            const response = await fetch(API_CONFIG.venice.endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: API_CONFIG.venice.model,
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                let errorDetails = responseText;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
+                } catch (e) { }
+                throw new Error(`Venice API failed (${response.status}): ${errorDetails}`);
+            }
+
+            const data = JSON.parse(responseText);
+            const content = data.choices?.[0]?.message?.content;
+            if (!content) {
+                throw new Error("Venice API returned no content");
+            }
+
+            // Convert to Gemini-like format
+            return {
+                candidates: [{
+                    content: {
+                        parts: [{ text: content }]
+                    }
+                }]
+            };
+        }
+
+        async function callImagenAPI(prompt, agent) {
+            const apiKey = getApiKey(agent);
+            if (!apiKey) {
+                 throw new Error(`API Key for ${agent} is not set for image generation.`);
+            }
+
+            // Currently only Gemini supports image generation with Imagen
+            if (agent === 'monday') {
+                const payload = { instances: [{ prompt: prompt }], parameters: { "sampleCount": 1} };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const responseText = await response.text();
+
+                if (!response.ok) {
+                    let errorDetails = responseText;
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        errorDetails = errorData?.error?.message || JSON.stringify(errorData);
+                    } catch (e) { }
+                    throw new Error(`Image API failed (${response.status}): ${errorDetails}`);
+                }
+
+                if (!responseText) {
+                     throw new Error("Image API returned empty response.");
+                }
+                return JSON.parse(responseText);
+            } else if (agent === 'friday') {
+                // OpenAI DALL-E integration
+                const response = await fetch('https://api.openai.com/v1/images/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "dall-e-3",
+                        prompt: prompt,
+                        n: 1,
+                        size: "1024x1024"
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`DALL-E API failed: ${data.error?.message || 'Unknown error'}`);
+                }
+
+                // Convert to Imagen format
+                if (data.data?.[0]?.url) {
+                    // Fetch the image and convert to base64
+                    const imageResponse = await fetch(data.data[0].url);
+                    const blob = await imageResponse.blob();
+                    const base64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                        reader.readAsDataURL(blob);
+                    });
+
+                    return {
+                        predictions: [{
+                            bytesBase64Encoded: base64
+                        }]
+                    };
+                }
+                throw new Error("DALL-E returned no image");
+            }
+
+            throw new Error(`Image generation not supported for agent: ${agent}`);
+        }
+
+        // --- PROMPTS ---
         function getPromptForSection(section, searchContext = '') {
             const context = currentSubjectDetails ? ` (${currentSubjectDetails})` : '';
             const subject = `"${currentSubjectName}"${context}`;
@@ -788,7 +1275,7 @@ CRITICAL INSTRUCTIONS:
                     convo_style: basePrompts.convo_style.replace('a script writer', 'a public relations expert').replace('in-character example lines of dialogue', 'plausible example lines they might say in various public contexts'),
                 }
             };
-            
+
             let finalPrompt = modeSpecifics[currentMode][section] || basePrompts[section];
 
             if (searchContext) {
@@ -797,8 +1284,8 @@ CRITICAL INSTRUCTIONS:
 
             return finalPrompt;
         }
-        
-        // --- HISTORY & API KEY FUNCTIONS ---
+
+        // --- HISTORY FUNCTIONS ---
         function saveToHistory(key, value, maxSize) {
             let history = JSON.parse(localStorage.getItem(key)) || [];
             history = history.filter(item => item !== value);
@@ -832,132 +1319,8 @@ CRITICAL INSTRUCTIONS:
         function loadContextHistory() {
             loadFromHistory(CONTEXT_HISTORY_KEY, document.getElementById('context-history'));
         }
-        
-        function saveApiKeys() {
-            const keys = {
-                gemini: geminiKeyInput.value.trim(),
-                tuesday: tuesdayKeyInput.value.trim(),
-                friday: fridayKeyInput.value.trim(),
-                saturday: saturdayKeyInput.value.trim(),
-            };
-            localStorage.setItem(API_KEYS_KEY, JSON.stringify(keys));
-            apiKeyModal.classList.add('hidden');
-        }
 
-        function loadApiKeys() {
-            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
-            geminiKeyInput.value = keys.gemini || '';
-            tuesdayKeyInput.value = keys.tuesday || '';
-            fridayKeyInput.value = keys.friday || '';
-            saturdayKeyInput.value = keys.saturday || '';
-        }
-
-        function getApiKey(agent) {
-            const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
-            if (agent === 'monday') return keys.gemini || '';
-            return keys[agent] || '';
-        }
-
-        // --- TEAM TOMORROW API ROUTING ---
-        async function callTeamTomorrowAPI(agent, prompt, config) {
-            const apiKey = getApiKey(agent);
-            if (!apiKey && agent !== 'monday') { // 'monday' can use the environment key
-                throw new Error(`API Key for ${agent} is not set. Please add it in Settings.`);
-            }
-
-            // This is the central routing function.
-            // It simulates calling different APIs based on the selected agent.
-            // In a real application, you would replace the placeholder comments
-            // with actual fetch calls to the respective API endpoints.
-            switch (agent) {
-                case 'monday': // Gemini
-                    return callGeminiAPI(prompt, config?.generationConfig, apiKey);
-                case 'tuesday': // Researcher - SIMULATED
-                    // Placeholder for Tuesday's API call.
-                    // You would replace this with the actual fetch logic for Tuesday's service.
-                    console.log(`Simulating call to Tuesday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                case 'friday': // All-Rounder - SIMULATED
-                    // Placeholder for Friday's API call.
-                    console.log(`Simulating call to Friday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                case 'saturday': // Unconventional - SIMULATED
-                     // Placeholder for Saturday's API call.
-                    console.log(`Simulating call to Saturday with key: ${apiKey ? 'provided' : 'not provided'}`);
-                    return callGeminiAPI(prompt, config?.generationConfig, getApiKey('monday')); // Fallback to Monday for simulation
-                default:
-                    throw new Error(`Unknown agent: ${agent}`);
-            }
-        }
-        
-        // --- GEMINI API CALLS ---
-        async function callGeminiAPI(prompt, generationConfig = null, apiKeyOverride = '') {
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-            if (generationConfig) {
-                payload.generationConfig = generationConfig;
-            }
-            const apiKey = apiKeyOverride || ""; // Use override or let environment handle it
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            
-            const response = await fetch(apiUrl, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload) 
-            });
-
-            const responseText = await response.text();
-
-            if (!response.ok) {
-                let errorDetails = responseText;
-                try {
-                    const errorData = JSON.parse(responseText);
-                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
-                } catch (e) { /* It's not JSON */ }
-                throw new Error(`API request failed (${response.status}): ${errorDetails}`);
-            }
-            
-            if (!responseText) {
-                throw new Error("API returned a successful but empty response.");
-            }
-            return JSON.parse(responseText);
-        }
-
-        async function callImagenAPI(prompt, agent) {
-            const apiKey = getApiKey(agent);
-            if (!apiKey && agent !== 'monday') {
-                 throw new Error(`API Key for ${agent} is not set for image generation.`);
-            }
-
-            // SIMULATION: In a real app, you might route to different image models.
-            // For now, all agents use the Gemini/Imagen model via this function.
-            const payload = { instances: [{ prompt: prompt }], parameters: { "sampleCount": 1} };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey || ""}`;
-            
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const responseText = await response.text();
-
-            if (!response.ok) {
-                let errorDetails = responseText;
-                try {
-                    const errorData = JSON.parse(responseText);
-                    errorDetails = errorData?.error?.message || JSON.stringify(errorData);
-                } catch (e) { /* Not JSON */ }
-                throw new Error(`Image API request failed (${response.status}): ${errorDetails}`);
-            }
-            
-            if (!responseText) {
-                 throw new Error("Image API returned a successful but empty response.");
-            }
-            return JSON.parse(responseText);
-        }
-
-        // --- CONTENT GENERATION FUNCTIONS ---
-
+        // --- CONTENT GENERATION ---
         async function getClarifications(subject, context, mode) {
             const prompt = getPromptForSection('clarification');
             const schema = {
@@ -972,7 +1335,7 @@ CRITICAL INSTRUCTIONS:
                 }
             };
             const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
-            const result = await callTeamTomorrowAPI('monday', prompt, { generationConfig }); // Clarification always uses Monday
+            const result = await callTeamTomorrowAPI('monday', prompt, { generationConfig });
 
             if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                 return JSON.parse(result.candidates[0].content.parts[0].text);
@@ -991,7 +1354,7 @@ CRITICAL INSTRUCTIONS:
                     { name: 'Pinterest', url: 'https://www.pinterest.com/search/pins/?q=' },
                     { name: 'Rule 34', url: 'https://rule34.xxx/index.php?page=post&s=list&tags=', nsfw: true }
                 ];
-            } else { // starling
+            } else {
                 searchSites = [
                     { name: 'Google', url: 'https://www.google.com/search?tbm=isch&q=' },
                     { name: 'Bing', url: 'https://www.bing.com/images/search?q=' },
@@ -999,7 +1362,7 @@ CRITICAL INSTRUCTIONS:
                     { name: 'Celeb Jihad', url: 'https://celebjihad.com/?s=', nsfw: true, customQuery: true }
                 ];
             }
-            
+
             const searchTerm = currentSubjectName.trim();
 
             searchSites.forEach(site => {
@@ -1034,7 +1397,7 @@ CRITICAL INSTRUCTIONS:
                 const detailsPrompt = getPromptForSection('image_details');
                 const schema = { type: "OBJECT", properties: { "hairColor": { "type": "STRING" }, "hairStyle": { "type": "STRING" }, "eyeColor": { "type": "STRING" }, "skinTone": { "type": "STRING" }, "build": { "type": "STRING" }, "distinguishingFeatures": { "type": "ARRAY", "items": { "type": "STRING" } } } };
                 const detailsResult = await callTeamTomorrowAPI('monday', detailsPrompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
-                
+
                 let descriptionParts = [];
                 if (detailsResult.candidates?.[0]?.content?.parts?.[0]) {
                     const details = JSON.parse(detailsResult.candidates[0].content.parts[0].text);
@@ -1045,7 +1408,7 @@ CRITICAL INSTRUCTIONS:
                 const basePromptStyle = currentMode === 'raven' ? `cinematic portrait of the fictional character ${currentSubjectName}${context}` : `photorealistic portrait of the public figure ${currentSubjectName}${context}`;
                 const finalDetails = descriptionParts.length > 0 ? `, with ${descriptionParts.join(', ')}` : '';
                 const finalPrompt = `${basePromptStyle}${finalDetails}, detailed face, intricate details, epic lighting, sharp focus`;
-                
+
                 const result = await callImagenAPI(finalPrompt, agent);
 
                 if (result.predictions?.[0]?.bytesBase64Encoded) {
@@ -1053,7 +1416,7 @@ CRITICAL INSTRUCTIONS:
                     aiImageContainer.innerHTML = `<img src="${imageUrl}" alt="AI-generated visual of ${currentSubjectName}" class="w-full h-full object-cover rounded-md">`;
                 } else {
                     let reason = "Image generation failed. The prompt may have been rejected by safety filters or an unknown error occurred.";
-                    console.error("Imagen Response Details:", JSON.stringify(result, null, 2));
+                    console.error("Image Response Details:", JSON.stringify(result, null, 2));
                     throw new Error(reason);
                 }
             } catch (error) {
@@ -1067,18 +1430,35 @@ CRITICAL INSTRUCTIONS:
         }
 
         async function generateIntel(searchContext = '') {
-            const agent = 'monday'; // Intel generation is a core Monday task for now
+            const agent = intelAgentSelect.value;
             const buttons = [intelBtn, deepSearchBtn];
             buttons.forEach(btn => btn.disabled = true);
             intelContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
-            
+
             try {
                 const prompt = getPromptForSection('intel', searchContext);
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "category": { "type": "STRING" }, "entries": { "type": "ARRAY", "items": { "type": "STRING" } } } } };
-                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+
+                let result;
+                if (agent === 'monday') {
+                    result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                } else {
+                    // For non-Gemini APIs, request JSON format in prompt
+                    const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON array following this schema: [{"category": "string", "entries": ["string", "string"]}]';
+                    result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                }
+
                 intelContent.innerHTML = '';
                 if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                    let dataText = result.candidates[0].content.parts[0].text;
+
+                    // Try to extract JSON from markdown code blocks if present
+                    const jsonMatch = dataText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch) {
+                        dataText = jsonMatch[1];
+                    }
+
+                    const data = JSON.parse(dataText);
                     if (data && data.length > 0) {
                         data.forEach(cat => {
                             if (cat.entries && cat.entries.length > 0) {
@@ -1113,29 +1493,59 @@ CRITICAL INSTRUCTIONS:
 
         async function enhanceIntelWithSearch() {
             const agent = searchAgentSelect.value;
-            intelContent.innerHTML = `<div class="mini-loader mx-auto"></div><p class="text-center text-sm text-text-secondary mt-2">Performing deep search via ${agent}... (Simulated)</p>`;
-            
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            const simulatedSearchResults = `According to online sources found by ${agent}, ${currentSubjectName} (${currentSubjectDetails}) is known for... [simulated search data would go here]`;
-            await generateIntel(simulatedSearchResults);
+            intelBtn.disabled = true;
+            deepSearchBtn.disabled = true;
+            intelContent.innerHTML = `<div class="mini-loader mx-auto"></div><p class="text-center text-sm text-text-secondary mt-2">Performing deep search via ${API_CONFIG[agent].name}...</p>`;
+
+            try {
+                const searchPrompt = `Search for and compile factual information about ${currentSubjectName}${currentSubjectDetails ? ' (' + currentSubjectDetails + ')' : ''}. Provide comprehensive, verified facts from reliable sources.`;
+                const searchResult = await callTeamTomorrowAPI(agent, searchPrompt);
+
+                let searchData = '';
+                if (searchResult.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    searchData = searchResult.candidates[0].content.parts[0].text;
+                }
+
+                await generateIntel(searchData);
+            } catch (error) {
+                console.error("Error during search enhancement:", error);
+                intelContent.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+                intelBtn.disabled = false;
+                deepSearchBtn.disabled = false;
+            }
         }
-        
-        async function generateConvoStyle() {
-            const agent = 'monday'; // Defaulting to Monday for consistency
+
+        async function generateConvoStyle(agent) {
             convoStyleBtn.disabled = true;
             convoStyleContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
             try {
                 const prompt = getPromptForSection('convo_style');
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "context": { "type": "STRING" }, "line": { "type": "STRING" } } } };
-                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+
+                let result;
+                if (agent === 'monday') {
+                    result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                } else {
+                    const jsonPrompt = prompt;
+                    result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                }
+
                 convoStyleContent.innerHTML = '';
                 if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                    let dataText = result.candidates[0].content.parts[0].text;
+
+                    // Try to extract JSON from markdown code blocks
+                    const jsonMatch = dataText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch) {
+                        dataText = jsonMatch[1];
+                    }
+
+                    const data = JSON.parse(dataText);
                     if (data && data.length > 0) {
                         data.forEach(item => {
                             const exampleDiv = document.createElement('div');
                             exampleDiv.className = 'convo-example';
-                            
+
                             const context = document.createElement('div');
                             context.className = 'convo-context';
                             context.textContent = item.context;
@@ -1162,26 +1572,41 @@ CRITICAL INSTRUCTIONS:
             }
         }
 
-        async function generateStrategicAnalysis() {
-            const agent = 'monday'; // Default
+        async function generateStrategicAnalysis(agent) {
             strategicBtn.disabled = true;
             strategicContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
             try {
                 const prompt = getPromptForSection('strategic');
                 const schema = { type: "OBJECT", properties: { "strengths": { "type": "ARRAY", "items": { "type": "STRING" } }, "weaknesses": { "type": "ARRAY", "items": { "type": "STRING" } }, "opportunities": { "type": "ARRAY", "items": { "type": "STRING" } }, "threats": { "type": "ARRAY", "items": { "type": "STRING" } } } };
-                const result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+
+                let result;
+                if (agent === 'monday') {
+                    result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                } else {
+                    const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON object with keys: strengths, weaknesses, opportunities, threats (each an array of strings).';
+                    result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                }
+
                 strategicContent.innerHTML = '';
 
                 if (result.candidates?.[0]?.content?.parts?.[0]) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                    let dataText = result.candidates[0].content.parts[0].text;
+
+                    // Try to extract JSON from markdown code blocks
+                    const jsonMatch = dataText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    if (jsonMatch) {
+                        dataText = jsonMatch[1];
+                    }
+
+                    const data = JSON.parse(dataText);
                     const categories = ['strengths', 'weaknesses', 'opportunities', 'threats'];
-                    
+
                     categories.forEach(catKey => {
                         const entries = data[catKey];
                         if (entries && entries.length > 0) {
                             const categoryDiv = document.createElement('div');
                             categoryDiv.className = 'swot-category';
-                            
+
                             const title = document.createElement('div');
                             title.className = 'swot-title';
                             title.textContent = catKey.charAt(0).toUpperCase() + catKey.slice(1);
@@ -1218,7 +1643,7 @@ CRITICAL INSTRUCTIONS:
                 if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                     contentElement.innerHTML = result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
                 } else {
-                    throw new Error("No content received from analysis API.");
+                    throw new Error("No content received from API.");
                 }
             } catch(error) {
                 console.error(`Error generating ${section}:`, error);
@@ -1229,7 +1654,8 @@ CRITICAL INSTRUCTIONS:
                 lucide.createIcons();
             }
         }
-        
+
+        // --- PDF EXPORT ---
         async function downloadSimplePDF() {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
@@ -1238,7 +1664,7 @@ CRITICAL INSTRUCTIONS:
             const originalButtonHTML = downloadSimplePdfBtn.innerHTML;
             downloadSimplePdfBtn.disabled = true;
             downloadSimplePdfBtn.innerHTML = '<div class="mini-loader btn-mini-loader mx-auto"></div>';
-            
+
             try {
                 let currentY = 20;
                 const leftMargin = 15;
@@ -1273,7 +1699,7 @@ CRITICAL INSTRUCTIONS:
                     categories.forEach(cat => {
                         const title = cat.querySelector('.intel-category-title').textContent;
                         const entries = Array.from(cat.querySelectorAll('.intel-entry')).map(e => e.textContent);
-                        
+
                         checkPageBreak(8);
                         pdf.setFontSize(11);
                         pdf.setFont('helvetica', 'bold');
@@ -1312,7 +1738,7 @@ CRITICAL INSTRUCTIONS:
                             const el = document.getElementById(section.contentId);
                             return el && el.textContent.trim() !== '' && !el.querySelector('.loader');
                         });
-                        if (!hasContent) return; 
+                        if (!hasContent) return;
 
                         checkPageBreak(20);
                         pdf.setFontSize(18);
@@ -1332,9 +1758,9 @@ CRITICAL INSTRUCTIONS:
                             pdf.setLineWidth(0.3);
                             pdf.line(leftMargin, currentY, leftMargin + usableWidth, currentY);
                             currentY += 8;
-                            
+
                             const text = contentElement.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
-                            
+
                             if (section.type === 'swot') {
                                 const swotCategories = contentElement.querySelectorAll('.swot-category');
                                 swotCategories.forEach(cat => {
@@ -1387,7 +1813,7 @@ CRITICAL INSTRUCTIONS:
 
                 pdf.save(fileName);
             } catch (error) {
-                console.error("Error generating text-based PDF:", error);
+                console.error("Error generating PDF:", error);
                 showError("Failed to generate PDF. Please try again.");
             } finally {
                 downloadSimplePdfBtn.disabled = false;
@@ -1405,17 +1831,16 @@ CRITICAL INSTRUCTIONS:
                 const dossierElement = document.getElementById('results-container');
                 const canvas = await html2canvas(dossierElement, {
                     backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-main'),
-                    useCORS: true, 
+                    useCORS: true,
                     logging: true,
                     onclone: (document) => {
-                        // Ensure the container is visible for the screenshot
                         document.getElementById('results-container').style.display = 'block';
                     }
                 });
 
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
-                
+
                 const pdf = new jsPDF({
                     orientation: 'p',
                     unit: 'px',
@@ -1440,7 +1865,7 @@ CRITICAL INSTRUCTIONS:
             errorText.textContent = message;
             errorMessage.classList.remove('hidden');
         }
-        
+
         // --- Initial Load ---
         loadSubjectHistory();
         loadContextHistory();
@@ -1449,4 +1874,3 @@ CRITICAL INSTRUCTIONS:
     </script>
 </body>
 </html>
-

@@ -1,15 +1,66 @@
-# hulukipedia
-Team Tomorrow Hulukipedia Dossier Generator (HTML exportable, cross-agent integration-ready)
+# Hulukipedia
+Team Tomorrow Hulukipedia Dossier Generator - **Now with Full Multi-API Integration!**
+
+## 🚀 What's New
+
+**Version 2.0 - Multi-API Integration Complete!**
+- ✅ **5 AI Providers Integrated**: Gemini, Perplexity, Claude, OpenAI, Venice
+- ✅ **Per-Section API Selection**: Choose the best model for each task
+- ✅ **Enhanced API Configuration UI**: Visual status indicators, helpful links
+- ✅ **Robust Error Handling**: Clear error messages and fallback options
+- ✅ **Dual Image Generation**: Support for both Imagen 3.0 and DALL-E 3
+- ✅ **Real-time Web Search**: Perplexity integration for up-to-date intel
+- ✅ **Uncensored Content**: Venice AI for unrestricted descriptions
 
 ## Overview
-This repository houses the Team Tomorrow Hulukipedia project - a comprehensive dossier generation system designed for cross-agent integration and HTML export capabilities.
+Hulukipedia is a comprehensive dossier generation system that combines multiple AI models to create detailed profiles of fictional characters and real-world entities. The system intelligently routes different tasks to the most appropriate AI provider for optimal results.
+
+## 🎯 Quick Start
+
+1. **Open the App**: Simply open `hulukipedia.html` in your web browser
+2. **Configure APIs**: Click the Settings (⚙️) button to add your API keys
+3. **Start Generating**: Enter a subject name and choose Raven (fictional) or Starling (real) search
+4. **Customize**: Select different AI models for each section using the dropdowns
+
+**📚 Full API Setup Guide**: See [API_INTEGRATION_GUIDE.md](./API_INTEGRATION_GUIDE.md) for detailed instructions
+
+## Features
+
+### 🎨 Dual-Mode Operation
+- **Raven Mode**: For fictional characters (games, movies, TV, books)
+- **Starling Mode**: For real-world public figures
+
+### 🤖 Multi-AI Integration
+| Provider | Specialty | API Required |
+|----------|-----------|--------------|
+| **Monday** (Gemini) | Fast text & image generation | Free tier available |
+| **Tuesday** (Perplexity) | Web search & research | Limited free |
+| **Wednesday** (Claude) | Deep analysis & psychology | Paid only |
+| **Friday** (OpenAI) | All-purpose GPT-4o + DALL-E | Limited free |
+| **Saturday** (Venice) | Uncensored content | Paid only |
+
+### 📋 Generated Sections
+- **Visual ID**: AI-generated portrait (Imagen or DALL-E)
+- **Confirmed Intel**: Structured fact database
+- **Physical Description**: 4 tone levels (Clinical → Locker Room)
+- **Communication Profile**: Speech patterns & mannerisms
+- **Conversational Examples**: In-character dialogue samples
+- **Psychological Profile**: Deep personality analysis
+- **Strategic Analysis**: SWOT breakdown
+- **Addendums**: Custom surveillance logs or career timelines
+
+### 💾 Export Options
+- **Simple PDF**: Text-based, optimized for readability
+- **Visual PDF**: Full screenshot with styling preserved
+- **Editable Content**: All sections are contenteditable for manual refinement
 
 ## Team Tomorrow Workflow
 
 ### Setup Instructions
 1. Clone this repository to your local development environment
-2. Ensure you have the necessary dependencies installed
-3. Follow the agent integration guidelines below
+2. Open `hulukipedia.html` in a modern web browser
+3. Configure API keys through the Settings modal
+4. Follow the agent integration guidelines below
 
 ### Development Process
 - All code should be paste-ready and modular
