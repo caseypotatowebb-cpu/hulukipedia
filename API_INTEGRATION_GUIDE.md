@@ -6,31 +6,31 @@ Hulukipedia now features **full multi-API integration** with support for 5 major
 
 ## Supported APIs
 
-### 🌙 Monday (Google Gemini)
+### 🌙 Gemini (Google)
 - **Model**: `gemini-2.0-flash`
 - **Best for**: Text generation, JSON responses, image generation (Imagen 3.0)
 - **Get API Key**: [Google AI Studio](https://aistudio.google.com/app/apikey)
 - **Endpoint**: `https://generativelanguage.googleapis.com/v1beta/models/`
 
-### 🔍 Tuesday (Perplexity)
+### 🔍 Perplexity
 - **Model**: `llama-3.1-sonar-large-128k-online`
 - **Best for**: Research, web search, fact-checking with real-time data
 - **Get API Key**: [Perplexity API](https://www.perplexity.ai/settings/api)
 - **Endpoint**: `https://api.perplexity.ai/chat/completions`
 
-### 🧠 Wednesday (Anthropic Claude)
+### 🧠 Claude (Anthropic)
 - **Model**: `claude-3-5-sonnet-20241022`
 - **Best for**: Deep analysis, psychological profiles, nuanced writing
 - **Get API Key**: [Anthropic Console](https://console.anthropic.com/)
 - **Endpoint**: `https://api.anthropic.com/v1/messages`
 
-### 🌟 Friday (OpenAI)
+### 🌟 OpenAI
 - **Model**: `gpt-4o` (text), `dall-e-3` (images)
 - **Best for**: All-purpose tasks, strategic analysis, DALL-E image generation
 - **Get API Key**: [OpenAI Platform](https://platform.openai.com/api-keys)
 - **Endpoint**: `https://api.openai.com/v1/chat/completions`
 
-### 🔓 Saturday (Venice AI)
+### 🔓 Venice AI
 - **Model**: `llama-3.3-70b`
 - **Best for**: Uncensored content, "Locker Room" physical descriptions
 - **Get API Key**: [Venice AI](https://venice.ai/)
@@ -53,10 +53,10 @@ Visit the links above for each service you want to use. You need at least **one 
 ### 3. Select APIs Per Section
 
 Each section has a dropdown to choose which AI model to use:
-- **Visual ID**: Monday (Imagen) or Friday (DALL-E)
-- **Confirmed Intel**: Monday, Tuesday (Perplexity), or Wednesday (Claude)
-- **Physical Description**: Monday, Wednesday, Friday, or Saturday
-- **Communication Profile**: Wednesday, Friday, or Monday
+- **Visual ID**: Gemini (Imagen) or OpenAI (DALL-E)
+- **Confirmed Intel**: Gemini, Perplexity, or Claude
+- **Physical Description**: Gemini, Claude, OpenAI, or Venice
+- **Communication Profile**: Claude, OpenAI, or Gemini
 - **And more...**
 
 ## API Integration Details
@@ -90,8 +90,8 @@ All API calls are made directly from the browser using `fetch()`. This requires:
 
 ## Feature Comparison
 
-| Feature | Monday | Tuesday | Wednesday | Friday | Saturday |
-|---------|--------|---------|-----------|--------|----------|
+| Feature | Gemini | Perplexity | Claude | OpenAI | Venice |
+|---------|--------|------------|--------|--------|--------|
 | Text Generation | ✅ | ✅ | ✅ | ✅ | ✅ |
 | JSON Mode | ✅ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
 | Image Generation | ✅ Imagen | ❌ | ❌ | ✅ DALL-E | ❌ |
@@ -106,23 +106,23 @@ All API calls are made directly from the browser using `fetch()`. This requires:
 ### For Best Results:
 
 **Fictional Characters (Raven Mode)**:
-- Intel: Monday (fast, accurate for pop culture)
-- Physical: Saturday (uncensored "Locker Room" descriptions)
-- Psychology: Wednesday (Claude excels at character analysis)
-- SWOT: Friday (structured strategic thinking)
+- Intel: Gemini (fast, accurate for pop culture)
+- Physical: Venice (uncensored "Locker Room" descriptions)
+- Psychology: Claude (excels at character analysis)
+- SWOT: OpenAI (structured strategic thinking)
 
 **Real People (Starling Mode)**:
-- Intel: Tuesday (Perplexity with web search)
-- Physical: Wednesday or Monday (balanced descriptions)
-- Communication: Wednesday (nuanced behavioral analysis)
-- Timeline: Tuesday (up-to-date career information)
+- Intel: Perplexity (with web search)
+- Physical: Claude or Gemini (balanced descriptions)
+- Communication: Claude (nuanced behavioral analysis)
+- Timeline: Perplexity (up-to-date career information)
 
 ### Cost Optimization:
 
-1. **Free tier**: Use Monday (Gemini) - generous free quota
-2. **Budget**: Mix Monday for most tasks + Tuesday for research only
-3. **Premium**: Use Wednesday (Claude) for all analysis tasks
-4. **Uncensored**: Enable Saturday only for "Locker Room" content
+1. **Free tier**: Use Gemini - generous free quota
+2. **Budget**: Mix Gemini for most tasks + Perplexity for research only
+3. **Premium**: Use Claude for all analysis tasks
+4. **Uncensored**: Enable Venice only for "Locker Room" content
 
 ## Troubleshooting
 
@@ -136,7 +136,7 @@ All API calls are made directly from the browser using `fetch()`. This requires:
 **Solution**: Rate limit exceeded - wait a few seconds or upgrade plan
 
 ### JSON Parsing Errors
-**Solution**: System automatically extracts JSON from markdown. If it fails, switch to Monday (Gemini) which has native JSON mode
+**Solution**: System automatically extracts JSON from markdown. If it fails, switch to Gemini which has native JSON mode
 
 ### CORS Errors
 **Solution**: All supported APIs have CORS enabled. If you see this:
@@ -172,11 +172,11 @@ const jsonMatch = result.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
 
 | Provider | Free Tier | Paid Tier |
 |----------|-----------|-----------|
-| Monday (Gemini) | 15 RPM | 360+ RPM |
-| Tuesday (Perplexity) | 5 RPM | 100+ RPM |
-| Wednesday (Claude) | N/A | 50+ RPM |
-| Friday (OpenAI) | 3 RPM | 500+ RPM |
-| Saturday (Venice) | N/A | Varies |
+| Gemini | 15 RPM | 360+ RPM |
+| Perplexity | 5 RPM | 100+ RPM |
+| Claude | N/A | 50+ RPM |
+| OpenAI | 3 RPM | 500+ RPM |
+| Venice | N/A | Varies |
 
 RPM = Requests Per Minute
 
