@@ -33,11 +33,11 @@ Hulukipedia is a comprehensive dossier generation system that combines multiple 
 ### 🤖 Multi-AI Integration
 | Provider | Specialty | API Required |
 |----------|-----------|--------------|
-| **Monday** (Gemini) | Fast text & image generation | Free tier available |
-| **Tuesday** (Perplexity) | Web search & research | Limited free |
-| **Wednesday** (Claude) | Deep analysis & psychology | Paid only |
-| **Friday** (OpenAI) | All-purpose GPT-4o + DALL-E | Limited free |
-| **Saturday** (Venice) | Uncensored content | Paid only |
+| **Gemini** (Google) | Fast text & image generation | Free tier available |
+| **Perplexity** | Web search & research | Limited free |
+| **Claude** (Anthropic) | Deep analysis & psychology | Paid only |
+| **OpenAI** | All-purpose GPT-4o + DALL-E | Limited free |
+| **Venice** | Uncensored content | Paid only |
 
 ### 📋 Generated Sections
 - **Visual ID**: AI-generated portrait (Imagen or DALL-E)
