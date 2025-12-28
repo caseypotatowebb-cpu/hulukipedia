@@ -1656,69 +1656,163 @@ CRITICAL INSTRUCTIONS:
         }
 
         // --- PDF EXPORT ---
+
+        // PDF rendering helper: Creates a context object to manage PDF state
+        function createPdfContext(pdf) {
+            const LEFT_MARGIN = 15;
+            const BOTTOM_MARGIN = 20;
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const usableWidth = pdf.internal.pageSize.getWidth() - LEFT_MARGIN - 15;
+
+            return {
+                pdf,
+                y: 20,
+                leftMargin: LEFT_MARGIN,
+                usableWidth,
+
+                checkPageBreak(neededHeight = 10) {
+                    if (this.y + neededHeight > pageHeight - BOTTOM_MARGIN) {
+                        this.pdf.addPage();
+                        this.y = 20;
+                    }
+                },
+
+                addSpacing(amount) {
+                    this.y += amount;
+                }
+            };
+        }
+
+        // PDF rendering helper: Renders a section header with title and underline
+        function renderPdfSectionHeader(ctx, title, fontSize = 14) {
+            ctx.checkPageBreak(20);
+            ctx.pdf.setFontSize(fontSize);
+            ctx.pdf.setFont('helvetica', 'bold');
+            ctx.pdf.text(title, ctx.leftMargin, ctx.y);
+            ctx.addSpacing(6);
+            ctx.pdf.setLineWidth(0.3);
+            ctx.pdf.line(ctx.leftMargin, ctx.y, ctx.leftMargin + ctx.usableWidth, ctx.y);
+            ctx.addSpacing(8);
+        }
+
+        // PDF rendering helper: Renders a list of categorized entries (intel/SWOT style)
+        function renderPdfCategoryEntries(ctx, categories, titleSelector, entrySelector, bulletChar = '-') {
+            categories.forEach(cat => {
+                const title = cat.querySelector(titleSelector).textContent;
+                const entries = Array.from(cat.querySelectorAll(entrySelector)).map(e => e.textContent);
+
+                ctx.checkPageBreak(8);
+                ctx.pdf.setFontSize(11);
+                ctx.pdf.setFont('helvetica', 'bold');
+                ctx.pdf.text(title, ctx.leftMargin, ctx.y);
+                ctx.addSpacing(5);
+
+                ctx.pdf.setFont('helvetica', 'normal');
+                const lineHeight = bulletChar === '•' ? 4 : 5;
+                entries.forEach(entry => {
+                    const lines = ctx.pdf.splitTextToSize(`${bulletChar} ${entry}`, ctx.usableWidth - 5);
+                    ctx.checkPageBreak(lines.length * lineHeight);
+                    ctx.pdf.text(lines, ctx.leftMargin + 5, ctx.y);
+                    ctx.addSpacing(lines.length * lineHeight);
+                });
+                ctx.addSpacing(3);
+            });
+        }
+
+        // PDF rendering helper: Renders conversation style examples
+        function renderPdfConvoExamples(ctx, contentElement) {
+            const examples = contentElement.querySelectorAll('.convo-example');
+            examples.forEach(ex => {
+                const context = ex.querySelector('.convo-context').textContent;
+                const line = ex.querySelector('.convo-line').textContent;
+
+                ctx.checkPageBreak(10);
+                ctx.pdf.setFontSize(11);
+                ctx.pdf.setFont('helvetica', 'bold');
+                ctx.pdf.text(context, ctx.leftMargin, ctx.y);
+                ctx.addSpacing(5);
+
+                ctx.pdf.setFont('helvetica', 'italic');
+                const lineText = ctx.pdf.splitTextToSize(`"${line}"`, ctx.usableWidth - 5);
+                ctx.pdf.text(lineText, ctx.leftMargin + 5, ctx.y);
+                ctx.addSpacing(lineText.length * 5 + 3);
+            });
+        }
+
+        // PDF rendering helper: Renders plain text content
+        function renderPdfTextContent(ctx, contentElement, fontStyle = 'normal') {
+            const text = contentElement.innerHTML
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/&nbsp;/g, ' ');
+
+            ctx.pdf.setFontSize(11);
+            ctx.pdf.setFont('helvetica', fontStyle);
+            const lines = ctx.pdf.splitTextToSize(text, ctx.usableWidth);
+            ctx.checkPageBreak(lines.length * 5);
+            ctx.pdf.text(lines, ctx.leftMargin, ctx.y);
+            ctx.addSpacing(lines.length * 5);
+        }
+
+        // PDF rendering helper: Checks if an element has valid content
+        function hasValidContent(element) {
+            return element &&
+                   element.textContent.trim() !== '' &&
+                   !element.querySelector('.loader');
+        }
+
+        // PDF rendering helper: Renders a single section based on its type
+        function renderPdfSection(ctx, section) {
+            const contentElement = document.getElementById(section.contentId);
+            if (!hasValidContent(contentElement)) return false;
+
+            renderPdfSectionHeader(ctx, section.title);
+
+            switch (section.type) {
+                case 'swot':
+                    const swotCategories = contentElement.querySelectorAll('.swot-category');
+                    renderPdfCategoryEntries(ctx, swotCategories, '.swot-title', '.swot-entry', '•');
+                    break;
+                case 'convo_style':
+                    renderPdfConvoExamples(ctx, contentElement);
+                    break;
+                default:
+                    renderPdfTextContent(ctx, contentElement, section.style || 'normal');
+            }
+
+            ctx.addSpacing(10);
+            return true;
+        }
+
+        // Main PDF export function
         async function downloadSimplePDF() {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
             const subjectName = currentSubjectName || 'Dossier';
             const fileName = `${subjectName.replace(/ /g, '_')}-Dossier.pdf`;
+
             const originalButtonHTML = downloadSimplePdfBtn.innerHTML;
             downloadSimplePdfBtn.disabled = true;
             downloadSimplePdfBtn.innerHTML = '<div class="mini-loader btn-mini-loader mx-auto"></div>';
 
             try {
-                let currentY = 20;
-                const leftMargin = 15;
-                const rightMargin = 15;
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                const usableWidth = pdf.internal.pageSize.getWidth() - leftMargin - rightMargin;
+                const ctx = createPdfContext(pdf);
 
-                const checkPageBreak = (neededHeight = 10) => {
-                    if (currentY + neededHeight > pageHeight - 20) {
-                        pdf.addPage();
-                        currentY = 20;
-                    }
-                };
-
+                // Render document title
                 pdf.setFontSize(22);
                 pdf.setFont('helvetica', 'bold');
-                pdf.text(`Dossier: ${currentSubjectName}`, leftMargin, currentY);
-                currentY += 15;
+                pdf.text(`Dossier: ${currentSubjectName}`, ctx.leftMargin, ctx.y);
+                ctx.addSpacing(15);
 
+                // Render Intel section
                 const intelElement = document.getElementById('intel-content');
-                if (intelElement && intelElement.textContent.trim() !== '' && !intelElement.querySelector('.loader')) {
-                    checkPageBreak(20);
-                    pdf.setFontSize(14);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.text("Confirmed Intel", leftMargin, currentY);
-                    currentY += 6;
-                    pdf.setLineWidth(0.3);
-                    pdf.line(leftMargin, currentY, leftMargin + usableWidth, currentY);
-                    currentY += 8;
-
+                if (hasValidContent(intelElement)) {
+                    renderPdfSectionHeader(ctx, "Confirmed Intel");
                     const categories = intelElement.querySelectorAll('.intel-category');
-                    categories.forEach(cat => {
-                        const title = cat.querySelector('.intel-category-title').textContent;
-                        const entries = Array.from(cat.querySelectorAll('.intel-entry')).map(e => e.textContent);
-
-                        checkPageBreak(8);
-                        pdf.setFontSize(11);
-                        pdf.setFont('helvetica', 'bold');
-                        pdf.text(title, leftMargin, currentY);
-                        currentY += 5;
-
-                        pdf.setFont('helvetica', 'normal');
-                        entries.forEach(entry => {
-                            const lines = pdf.splitTextToSize(`- ${entry}`, usableWidth - 5);
-                            checkPageBreak(lines.length * 5);
-                            pdf.text(lines, leftMargin + 5, currentY);
-                            currentY += (lines.length * 5);
-                        });
-                        currentY += 3;
-                    });
+                    renderPdfCategoryEntries(ctx, categories, '.intel-category-title', '.intel-entry', '-');
                 }
+                ctx.addSpacing(10);
 
-                currentY += 10;
-
+                // Define sections configuration
                 const mainSections = [
                     { title: "Physical Description", contentId: "physical-content", type: "text" },
                     { title: "Communication Profile", contentId: "comm-content", type: "text" },
@@ -1732,84 +1826,21 @@ CRITICAL INSTRUCTIONS:
                     { title: addendum2Title.textContent, contentId: "addendum-2-content", type: "text" }
                 ];
 
-                const processSections = (sections, isAddendum = false) => {
-                    if (isAddendum) {
-                        const hasContent = sections.some(section => {
-                            const el = document.getElementById(section.contentId);
-                            return el && el.textContent.trim() !== '' && !el.querySelector('.loader');
-                        });
-                        if (!hasContent) return;
+                // Render main sections
+                mainSections.forEach(section => renderPdfSection(ctx, section));
 
-                        checkPageBreak(20);
-                        pdf.setFontSize(18);
-                        pdf.setFont('helvetica', 'bold');
-                        pdf.text("ADDENDUMS", leftMargin, currentY);
-                        currentY += 15;
-                    }
-
-                    for (const section of sections) {
-                        const contentElement = document.getElementById(section.contentId);
-                        if (contentElement && contentElement.textContent.trim() !== '' && !contentElement.querySelector('.loader')) {
-                            checkPageBreak(20);
-                            pdf.setFontSize(14);
-                            pdf.setFont('helvetica', 'bold');
-                            pdf.text(section.title, leftMargin, currentY);
-                            currentY += 6;
-                            pdf.setLineWidth(0.3);
-                            pdf.line(leftMargin, currentY, leftMargin + usableWidth, currentY);
-                            currentY += 8;
-
-                            const text = contentElement.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
-
-                            if (section.type === 'swot') {
-                                const swotCategories = contentElement.querySelectorAll('.swot-category');
-                                swotCategories.forEach(cat => {
-                                    const title = cat.querySelector('.swot-title').textContent;
-                                    const entries = Array.from(cat.querySelectorAll('.swot-entry')).map(e => e.textContent);
-                                    checkPageBreak(8);
-                                    pdf.setFontSize(11);
-                                    pdf.setFont('helvetica', 'bold');
-                                    pdf.text(title, leftMargin, currentY);
-                                    currentY += 5;
-                                    pdf.setFont('helvetica', 'normal');
-                                    entries.forEach(entry => {
-                                        const lines = pdf.splitTextToSize(`• ${entry}`, usableWidth - 5);
-                                        checkPageBreak(lines.length * 4);
-                                        pdf.text(lines, leftMargin + 5, currentY);
-                                        currentY += (lines.length * 4);
-                                    });
-                                    currentY += 3;
-                                });
-                            } else if (section.type === 'convo_style') {
-                                const convoExamples = contentElement.querySelectorAll('.convo-example');
-                                convoExamples.forEach(ex => {
-                                    const context = ex.querySelector('.convo-context').textContent;
-                                    const line = ex.querySelector('.convo-line').textContent;
-                                    checkPageBreak(10);
-                                    pdf.setFontSize(11);
-                                    pdf.setFont('helvetica', 'bold');
-                                    pdf.text(context, leftMargin, currentY);
-                                    currentY += 5;
-                                    pdf.setFont('helvetica', 'italic');
-                                    const lineText = pdf.splitTextToSize(`"${line}"`, usableWidth - 5);
-                                    pdf.text(lineText, leftMargin + 5, currentY);
-                                    currentY += (lineText.length * 5) + 3;
-                                });
-                            } else {
-                                pdf.setFontSize(11);
-                                pdf.setFont('helvetica', section.style || 'normal');
-                                const lines = pdf.splitTextToSize(text, usableWidth);
-                                checkPageBreak(lines.length * 5);
-                                pdf.text(lines, leftMargin, currentY);
-                                currentY += lines.length * 5;
-                            }
-                            currentY += 10;
-                        }
-                    }
-                };
-
-                processSections(mainSections);
-                processSections(addendumSections, true);
+                // Render addendum sections (with header if any have content)
+                const hasAddendumContent = addendumSections.some(
+                    section => hasValidContent(document.getElementById(section.contentId))
+                );
+                if (hasAddendumContent) {
+                    ctx.checkPageBreak(20);
+                    pdf.setFontSize(18);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text("ADDENDUMS", ctx.leftMargin, ctx.y);
+                    ctx.addSpacing(15);
+                    addendumSections.forEach(section => renderPdfSection(ctx, section));
+                }
 
                 pdf.save(fileName);
             } catch (error) {
