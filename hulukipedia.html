@@ -452,8 +452,8 @@
                                     </button>
                                     <select id="intel-agent-select" class="agent-select">
                                         <option value="monday">Monday</option>
-                                        <option value="perplexity">Tuesday</option>
-                                        <option value="claude">Wednesday</option>
+                                        <option value="tuesday">Tuesday</option>
+                                        <option value="wednesday">Wednesday</option>
                                     </select>
                                 </div>
                                 <div class="flex-1 flex items-center">
@@ -461,7 +461,7 @@
                                         <i data-lucide="search-code" class="mr-2 h-4 w-4"></i><span>Search Enhance</span>
                                     </button>
                                      <select id="search-agent-select" class="agent-select">
-                                        <option value="perplexity">Tuesday</option>
+                                        <option value="tuesday">Tuesday</option>
                                         <option value="monday">Monday</option>
                                     </select>
                                 </div>
@@ -473,9 +473,9 @@
                             <h3><i data-lucide="person-standing" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Physical Description</h3>
                             <select id="physical-agent-select" class="agent-select -mt-4">
                                 <option value="monday">Monday</option>
-                                <option value="claude">Wednesday</option>
+                                <option value="wednesday">Wednesday</option>
                                 <option value="friday">Friday</option>
-                                <option value="venice">Saturday</option>
+                                <option value="saturday">Saturday</option>
                             </select>
                         </div>
                         <div id="physical-content" class="font-mono whitespace-pre-wrap min-h-[50px]" contenteditable="true"></div>
@@ -498,7 +498,7 @@
                         <div class="flex justify-between items-center">
                             <h3><i data-lucide="message-circle" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Communication Profile</h3>
                             <select id="comm-agent-select" class="agent-select -mt-4">
-                                <option value="claude">Wednesday</option>
+                                <option value="wednesday">Wednesday</option>
                                 <option value="friday">Friday</option>
                                 <option value="monday">Monday</option>
                             </select>
@@ -512,7 +512,7 @@
                         <div class="flex justify-between items-center">
                             <h3><i data-lucide="messages-square" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Conversational Style Examples</h3>
                             <select id="convo-agent-select" class="agent-select -mt-4">
-                                <option value="claude">Wednesday</option>
+                                <option value="wednesday">Wednesday</option>
                                 <option value="friday">Friday</option>
                                 <option value="monday">Monday</option>
                             </select>
@@ -526,7 +526,7 @@
                         <div class="flex justify-between items-center">
                             <h3><i data-lucide="brain-circuit" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Psychological Profile</h3>
                             <select id="psych-agent-select" class="agent-select -mt-4">
-                                <option value="claude">Wednesday</option>
+                                <option value="wednesday">Wednesday</option>
                                 <option value="friday">Friday</option>
                                 <option value="monday">Monday</option>
                             </select>
@@ -541,7 +541,7 @@
                             <h3><i data-lucide="crosshair" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Strategic Analysis (SWOT)</h3>
                             <select id="strategic-agent-select" class="agent-select -mt-4">
                                 <option value="friday">Friday</option>
-                                <option value="claude">Wednesday</option>
+                                <option value="wednesday">Wednesday</option>
                                 <option value="monday">Monday</option>
                             </select>
                         </div>
@@ -558,7 +558,7 @@
                         <div class="flex justify-between items-center">
                             <h3 id="addendum-1-title"><i data-lucide="clipboard-list" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Field Surveillance Log</h3>
                             <select id="addendum1-agent-select" class="agent-select -mt-4">
-                                <option value="claude">Wednesday</option>
+                                <option value="wednesday">Wednesday</option>
                                 <option value="friday">Friday</option>
                                 <option value="monday">Monday</option>
                             </select>
@@ -572,7 +572,7 @@
                         <div class="flex justify-between items-center">
                             <h3 id="addendum-2-title"><i data-lucide="users" class="inline-block h-5 w-5 mr-2 -mt-1"></i>Encounter Simulation</h3>
                             <select id="addendum2-agent-select" class="agent-select -mt-4">
-                                <option value="claude">Wednesday</option>
+                                <option value="wednesday">Wednesday</option>
                                 <option value="friday">Friday</option>
                                 <option value="monday">Monday</option>
                             </select>
@@ -682,12 +682,12 @@
                 endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/',
                 model: 'gemini-2.0-flash'
             },
-            perplexity: {
+            tuesday: {
                 name: 'Perplexity',
                 endpoint: 'https://api.perplexity.ai/chat/completions',
                 model: 'llama-3.1-sonar-large-128k-online'
             },
-            claude: {
+            wednesday: {
                 name: 'Claude',
                 endpoint: 'https://api.anthropic.com/v1/messages',
                 model: 'claude-3-5-sonnet-20241022'
@@ -697,7 +697,7 @@
                 endpoint: 'https://api.openai.com/v1/chat/completions',
                 model: 'gpt-4o'
             },
-            venice: {
+            saturday: {
                 name: 'Venice',
                 endpoint: 'https://api.venice.ai/api/v1/chat/completions',
                 model: 'llama-3.3-70b'
@@ -909,9 +909,16 @@
 
         function getApiKey(agent) {
             const keys = JSON.parse(localStorage.getItem(API_KEYS_KEY)) || {};
-            if (agent === 'monday') return keys.gemini || '';
-            if (agent === 'friday') return keys.openai || '';
-            return keys[agent] || '';
+            // Map day-based agent names to localStorage key names
+            const keyMapping = {
+                monday: 'gemini',
+                tuesday: 'perplexity',
+                wednesday: 'claude',
+                friday: 'openai',
+                saturday: 'venice'
+            };
+            const storageKey = keyMapping[agent] || agent;
+            return keys[storageKey] || '';
         }
 
         // --- UNIFIED API CALL HANDLER ---
@@ -926,13 +933,13 @@
             switch (agent) {
                 case 'monday':
                     return callGeminiAPI(prompt, config.generationConfig, apiKey);
-                case 'perplexity':
+                case 'tuesday':
                     return callPerplexityAPI(prompt, apiKey);
-                case 'claude':
+                case 'wednesday':
                     return callClaudeAPI(prompt, apiKey);
                 case 'friday':
                     return callOpenAIAPI(prompt, apiKey);
-                case 'venice':
+                case 'saturday':
                     return callVeniceAPI(prompt, apiKey);
                 default:
                     throw new Error(`Unknown agent: ${agent}`);
