@@ -335,7 +335,7 @@
                     <div class="bg-bg-section p-4 rounded-lg border border-border-color">
                         <div class="flex items-center justify-between mb-2">
                             <label for="gemini-key" class="block text-sm font-bold text-primary flex items-center">
-                                Monday (Gemini)
+                                Gemini
                                 <span id="gemini-status" class="api-status-indicator api-inactive ml-2"></span>
                             </label>
                             <span class="text-xs text-text-secondary">Text & Image Generation</span>
@@ -346,7 +346,7 @@
                     <div class="bg-bg-section p-4 rounded-lg border border-border-color">
                         <div class="flex items-center justify-between mb-2">
                             <label for="perplexity-key" class="block text-sm font-bold text-primary flex items-center">
-                                Tuesday (Perplexity)
+                                Perplexity
                                 <span id="perplexity-status" class="api-status-indicator api-inactive ml-2"></span>
                             </label>
                             <span class="text-xs text-text-secondary">Research & Search</span>
@@ -357,7 +357,7 @@
                     <div class="bg-bg-section p-4 rounded-lg border border-border-color">
                         <div class="flex items-center justify-between mb-2">
                             <label for="claude-key" class="block text-sm font-bold text-primary flex items-center">
-                                Wednesday (Claude)
+                                Claude
                                 <span id="claude-status" class="api-status-indicator api-inactive ml-2"></span>
                             </label>
                             <span class="text-xs text-text-secondary">Analysis & Writing</span>
@@ -368,7 +368,7 @@
                     <div class="bg-bg-section p-4 rounded-lg border border-border-color">
                         <div class="flex items-center justify-between mb-2">
                             <label for="openai-key" class="block text-sm font-bold text-primary flex items-center">
-                                Friday (OpenAI)
+                                OpenAI
                                 <span id="openai-status" class="api-status-indicator api-inactive ml-2"></span>
                             </label>
                             <span class="text-xs text-text-secondary">All-Purpose GPT</span>
@@ -379,7 +379,7 @@
                     <div class="bg-bg-section p-4 rounded-lg border border-border-color">
                         <div class="flex items-center justify-between mb-2">
                             <label for="venice-key" class="block text-sm font-bold text-primary flex items-center">
-                                Saturday (Venice)
+                                Venice
                                 <span id="venice-status" class="api-status-indicator api-inactive ml-2"></span>
                             </label>
                             <span class="text-xs text-text-secondary">Uncensored Content</span>
@@ -1141,7 +1141,7 @@
             }
 
             // Currently only Gemini supports image generation with Imagen
-            if (agent === 'monday') {
+            if (agent === 'gemini') {
                 const payload = { instances: [{ prompt: prompt }], parameters: { "sampleCount": 1} };
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
 
@@ -1166,7 +1166,7 @@
                      throw new Error("Image API returned empty response.");
                 }
                 return JSON.parse(responseText);
-            } else if (agent === 'friday') {
+            } else if (agent === 'openai') {
                 // OpenAI DALL-E integration
                 const response = await fetch('https://api.openai.com/v1/images/generations', {
                     method: 'POST',
@@ -1333,7 +1333,7 @@ CRITICAL INSTRUCTIONS:
                 }
             };
             const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
-            const result = await callTeamTomorrowAPI('monday', prompt, { generationConfig });
+            const result = await callTeamTomorrowAPI('gemini', prompt, { generationConfig });
 
             if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                 return JSON.parse(result.candidates[0].content.parts[0].text);
@@ -1394,7 +1394,7 @@ CRITICAL INSTRUCTIONS:
             try {
                 const detailsPrompt = getPromptForSection('image_details');
                 const schema = { type: "OBJECT", properties: { "hairColor": { "type": "STRING" }, "hairStyle": { "type": "STRING" }, "eyeColor": { "type": "STRING" }, "skinTone": { "type": "STRING" }, "build": { "type": "STRING" }, "distinguishingFeatures": { "type": "ARRAY", "items": { "type": "STRING" } } } };
-                const detailsResult = await callTeamTomorrowAPI('monday', detailsPrompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                const detailsResult = await callTeamTomorrowAPI('gemini', detailsPrompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
 
                 let descriptionParts = [];
                 if (detailsResult.candidates?.[0]?.content?.parts?.[0]) {
@@ -1438,7 +1438,7 @@ CRITICAL INSTRUCTIONS:
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "category": { "type": "STRING" }, "entries": { "type": "ARRAY", "items": { "type": "STRING" } } } } };
 
                 let result;
-                if (agent === 'monday') {
+                if (agent === 'gemini') {
                     result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
                 } else {
                     // For non-Gemini APIs, request JSON format in prompt
@@ -1521,7 +1521,7 @@ CRITICAL INSTRUCTIONS:
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "context": { "type": "STRING" }, "line": { "type": "STRING" } } } };
 
                 let result;
-                if (agent === 'monday') {
+                if (agent === 'gemini') {
                     result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
                 } else {
                     const jsonPrompt = prompt;
@@ -1578,7 +1578,7 @@ CRITICAL INSTRUCTIONS:
                 const schema = { type: "OBJECT", properties: { "strengths": { "type": "ARRAY", "items": { "type": "STRING" } }, "weaknesses": { "type": "ARRAY", "items": { "type": "STRING" } }, "opportunities": { "type": "ARRAY", "items": { "type": "STRING" } }, "threats": { "type": "ARRAY", "items": { "type": "STRING" } } } };
 
                 let result;
-                if (agent === 'monday') {
+                if (agent === 'gemini') {
                     result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
                 } else {
                     const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON object with keys: strengths, weaknesses, opportunities, threats (each an array of strings).';
@@ -1630,7 +1630,7 @@ CRITICAL INSTRUCTIONS:
             }
         }
 
-        async function generateTextSection(section, contentElement, buttonElement, agent = 'monday') {
+        async function generateTextSection(section, contentElement, buttonElement, agent = 'gemini') {
             buttonElement.disabled = true;
             const originalButtonHTML = buttonElement.innerHTML;
             buttonElement.innerHTML = `<div class="mini-loader btn-mini-loader"></div>`;
