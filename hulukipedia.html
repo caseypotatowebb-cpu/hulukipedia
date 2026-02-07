@@ -266,6 +266,94 @@
                 display: block;
             }
         }
+
+        /* --- Compilation Progress Panel --- */
+        .compile-progress {
+            background: var(--bg-section);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .compile-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+        .compile-step.active {
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+        .compile-step.done {
+            color: #10b981;
+        }
+        .compile-step.error {
+            color: #ef4444;
+        }
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .compile-progress-bar {
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+        .compile-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-gold), #10b981);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        .compile-btn {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .compile-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        .compile-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .api-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.625rem;
+            font-family: var(--font-mono);
+            background: var(--bg-section);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .api-badge.available { border-color: #10b981; color: #10b981; }
+        .api-badge.unavailable { border-color: #ef4444; color: #ef4444; opacity: 0.5; }
     </style>
 </head>
 <body class="theme-hulu">
@@ -405,6 +493,9 @@
                      <button id="reset-btn" class="bg-gray-700 hover:bg-gray-600 text-purple-200 font-bold py-2 px-4 rounded-md transition duration-200 flex items-center justify-center">
                          <i data-lucide="search" class="mr-2 h-4 w-4"></i> New Target
                      </button>
+                     <button id="compile-all-btn" class="compile-btn">
+                         <i data-lucide="zap" class="h-4 w-4"></i> Compile Full Dossier
+                     </button>
                      <div class="flex gap-2">
                         <button id="download-simple-pdf-btn" class="bg-rose-700 hover:bg-rose-800 text-white font-bold py-2 px-2 rounded-md transition duration-200 flex items-center text-xs">
                             <i data-lucide="file-text" class="mr-1 h-4 w-4"></i> Simple PDF
@@ -418,6 +509,19 @@
                       </button>
                  </div>
              </header>
+
+            <!-- Compilation Progress Panel -->
+            <div id="compile-progress-panel" class="hidden compile-progress">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-sm font-bold" style="color: var(--accent-gold); font-family: var(--font-mono); letter-spacing: 0.1em;">COMPILATION PIPELINE</h4>
+                    <div id="compile-api-badges" class="flex gap-1 flex-wrap"></div>
+                </div>
+                <div id="compile-steps"></div>
+                <div class="compile-progress-bar">
+                    <div id="compile-progress-fill" class="compile-progress-fill"></div>
+                </div>
+                <p id="compile-status-text" class="text-xs mt-2 text-center" style="color: var(--text-secondary); font-family: var(--font-mono);"></p>
+            </div>
 
             <div id="dossier-content" class="space-y-8">
                 <div class="bg-bg-container/80 backdrop-blur-sm p-6 md:p-8 rounded-lg border border-border-color shadow-xl space-y-6">
@@ -611,6 +715,12 @@
         const errorText = document.getElementById('error-text');
         const errorMessage = document.getElementById('error-message');
         const settingsBtn = document.getElementById('settings-btn');
+        const compileAllBtn = document.getElementById('compile-all-btn');
+        const compileProgressPanel = document.getElementById('compile-progress-panel');
+        const compileSteps = document.getElementById('compile-steps');
+        const compileProgressFill = document.getElementById('compile-progress-fill');
+        const compileStatusText = document.getElementById('compile-status-text');
+        const compileApiBadges = document.getElementById('compile-api-badges');
 
         const clarificationModal = document.getElementById('clarification-modal');
         const clarificationOptions = document.getElementById('clarification-options');
@@ -674,6 +784,8 @@
         const CONTEXT_HISTORY_KEY = 'hulukipediaContextHistory';
         const API_KEYS_KEY = 'hulukipediaApiKeys';
         const MAX_HISTORY_SIZE = 10;
+        let globalSearchContext = '';
+        let compilationInProgress = false;
 
         // --- API Configuration ---
         const API_CONFIG = {
@@ -718,6 +830,9 @@
             clarificationModal.classList.add('hidden');
             searchContainer.classList.remove('hidden');
         });
+
+        // Wire up compile button
+        compileAllBtn.addEventListener('click', compileFullDossier);
 
         // Wire up main section buttons
         generateImageBtn.addEventListener('click', generateAIImage);
@@ -777,6 +892,7 @@
         function startDossierGeneration(subject) {
             currentSubjectName = subject.name;
             currentSubjectDetails = subject.knownFor;
+            globalSearchContext = '';
 
             saveSubjectToHistory(currentSubjectName);
             if (currentSubjectDetails) {
@@ -788,6 +904,7 @@
             clarificationModal.classList.add('hidden');
             resultsContainer.classList.remove('hidden');
             errorMessage.classList.add('hidden');
+            compileProgressPanel.classList.add('hidden');
             dossierSubject.textContent = currentSubjectName.toUpperCase();
 
             const contentDivs = document.querySelectorAll('#dossier-content div[id$="-content"], #ai-image-container');
@@ -795,7 +912,19 @@
 
             setupAddendums();
             setupImageSearchLink();
-            generateIntel();
+
+            // Kick off web search in background to prime the search context
+            // Then generate intel using the search results
+            performWebSearch(currentSubjectName, currentSubjectDetails)
+                .then(context => {
+                    globalSearchContext = context;
+                    console.log(`[Init] Web search context loaded (${context.length} chars)`);
+                    return generateIntel(context);
+                })
+                .catch(e => {
+                    console.warn('[Init] Web search failed, generating intel with AI knowledge:', e.message);
+                    generateIntel();
+                });
         }
 
         function displayClarificationModal(options) {
@@ -823,12 +952,15 @@
             applyTheme('hulu');
             currentSubjectName = '';
             currentSubjectDetails = '';
+            globalSearchContext = '';
+            compilationInProgress = false;
             subjectInput.value = '';
             subjectDetailsInput.value = '';
             resultsContainer.classList.add('hidden');
             searchContainer.classList.remove('hidden');
             errorMessage.classList.add('hidden');
             clarificationModal.classList.add('hidden');
+            compileProgressPanel.classList.add('hidden');
             const contentDivs = document.querySelectorAll('#dossier-content div[id$="-content"], #ai-image-container');
             contentDivs.forEach(div => div.innerHTML = '');
         }
@@ -937,6 +1069,292 @@
                 default:
                     throw new Error(`Unknown agent: ${agent}`);
             }
+        }
+
+        // --- UTILITY: Available Agents ---
+        function getAvailableAgents() {
+            const allAgents = ['monday', 'perplexity', 'claude', 'friday', 'venice'];
+            return allAgents.filter(agent => {
+                const key = getApiKey(agent);
+                return key && key.trim().length > 0;
+            });
+        }
+
+        // --- UTILITY: API Fallback Chain ---
+        async function callWithFallback(prompt, config = {}, preferredAgent = null) {
+            const available = getAvailableAgents();
+            if (available.length === 0) {
+                throw new Error('No API keys configured. Please add at least one API key in Settings.');
+            }
+
+            const ordered = preferredAgent && available.includes(preferredAgent)
+                ? [preferredAgent, ...available.filter(a => a !== preferredAgent)]
+                : available;
+
+            let lastError;
+            for (const agent of ordered) {
+                try {
+                    const result = await callTeamTomorrowAPI(agent, prompt, config);
+                    return { result, agent };
+                } catch (e) {
+                    console.warn(`[Fallback] ${agent} failed: ${e.message}`);
+                    lastError = e;
+                }
+            }
+            throw new Error(`All APIs failed. Last error: ${lastError.message}`);
+        }
+
+        // --- SEARCH PIPELINE: Real Web Search ---
+        async function performWebSearch(query, context = '') {
+            const contextStr = context ? ` (${context})` : '';
+            const searchPrompt = `Search the internet thoroughly and compile comprehensive, factual, up-to-date information about: ${query}${contextStr}.
+
+Include ALL of the following if available:
+- Full name, date of birth, nationality, background
+- Physical appearance details (height, build, hair, eyes, distinguishing features)
+- Career history, major achievements, awards
+- Key relationships (family, partners, collaborators)
+- Personality traits, communication style, public behavior
+- Controversies, legal issues, public stances
+- Net worth, business ventures, philanthropy
+- Recent news and current status
+- For fictional characters: canon source material, abilities, story arcs, affiliations
+
+Be thorough, factual, and cite specific details. Do NOT fabricate information.`;
+
+            // Perplexity is ideal (has live web search built in), but fall back to others
+            const { result, agent } = await callWithFallback(searchPrompt, {}, 'perplexity');
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            console.log(`[Search] Web search completed via ${agent} (${text.length} chars)`);
+            return text;
+        }
+
+        // --- COMPILATION PROGRESS UI ---
+        const COMPILE_STEPS = [
+            { id: 'search', label: 'Web Search & Data Gathering' },
+            { id: 'intel', label: 'Confirmed Intel Compilation' },
+            { id: 'physical', label: 'Physical Description' },
+            { id: 'comm', label: 'Communication Profile' },
+            { id: 'convo', label: 'Conversational Examples' },
+            { id: 'psych', label: 'Psychological Profile' },
+            { id: 'strategic', label: 'Strategic Analysis (SWOT)' },
+            { id: 'image', label: 'Visual ID Generation' },
+            { id: 'addendum1', label: 'Addendum 1' },
+            { id: 'addendum2', label: 'Addendum 2' }
+        ];
+
+        function initCompileProgress() {
+            compileProgressPanel.classList.remove('hidden');
+            compileSteps.innerHTML = '';
+            compileProgressFill.style.width = '0%';
+            compileStatusText.textContent = 'Initializing compilation pipeline...';
+
+            // Show available API badges
+            const allAgents = [
+                { id: 'monday', label: 'Monday (Gemini)' },
+                { id: 'perplexity', label: 'Tuesday (Perplexity)' },
+                { id: 'claude', label: 'Wednesday (Claude)' },
+                { id: 'friday', label: 'Friday (OpenAI)' },
+                { id: 'venice', label: 'Saturday (Venice)' }
+            ];
+            compileApiBadges.innerHTML = allAgents.map(a => {
+                const available = getApiKey(a.id) ? 'available' : 'unavailable';
+                return `<span class="api-badge ${available}">${a.label}</span>`;
+            }).join('');
+
+            COMPILE_STEPS.forEach(step => {
+                const div = document.createElement('div');
+                div.className = 'compile-step';
+                div.id = `step-${step.id}`;
+                div.innerHTML = `
+                    <span class="step-icon">&#9675;</span>
+                    <span>${step.label}</span>
+                `;
+                compileSteps.appendChild(div);
+            });
+        }
+
+        function updateCompileStep(stepId, status, detail = '') {
+            const el = document.getElementById(`step-${stepId}`);
+            if (!el) return;
+            el.className = `compile-step ${status}`;
+            const icon = el.querySelector('.step-icon');
+            if (status === 'active') {
+                icon.innerHTML = '<div class="mini-loader" style="width:16px;height:16px;border-width:2px;"></div>';
+            } else if (status === 'done') {
+                icon.textContent = '\u2713';
+            } else if (status === 'error') {
+                icon.textContent = '\u2717';
+            }
+            if (detail) {
+                let detailEl = el.querySelector('.step-detail');
+                if (!detailEl) {
+                    detailEl = document.createElement('span');
+                    detailEl.className = 'step-detail';
+                    detailEl.style.cssText = 'font-size:0.7rem; opacity:0.7; margin-left:auto;';
+                    el.appendChild(detailEl);
+                }
+                detailEl.textContent = detail;
+            }
+        }
+
+        function updateCompileProgress(completed, total) {
+            const pct = Math.round((completed / total) * 100);
+            compileProgressFill.style.width = `${pct}%`;
+            compileStatusText.textContent = `${completed}/${total} steps complete (${pct}%)`;
+        }
+
+        // --- COMPILATION ENGINE ---
+        async function compileFullDossier() {
+            if (compilationInProgress) return;
+            compilationInProgress = true;
+            compileAllBtn.disabled = true;
+            compileAllBtn.innerHTML = '<div class="mini-loader btn-mini-loader" style="width:16px;height:16px;border-width:2px;"></div> Compiling...';
+
+            const totalSteps = COMPILE_STEPS.length;
+            let completedSteps = 0;
+
+            initCompileProgress();
+
+            try {
+                // ===== STEP 1: Web Search =====
+                updateCompileStep('search', 'active');
+                compileStatusText.textContent = 'Searching the web for comprehensive data...';
+                try {
+                    globalSearchContext = await performWebSearch(currentSubjectName, currentSubjectDetails);
+                    updateCompileStep('search', 'done', `${globalSearchContext.length} chars`);
+                } catch (e) {
+                    console.warn('[Compile] Web search failed, continuing with AI knowledge:', e.message);
+                    globalSearchContext = '';
+                    updateCompileStep('search', 'error', 'Using AI knowledge');
+                }
+                completedSteps++;
+                updateCompileProgress(completedSteps, totalSteps);
+
+                // ===== STEP 2: Intel =====
+                updateCompileStep('intel', 'active');
+                compileStatusText.textContent = 'Compiling confirmed intelligence...';
+                try {
+                    await generateIntel(globalSearchContext);
+                    updateCompileStep('intel', 'done');
+                } catch (e) {
+                    updateCompileStep('intel', 'error', e.message);
+                }
+                completedSteps++;
+                updateCompileProgress(completedSteps, totalSteps);
+
+                // ===== STEPS 3-7: Parallel generation of text sections =====
+                const parallelTasks = [
+                    {
+                        stepId: 'physical',
+                        fn: () => generateTextSection('physical_blue', physicalContent, physicalBtnBlue, getBestAgentFor('text'), globalSearchContext)
+                    },
+                    {
+                        stepId: 'comm',
+                        fn: () => generateTextSection('comm', commContent, commBtn, getBestAgentFor('text'), globalSearchContext)
+                    },
+                    {
+                        stepId: 'convo',
+                        fn: () => generateConvoStyle(getBestAgentFor('structured'), globalSearchContext)
+                    },
+                    {
+                        stepId: 'psych',
+                        fn: () => generateTextSection('psych', psychContent, psychBtn, getBestAgentFor('analysis'), globalSearchContext)
+                    },
+                    {
+                        stepId: 'strategic',
+                        fn: () => generateStrategicAnalysis(getBestAgentFor('structured'), globalSearchContext)
+                    }
+                ];
+
+                // Mark all parallel steps as active
+                parallelTasks.forEach(t => updateCompileStep(t.stepId, 'active'));
+                compileStatusText.textContent = 'Generating sections in parallel...';
+
+                const parallelResults = await Promise.allSettled(parallelTasks.map(async (task) => {
+                    try {
+                        await task.fn();
+                        updateCompileStep(task.stepId, 'done');
+                    } catch (e) {
+                        updateCompileStep(task.stepId, 'error', e.message);
+                        throw e;
+                    }
+                }));
+                completedSteps += parallelTasks.length;
+                updateCompileProgress(completedSteps, totalSteps);
+
+                // ===== STEP 8: Image Generation =====
+                updateCompileStep('image', 'active');
+                compileStatusText.textContent = 'Generating visual ID...';
+                try {
+                    await generateAIImage();
+                    updateCompileStep('image', 'done');
+                } catch (e) {
+                    updateCompileStep('image', 'error', e.message);
+                }
+                completedSteps++;
+                updateCompileProgress(completedSteps, totalSteps);
+
+                // ===== STEPS 9-10: Addendums =====
+                const addendumSection1 = currentMode === 'raven' ? 'surveillance' : 'timeline';
+                const addendumSection2 = currentMode === 'raven' ? 'scenario' : 'persona';
+
+                updateCompileStep('addendum1', 'active');
+                updateCompileStep('addendum2', 'active');
+                compileStatusText.textContent = 'Generating addendums...';
+
+                const addendumResults = await Promise.allSettled([
+                    (async () => {
+                        try {
+                            await generateTextSection(addendumSection1, addendum1Content, addendum1Btn, getBestAgentFor('text'), globalSearchContext);
+                            updateCompileStep('addendum1', 'done');
+                        } catch (e) {
+                            updateCompileStep('addendum1', 'error', e.message);
+                        }
+                    })(),
+                    (async () => {
+                        try {
+                            await generateTextSection(addendumSection2, addendum2Content, addendum2Btn, getBestAgentFor('text'), globalSearchContext);
+                            updateCompileStep('addendum2', 'done');
+                        } catch (e) {
+                            updateCompileStep('addendum2', 'error', e.message);
+                        }
+                    })()
+                ]);
+                completedSteps += 2;
+                updateCompileProgress(completedSteps, totalSteps);
+
+                compileStatusText.textContent = 'Compilation complete!';
+
+            } catch (error) {
+                console.error('[Compile] Fatal error:', error);
+                compileStatusText.textContent = `Compilation error: ${error.message}`;
+            } finally {
+                compilationInProgress = false;
+                compileAllBtn.disabled = false;
+                compileAllBtn.innerHTML = '<i data-lucide="zap" class="h-4 w-4"></i> Compile Full Dossier';
+                lucide.createIcons();
+            }
+        }
+
+        // --- AGENT SELECTION LOGIC ---
+        function getBestAgentFor(taskType) {
+            const available = getAvailableAgents();
+            if (available.length === 0) return 'monday'; // Will fail with clear error
+
+            const preferences = {
+                search: ['perplexity', 'monday', 'friday', 'claude', 'venice'],
+                text: ['claude', 'friday', 'monday', 'venice', 'perplexity'],
+                structured: ['monday', 'friday', 'claude', 'perplexity', 'venice'],
+                analysis: ['claude', 'friday', 'monday', 'perplexity', 'venice'],
+                image: ['monday', 'friday']
+            };
+
+            const prefs = preferences[taskType] || preferences.text;
+            for (const agent of prefs) {
+                if (available.includes(agent)) return agent;
+            }
+            return available[0];
         }
 
         // --- GEMINI API ---
@@ -1334,11 +1752,32 @@ CRITICAL INSTRUCTIONS:
                     }
                 }
             };
-            const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
-            const result = await callTeamTomorrowAPI('monday', prompt, { generationConfig });
+
+            // Try Gemini first (native JSON mode), then fall back to others
+            const available = getAvailableAgents();
+            let result;
+
+            if (available.includes('monday')) {
+                try {
+                    const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
+                    result = await callTeamTomorrowAPI('monday', prompt, { generationConfig });
+                } catch (e) {
+                    console.warn('[Clarification] Gemini failed, trying fallback:', e.message);
+                }
+            }
+
+            if (!result) {
+                const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON array: [{"name": "string", "knownFor": "string", "keyDetails": ["string"]}]';
+                const fallbackResult = await callWithFallback(jsonPrompt, {}, available.includes('perplexity') ? 'perplexity' : null);
+                result = fallbackResult.result;
+            }
 
             if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
-                return JSON.parse(result.candidates[0].content.parts[0].text);
+                let dataText = result.candidates[0].content.parts[0].text;
+                // Extract JSON from markdown code blocks if present
+                const jsonMatch = dataText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (jsonMatch) dataText = jsonMatch[1];
+                return JSON.parse(dataText);
             }
             return [];
         }
@@ -1435,17 +1874,26 @@ CRITICAL INSTRUCTIONS:
             buttons.forEach(btn => btn.disabled = true);
             intelContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
 
+            // Use global search context if available and none provided
+            const effectiveContext = searchContext || globalSearchContext;
+
             try {
-                const prompt = getPromptForSection('intel', searchContext);
+                const prompt = getPromptForSection('intel', effectiveContext);
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "category": { "type": "STRING" }, "entries": { "type": "ARRAY", "items": { "type": "STRING" } } } } };
 
                 let result;
-                if (agent === 'monday') {
-                    result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
-                } else {
-                    // For non-Gemini APIs, request JSON format in prompt
+                try {
+                    if (agent === 'monday') {
+                        result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                    } else {
+                        const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON array following this schema: [{"category": "string", "entries": ["string", "string"]}]';
+                        result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                    }
+                } catch (e) {
+                    console.warn(`[Intel] ${agent} failed, trying fallback:`, e.message);
                     const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON array following this schema: [{"category": "string", "entries": ["string", "string"]}]';
-                    result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                    const fallback = await callWithFallback(jsonPrompt);
+                    result = fallback.result;
                 }
 
                 intelContent.innerHTML = '';
@@ -1495,15 +1943,28 @@ CRITICAL INSTRUCTIONS:
             const agent = searchAgentSelect.value;
             intelBtn.disabled = true;
             deepSearchBtn.disabled = true;
-            intelContent.innerHTML = `<div class="mini-loader mx-auto"></div><p class="text-center text-sm text-text-secondary mt-2">Performing deep search via ${API_CONFIG[agent].name}...</p>`;
+            intelContent.innerHTML = `<div class="mini-loader mx-auto"></div><p class="text-center text-sm text-text-secondary mt-2">Performing deep search via ${API_CONFIG[agent]?.name || agent}...</p>`;
 
             try {
                 const searchPrompt = `Search for and compile factual information about ${currentSubjectName}${currentSubjectDetails ? ' (' + currentSubjectDetails + ')' : ''}. Provide comprehensive, verified facts from reliable sources.`;
-                const searchResult = await callTeamTomorrowAPI(agent, searchPrompt);
-
                 let searchData = '';
-                if (searchResult.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    searchData = searchResult.candidates[0].content.parts[0].text;
+
+                try {
+                    const searchResult = await callTeamTomorrowAPI(agent, searchPrompt);
+                    if (searchResult.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        searchData = searchResult.candidates[0].content.parts[0].text;
+                    }
+                } catch (e) {
+                    console.warn(`[SearchEnhance] ${agent} failed, trying fallback:`, e.message);
+                    const fallback = await callWithFallback(searchPrompt, {}, 'perplexity');
+                    if (fallback.result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        searchData = fallback.result.candidates[0].content.parts[0].text;
+                    }
+                }
+
+                // Update global search context so other sections can use it
+                if (searchData) {
+                    globalSearchContext = searchData;
                 }
 
                 await generateIntel(searchData);
@@ -1515,19 +1976,25 @@ CRITICAL INSTRUCTIONS:
             }
         }
 
-        async function generateConvoStyle(agent) {
+        async function generateConvoStyle(agent, searchContext = '') {
             convoStyleBtn.disabled = true;
             convoStyleContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
             try {
-                const prompt = getPromptForSection('convo_style');
+                const prompt = getPromptForSection('convo_style', searchContext || globalSearchContext);
                 const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { "context": { "type": "STRING" }, "line": { "type": "STRING" } } } };
 
                 let result;
-                if (agent === 'monday') {
-                    result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
-                } else {
-                    const jsonPrompt = prompt;
-                    result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                try {
+                    if (agent === 'monday') {
+                        result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                    } else {
+                        result = await callTeamTomorrowAPI(agent, prompt);
+                    }
+                } catch (e) {
+                    console.warn(`[ConvoStyle] ${agent} failed, trying fallback:`, e.message);
+                    const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON array: [{"context": "string", "line": "string"}]';
+                    const fallback = await callWithFallback(jsonPrompt);
+                    result = fallback.result;
                 }
 
                 convoStyleContent.innerHTML = '';
@@ -1572,19 +2039,26 @@ CRITICAL INSTRUCTIONS:
             }
         }
 
-        async function generateStrategicAnalysis(agent) {
+        async function generateStrategicAnalysis(agent, searchContext = '') {
             strategicBtn.disabled = true;
             strategicContent.innerHTML = `<div class="mini-loader mx-auto"></div>`;
             try {
-                const prompt = getPromptForSection('strategic');
+                const prompt = getPromptForSection('strategic', searchContext || globalSearchContext);
                 const schema = { type: "OBJECT", properties: { "strengths": { "type": "ARRAY", "items": { "type": "STRING" } }, "weaknesses": { "type": "ARRAY", "items": { "type": "STRING" } }, "opportunities": { "type": "ARRAY", "items": { "type": "STRING" } }, "threats": { "type": "ARRAY", "items": { "type": "STRING" } } } };
 
                 let result;
-                if (agent === 'monday') {
-                    result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
-                } else {
+                try {
+                    if (agent === 'monday') {
+                        result = await callTeamTomorrowAPI(agent, prompt, { generationConfig: { responseMimeType: "application/json", responseSchema: schema } });
+                    } else {
+                        const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON object with keys: strengths, weaknesses, opportunities, threats (each an array of strings).';
+                        result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                    }
+                } catch (e) {
+                    console.warn(`[Strategic] ${agent} failed, trying fallback:`, e.message);
                     const jsonPrompt = prompt + '\n\nReturn the response as a valid JSON object with keys: strengths, weaknesses, opportunities, threats (each an array of strings).';
-                    result = await callTeamTomorrowAPI(agent, jsonPrompt);
+                    const fallback = await callWithFallback(jsonPrompt);
+                    result = fallback.result;
                 }
 
                 strategicContent.innerHTML = '';
@@ -1632,14 +2106,21 @@ CRITICAL INSTRUCTIONS:
             }
         }
 
-        async function generateTextSection(section, contentElement, buttonElement, agent = 'monday') {
+        async function generateTextSection(section, contentElement, buttonElement, agent = 'monday', searchContext = '') {
             buttonElement.disabled = true;
             const originalButtonHTML = buttonElement.innerHTML;
             buttonElement.innerHTML = `<div class="mini-loader btn-mini-loader"></div>`;
             contentElement.innerHTML = `<div class="mini-loader mx-auto"></div>`;
             try {
-                const prompt = getPromptForSection(section);
-                const result = await callTeamTomorrowAPI(agent, prompt);
+                const prompt = getPromptForSection(section, searchContext || globalSearchContext);
+                let result;
+                try {
+                    result = await callTeamTomorrowAPI(agent, prompt);
+                } catch (e) {
+                    console.warn(`[TextSection] ${agent} failed, trying fallback:`, e.message);
+                    const fallback = await callWithFallback(prompt);
+                    result = fallback.result;
+                }
                 if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
                     contentElement.innerHTML = result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
                 } else {
