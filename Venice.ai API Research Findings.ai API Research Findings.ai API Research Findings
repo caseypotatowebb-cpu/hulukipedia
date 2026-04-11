@@ -1,0 +1,24 @@
+# Venice.ai API Research Findings
+
+## Core Capabilities
+- **Text Generation**: Uncensored models (e.g., Llama 3.2, Venice-Uncensored). Supports streaming and OpenAI-compatible endpoints.
+- **Image Generation**: Models like `z-image-turbo` and `nano-banana-pro`. Supports custom resolutions (1K, 2K, 4K), aspect ratios, and styles.
+- **Privacy**: Zero data retention, private inference.
+- **Unique Features**: 
+    - `venice_parameters`: Custom options like `enable_web_search`, `include_venice_system_prompt`, `character_slug`.
+    - **Prompt Caching**: Automatic and manual caching to reduce latency/cost.
+    - **Model Suffixes**: Parameters can be appended to model names (e.g., `model:enable_web_search=auto`).
+
+## Key Endpoints
+- **Base URL**: `https://api.venice.ai/api/v1`
+- **Models**: `GET /models` (can filter by type: text, image, asr, etc.)
+- **Chat**: `POST /chat/completions` (OpenAI compatible)
+- **Images**: `POST /image/generate`
+
+## Authentication
+- **Bearer Token**: `Authorization: Bearer <VENICE_API_KEY>`
+
+## Response Headers
+- `x-ratelimit-remaining-requests`, `x-ratelimit-remaining-tokens`
+- `x-venice-balance-usd`, `x-venice-balance-diem`
+- `CF-RAY` (Request ID)
