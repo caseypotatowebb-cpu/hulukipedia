@@ -2,13 +2,18 @@
  * Hulukipedia — Cloudflare Worker (Multi-Provider)
  * Serves the static frontend and proxies AI API calls.
  * API keys are stored as Worker secrets — never exposed to the browser.
- * 
+ *
  * Supported providers:
- *   - anthropic  (Claude — default, reliable text generation)
- *   - venice     (Uncensored text + image generation)
+ *   - venice     (Primary: uncensored text + web search + image generation)
+ *   - anthropic  (Claude — reliable structured output)
  *   - perplexity (Deep search / RAG with citations)
  *   - openrouter (Model routing — access to 200+ models)
- * 
+ *
+ * Venice integration notes:
+ *   - Web search: enabled via venice_parameters.enable_web_search
+ *   - Uncensored: include_venice_system_prompt: false removes content guardrails
+ *   - Image generation: /api/v1/image/generate with venice-sd35 default
+ *
  * A Team Tomorrow Production 🦅
  */
 
@@ -37,16 +42,56 @@ export default {
     if (url.pathname === "/api/providers") {
       return jsonResponse({
         providers: [
-          { id: "anthropic", name: "Anthropic Claude", capabilities: ["text"], models: ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"] },
-          { id: "venice", name: "Venice AI", capabilities: ["text", "image"], models: ["llama-3.3-70b", "deepseek-r1-671b", "qwen-2.5-coder-32b"] },
-          { id: "perplexity", name: "Perplexity Sonar", capabilities: ["text", "search"], models: ["sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-reasoning"] },
-          { id: "openrouter", name: "OpenRouter", capabilities: ["text"], models: ["anthropic/claude-sonnet-4-20250514", "google/gemini-2.5-flash", "openai/gpt-4o", "meta-llama/llama-3.3-70b-instruct"] },
-        ]
+          {
+            id: "venice",
+            name: "Venice AI",
+            capabilities: ["text", "image", "search"],
+            models: [
+              "venice-uncensored",
+              "llama-3.3-70b",
+              "llama-3.1-405b",
+              "zai-org-glm-5-1",
+              "deepseek-r1-671b",
+              "kimi-k2-5",
+              "qwen3-235b-a22b",
+              "qwen3-vl-235b-a22b",
+              "llama-3.2-11b-vision",
+              "qwen-2.5-coder-32b",
+              "deepseek-coder-v2-lite",
+              "llama-3.2-3b",
+              "qwen-2.5-72b",
+              "mistral-31-24b",
+            ],
+          },
+          {
+            id: "anthropic",
+            name: "Anthropic Claude",
+            capabilities: ["text"],
+            models: ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"],
+          },
+          {
+            id: "perplexity",
+            name: "Perplexity Sonar",
+            capabilities: ["text", "search"],
+            models: ["sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-reasoning"],
+          },
+          {
+            id: "openrouter",
+            name: "OpenRouter",
+            capabilities: ["text"],
+            models: [
+              "anthropic/claude-sonnet-4-20250514",
+              "google/gemini-2.5-flash",
+              "openai/gpt-4o",
+              "meta-llama/llama-3.3-70b-instruct",
+            ],
+          },
+        ],
       }, 200, url.origin);
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString() });
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "2.0.0" });
     }
 
     // ─── Static assets ───
@@ -69,10 +114,10 @@ async function handleAIProxy(request, env, origin) {
     const {
       systemPrompt,
       userPrompt,
-      maxTokens = 1000,
+      maxTokens = 1500,
       useSearch = false,
-      provider = "anthropic",   // default
-      model,                     // optional override
+      provider = "venice",   // Venice is now the primary default
+      model,
     } = body;
 
     if (!systemPrompt || !userPrompt) {
@@ -80,10 +125,10 @@ async function handleAIProxy(request, env, origin) {
     }
 
     switch (provider) {
+      case "venice":
+        return await callVenice(env, systemPrompt, userPrompt, maxTokens, model, useSearch, origin);
       case "anthropic":
         return await callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch, model, origin);
-      case "venice":
-        return await callVenice(env, systemPrompt, userPrompt, maxTokens, model, origin);
       case "perplexity":
         return await callPerplexity(env, systemPrompt, userPrompt, maxTokens, model, origin);
       case "openrouter":
@@ -94,6 +139,58 @@ async function handleAIProxy(request, env, origin) {
   } catch (e) {
     return jsonResponse({ error: `Proxy error: ${e.message}` }, 500, origin);
   }
+}
+
+
+// ─── Venice AI (text + optional web search) ───
+async function callVenice(env, systemPrompt, userPrompt, maxTokens, model, useSearch, origin) {
+  const apiKey = env.VENICE_API_KEY;
+  if (!apiKey) return jsonResponse({ error: "Venice API key not configured" }, 500, origin);
+
+  const selectedModel = model || "venice-uncensored";
+
+  const veniceBody = {
+    model: selectedModel,
+    max_tokens: maxTokens,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+    // Venice-specific parameters
+    venice_parameters: {
+      // Disable Venice's default system prompt so our prompts are fully respected
+      include_venice_system_prompt: false,
+      // Enable web search when requested — Venice's built-in grounded search
+      enable_web_search: useSearch ? "on" : "off",
+    },
+  };
+
+  const res = await fetch("https://api.venice.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(veniceBody),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `Venice returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
+  if (!res.ok) {
+    const errMsg = data?.error?.message || data?.error || data?.detail || `Venice error: ${res.status}`;
+    return jsonResponse({ error: errMsg }, res.status, origin);
+  }
+
+  const text = data.choices?.[0]?.message?.content || "";
+  // Venice may return citations in web search mode
+  const citations = data.citations || data.choices?.[0]?.message?.citations || [];
+  return jsonResponse({ text, citations, provider: "venice", model: selectedModel }, 200, origin);
 }
 
 
@@ -123,43 +220,17 @@ async function callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch
     body: JSON.stringify(anthropicBody),
   });
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `Anthropic returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
   if (!res.ok) return jsonResponse({ error: data.error?.message || `Anthropic error: ${res.status}` }, res.status, origin);
 
   const text = data.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
   return jsonResponse({ text, provider: "anthropic", model: anthropicBody.model }, 200, origin);
-}
-
-
-// ─── Venice AI (text) ───
-async function callVenice(env, systemPrompt, userPrompt, maxTokens, model, origin) {
-  const apiKey = env.VENICE_API_KEY;
-  if (!apiKey) return jsonResponse({ error: "Venice API key not configured" }, 500, origin);
-
-  const veniceBody = {
-    model: model || "llama-3.3-70b",
-    max_tokens: maxTokens,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.7,
-  };
-
-  const res = await fetch("https://api.venice.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(veniceBody),
-  });
-
-  const data = await res.json();
-  if (!res.ok) return jsonResponse({ error: data.error?.message || data.error || `Venice error: ${res.status}` }, res.status, origin);
-
-  const text = data.choices?.[0]?.message?.content || "";
-  return jsonResponse({ text, provider: "venice", model: veniceBody.model }, 200, origin);
 }
 
 
@@ -188,7 +259,13 @@ async function callPerplexity(env, systemPrompt, userPrompt, maxTokens, model, o
     body: JSON.stringify(pplxBody),
   });
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `Perplexity returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
   if (!res.ok) return jsonResponse({ error: data.error?.message || `Perplexity error: ${res.status}` }, res.status, origin);
 
   const text = data.choices?.[0]?.message?.content || "";
@@ -222,7 +299,13 @@ async function callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, o
     body: JSON.stringify(orBody),
   });
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `OpenRouter returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
   if (!res.ok) return jsonResponse({ error: data.error?.message || `OpenRouter error: ${res.status}` }, res.status, origin);
 
   const text = data.choices?.[0]?.message?.content || "";
@@ -244,14 +327,19 @@ async function handleImageProxy(request, env, origin) {
     const apiKey = env.VENICE_API_KEY;
     if (!apiKey) return jsonResponse({ error: "Venice API key not configured for images" }, 500, origin);
 
+    // Updated default to venice-sd35 (current Venice flagship image model)
+    const selectedModel = model || "venice-sd35";
+
     const imgBody = {
-      model: model || "fluently-xl",
+      model: selectedModel,
       prompt,
-      negative_prompt: negativePrompt || "",
+      negative_prompt: negativePrompt || "blurry, low quality, distorted, deformed",
       width: width || 1024,
       height: height || 1024,
       format: "webp",
       safe_mode: false,
+      // Venice image parameters
+      hide_watermark: true,
     };
 
     if (style) imgBody.style_preset = style;
@@ -265,11 +353,19 @@ async function handleImageProxy(request, env, origin) {
       body: JSON.stringify(imgBody),
     });
 
-    const data = await res.json();
-    if (!res.ok) return jsonResponse({ error: data.error || `Venice image error: ${res.status}` }, res.status, origin);
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      return jsonResponse({ error: `Venice image returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+    }
+
+    if (!res.ok) return jsonResponse({ error: data.error || data.detail || `Venice image error: ${res.status}` }, res.status, origin);
 
     const imageBase64 = data.images?.[0] || "";
-    return jsonResponse({ image: imageBase64, provider: "venice", model: imgBody.model }, 200, origin);
+    if (!imageBase64) return jsonResponse({ error: "Venice returned no image data" }, 502, origin);
+
+    return jsonResponse({ image: imageBase64, provider: "venice", model: selectedModel }, 200, origin);
   } catch (e) {
     return jsonResponse({ error: `Image proxy error: ${e.message}` }, 500, origin);
   }
@@ -277,23 +373,30 @@ async function handleImageProxy(request, env, origin) {
 
 
 // ═══════════════════════════════════════════════════════════════
-//  DEEP SEARCH PROXY — Perplexity
+//  DEEP SEARCH PROXY — Perplexity (with Venice fallback)
 // ═══════════════════════════════════════════════════════════════
 
 async function handleSearchProxy(request, env, origin) {
   try {
     const body = await request.json();
-    const { query, systemPrompt, model } = body;
+    const { query, systemPrompt, model, provider = "perplexity" } = body;
 
     if (!query) return jsonResponse({ error: "Missing query" }, 400, origin);
 
+    // Try Perplexity first, fall back to Venice web search if Perplexity key missing
+    if (provider === "venice" || !env.PERPLEXITY_API_KEY) {
+      return await callVeniceSearch(env, query, systemPrompt, model, origin);
+    }
+
     const apiKey = env.PERPLEXITY_API_KEY;
-    if (!apiKey) return jsonResponse({ error: "Perplexity API key not configured" }, 500, origin);
 
     const searchBody = {
       model: model || "sonar-pro",
       messages: [
-        { role: "system", content: systemPrompt || "You are a thorough research assistant. Provide detailed, well-cited answers." },
+        {
+          role: "system",
+          content: systemPrompt || "You are a thorough research assistant. Provide detailed, well-cited answers.",
+        },
         { role: "user", content: query },
       ],
       temperature: 0.2,
@@ -309,7 +412,13 @@ async function handleSearchProxy(request, env, origin) {
       body: JSON.stringify(searchBody),
     });
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      return jsonResponse({ error: `Perplexity search returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+    }
+
     if (!res.ok) return jsonResponse({ error: data.error?.message || `Perplexity search error: ${res.status}` }, res.status, origin);
 
     const text = data.choices?.[0]?.message?.content || "";
@@ -318,6 +427,55 @@ async function handleSearchProxy(request, env, origin) {
   } catch (e) {
     return jsonResponse({ error: `Search proxy error: ${e.message}` }, 500, origin);
   }
+}
+
+
+// ─── Venice Web Search (fallback / direct) ───
+async function callVeniceSearch(env, query, systemPrompt, model, origin) {
+  const apiKey = env.VENICE_API_KEY;
+  if (!apiKey) return jsonResponse({ error: "No search API key configured (Venice or Perplexity)" }, 500, origin);
+
+  const veniceBody = {
+    model: model || "llama-3.3-70b",
+    max_tokens: 2000,
+    messages: [
+      {
+        role: "system",
+        content: systemPrompt || "You are a thorough research assistant. Provide detailed, well-cited answers.",
+      },
+      { role: "user", content: query },
+    ],
+    temperature: 0.3,
+    venice_parameters: {
+      include_venice_system_prompt: false,
+      enable_web_search: "on",
+    },
+  };
+
+  const res = await fetch("https://api.venice.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(veniceBody),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `Venice search returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
+  if (!res.ok) {
+    const errMsg = data?.error?.message || data?.error || `Venice search error: ${res.status}`;
+    return jsonResponse({ error: errMsg }, res.status, origin);
+  }
+
+  const text = data.choices?.[0]?.message?.content || "";
+  const citations = data.citations || data.choices?.[0]?.message?.citations || [];
+  return jsonResponse({ text, citations, provider: "venice", model: veniceBody.model }, 200, origin);
 }
 
 

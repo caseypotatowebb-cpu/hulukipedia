@@ -24,6 +24,7 @@ const themes = {
 };
 
 // ─── PROVIDER DEFINITIONS ───
+// Venice models curated from the full catalog (api-docs-main/model-search.js + swagger.yaml)
 const PROVIDERS = {
   anthropic: {
     name: "Claude (Anthropic)",
@@ -37,12 +38,28 @@ const PROVIDERS = {
   },
   venice: {
     name: "Venice AI",
-    icon: "🎭",
+    icon: "🔮",
     color: "#8b5cf6",
     models: [
+      // ── Flagship / General Purpose ──
+      { id: "venice-uncensored", name: "Venice Uncensored ✦" },
       { id: "llama-3.3-70b", name: "Llama 3.3 70B" },
-      { id: "deepseek-r1-671b", name: "DeepSeek R1 671B" },
-      { id: "qwen-2.5-coder-32b", name: "Qwen 2.5 Coder" },
+      { id: "llama-3.1-405b", name: "Llama 3.1 405B" },
+      { id: "zai-org-glm-5-1", name: "GLM-5.1 (Default)" },
+      // ── Reasoning ──
+      { id: "deepseek-r1-671b", name: "DeepSeek R1 671B 🧠" },
+      { id: "kimi-k2-5", name: "Kimi K2.5 🧠" },
+      { id: "qwen3-235b-a22b", name: "Qwen3 235B 🧠" },
+      // ── Vision / Multimodal ──
+      { id: "qwen3-vl-235b-a22b", name: "Qwen3 VL 235B 👁" },
+      { id: "llama-3.2-11b-vision", name: "Llama 3.2 11B Vision 👁" },
+      // ── Code ──
+      { id: "qwen-2.5-coder-32b", name: "Qwen 2.5 Coder 32B </>" },
+      { id: "deepseek-coder-v2-lite", name: "DeepSeek Coder V2 </>" },
+      // ── Fast / Lightweight ──
+      { id: "llama-3.2-3b", name: "Llama 3.2 3B (Fast)" },
+      { id: "qwen-2.5-72b", name: "Qwen 2.5 72B" },
+      { id: "mistral-31-24b", name: "Mistral 3.1 24B" },
     ],
   },
   perplexity: {
@@ -69,8 +86,21 @@ const PROVIDERS = {
   },
 };
 
-const DEFAULT_PROVIDER = "anthropic";
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_PROVIDER = "venice";
+const DEFAULT_MODEL = "venice-uncensored";
+
+// ─── SMART SECTION DEFAULTS ───
+// Venice is best for creative/uncensored content; Perplexity for factual research
+const SECTION_DEFAULTS = {
+  intel:     { provider: "perplexity", model: "sonar-pro" },
+  physical:  { provider: "venice",     model: "venice-uncensored" },
+  comm:      { provider: "venice",     model: "llama-3.3-70b" },
+  convo:     { provider: "venice",     model: "venice-uncensored" },
+  psych:     { provider: "venice",     model: "deepseek-r1-671b" },
+  strategic: { provider: "venice",     model: "llama-3.3-70b" },
+  add1:      { provider: "venice",     model: "venice-uncensored" },
+  add2:      { provider: "venice",     model: "llama-3.3-70b" },
+};
 
 // ─── API HELPER ───
 const API_BASE = window.location.origin;
@@ -93,7 +123,7 @@ async function callAI(systemPrompt, userPrompt, provider = DEFAULT_PROVIDER, mod
   }
 }
 
-async function callAIWithSearch(systemPrompt, userPrompt, provider = "anthropic", model = null) {
+async function callAIWithSearch(systemPrompt, userPrompt, provider = "venice", model = null) {
   try {
     const res = await fetch(`${API_BASE}/api/ai`, {
       method: "POST",
@@ -129,7 +159,7 @@ async function callDeepSearch(query, systemPrompt = null) {
   }
 }
 
-async function callImageGen(prompt, negativePrompt = "", model = "fluently-xl") {
+async function callImageGen(prompt, negativePrompt = "", model = "venice-sd35") {
   try {
     const res = await fetch(`${API_BASE}/api/image`, {
       method: "POST",
@@ -145,6 +175,61 @@ async function callImageGen(prompt, negativePrompt = "", model = "fluently-xl") 
   } catch (e) {
     throw new Error(`Image generation failed: ${e.message}`);
   }
+}
+
+// ─── ROBUST JSON PARSER ───
+// Handles cases where AI wraps JSON in markdown fences or adds surrounding text
+function parseJsonArray(raw) {
+  if (!raw) return null;
+  // 1. Try direct parse
+  try { return JSON.parse(raw.trim()); } catch {}
+  // 2. Extract from markdown code fences ```json ... ```
+  const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) {
+    try { return JSON.parse(fenceMatch[1].trim()); } catch {}
+  }
+  // 3. Extract first JSON array [...] from surrounding text
+  const arrayMatch = raw.match(/\[[\s\S]*\]/);
+  if (arrayMatch) {
+    try { return JSON.parse(arrayMatch[0]); } catch {}
+  }
+  // 4. Extract first JSON object {...} (for single-item responses)
+  const objMatch = raw.match(/\{[\s\S]*\}/);
+  if (objMatch) {
+    try {
+      const obj = JSON.parse(objMatch[0]);
+      return Array.isArray(obj) ? obj : [obj];
+    } catch {}
+  }
+  return null;
+}
+
+// ─── LIGHTWEIGHT MARKDOWN RENDERER ───
+// Converts common markdown to HTML without requiring an external library
+function renderMarkdown(text) {
+  if (!text) return "";
+  return text
+    // Headers
+    .replace(/^### (.+)$/gm, '<h3 style="font-size:1em;font-weight:700;margin:0.75em 0 0.25em;text-transform:uppercase;letter-spacing:0.05em">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 style="font-size:1.1em;font-weight:700;margin:0.75em 0 0.25em">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 style="font-size:1.2em;font-weight:700;margin:0.75em 0 0.25em">$1</h1>')
+    // Bold + italic
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/_(.+?)_/g, '<em>$1</em>')
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.1);padding:0.1em 0.3em;border-radius:3px;font-family:monospace;font-size:0.9em">$1</code>')
+    // Bullet lists
+    .replace(/^[\*\-] (.+)$/gm, '<li style="margin-left:1em;list-style:disc">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<li style="margin-left:1em;list-style:decimal">$2</li>')
+    // Horizontal rules
+    .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid rgba(128,128,128,0.3);margin:0.75em 0">')
+    // Line breaks (double newline = paragraph break)
+    .replace(/\n\n/g, '</p><p style="margin:0.5em 0">')
+    // Single newlines
+    .replace(/\n/g, '<br>');
 }
 
 // ─── SECTION PROMPTS ───
@@ -244,7 +329,7 @@ function ProviderSelector({ provider, model, onProviderChange, onModelChange, th
         <ChevronDown size={10} />
       </div>
       {open && (
-        <div className="absolute top-full left-0 mt-1 rounded-md shadow-xl z-50 min-w-[200px]"
+        <div className="absolute top-full left-0 mt-1 rounded-md shadow-xl z-50 min-w-[220px]"
           style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}` }}
         >
           {Object.entries(PROVIDERS).map(([pid, pdef]) => (
@@ -303,7 +388,7 @@ function EditableSection({ content, onChange, className = "", style = {} }) {
       suppressContentEditableWarning
       onBlur={(e) => onChange?.(e.target.innerHTML)}
       className={`min-h-[50px] outline-none rounded p-1 transition-colors ${className}`}
-      style={{ cursor: "text", ...style }}
+      style={{ cursor: "text", lineHeight: "1.6", ...style }}
     />
   );
 }
@@ -367,9 +452,11 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model 
 
 // ─── IMAGE MODEL SELECTOR ───
 const IMAGE_MODELS = [
-  { id: "fluently-xl", name: "Fluently XL" },
+  { id: "venice-sd35", name: "Venice SD 3.5 (Default)" },
   { id: "flux-dev", name: "Flux Dev" },
   { id: "flux-dev-uncensored", name: "Flux Dev Uncensored" },
+  { id: "nano-banana-pro", name: "Nano Banana Pro" },
+  { id: "z-image-turbo", name: "Z-Image Turbo (Fast)" },
   { id: "stable-diffusion-3.5", name: "SD 3.5" },
 ];
 
@@ -388,8 +475,8 @@ export default function Hulukipedia() {
   const [globalProvider, setGlobalProvider] = useState(DEFAULT_PROVIDER);
   const [globalModel, setGlobalModel] = useState(DEFAULT_MODEL);
 
-  // Per-section provider overrides
-  const [sectionProviders, setSectionProviders] = useState({});
+  // Per-section provider overrides — initialized with smart defaults
+  const [sectionProviders, setSectionProviders] = useState(SECTION_DEFAULTS);
   const getSP = (section) => sectionProviders[section]?.provider || globalProvider;
   const getSM = (section) => sectionProviders[section]?.model || globalModel;
   const setSP = (section, provider, model) => {
@@ -409,7 +496,7 @@ export default function Hulukipedia() {
   const [addendum1, setAddendum1] = useState("");
   const [addendum2, setAddendum2] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
-  const [imageModel, setImageModel] = useState("fluently-xl");
+  const [imageModel, setImageModel] = useState("venice-sd35");
   const [imageSource, setImageSource] = useState("venice"); // "venice" or "pollinations"
   const [deepSearchResult, setDeepSearchResult] = useState(null);
 
@@ -427,16 +514,11 @@ export default function Hulukipedia() {
     try {
       const prompts = getPrompts(nameInput.trim(), detailsInput.trim(), searchMode);
       const raw = await callAI(prompts.clarify.system, prompts.clarify.user, globalProvider, globalModel);
-      const match = raw.match(/\[[\s\S]*\]/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        if (parsed.length === 1) {
-          startDossier(parsed[0], searchMode);
-        } else if (parsed.length > 1) {
-          setClarifications(parsed);
-        } else {
-          startDossier({ name: nameInput.trim(), knownFor: detailsInput.trim() }, searchMode);
-        }
+      const parsed = parseJsonArray(raw);
+      if (parsed && parsed.length === 1) {
+        startDossier(parsed[0], searchMode);
+      } else if (parsed && parsed.length > 1) {
+        setClarifications(parsed);
       } else {
         startDossier({ name: nameInput.trim(), knownFor: detailsInput.trim() }, searchMode);
       }
@@ -465,8 +547,13 @@ export default function Hulukipedia() {
     try {
       const p = getPrompts(name || subject.name, details || subject.details, m || mode);
       const raw = await callAI(p.intel.system, p.intel.user, getSP("intel"), getSM("intel"));
-      const match = raw.match(/\[[\s\S]*\]/);
-      if (match) setIntel(JSON.parse(match[0]));
+      const parsed = parseJsonArray(raw);
+      if (parsed) {
+        setIntel(parsed);
+      } else {
+        // Fallback: split raw text into a single category
+        setIntel([{ category: "Intel", entries: raw.split("\n").filter(l => l.trim()) }]);
+      }
     } catch (e) {
       setIntel([{ category: "Error", entries: [e.message] }]);
     }
@@ -483,9 +570,12 @@ export default function Hulukipedia() {
         p.intel.user.replace("List confirmed data", "Search the web and list thoroughly verified, current data"),
         getSP("intel"), getSM("intel")
       );
-      const match = raw.match(/\[[\s\S]*\]/);
-      if (match) setIntel(JSON.parse(match[0]));
-      else setIntel([{ category: "Enhanced Intel", entries: raw.split("\n").filter(Boolean) }]);
+      const parsed = parseJsonArray(raw);
+      if (parsed) {
+        setIntel(parsed);
+      } else {
+        setIntel([{ category: "Enhanced Intel", entries: raw.split("\n").filter(Boolean) }]);
+      }
     } catch (e) {
       setIntel([{ category: "Error", entries: [e.message] }]);
     }
@@ -514,7 +604,8 @@ export default function Hulukipedia() {
       const prompts = getPrompts(subject.name, subject.details, mode);
       const pObj = subKey ? prompts[promptKey](subKey) : prompts[promptKey];
       const text = await callAI(pObj.system, pObj.user, getSP(key), getSM(key));
-      setter(text.replace(/\n/g, "<br>"));
+      // Render markdown to HTML for rich display
+      setter(renderMarkdown(text));
     } catch (e) {
       setter(`<span style="color:#ef4444">Error: ${e.message}</span>`);
     }
@@ -572,7 +663,7 @@ export default function Hulukipedia() {
     setNameInput("");
     setDetailsInput("");
     setClarifications(null);
-    setSectionProviders({});
+    setSectionProviders(SECTION_DEFAULTS);
   };
 
   // ─── SEARCH LINKS ───
@@ -662,6 +753,8 @@ export default function Hulukipedia() {
         @keyframes slideDown { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin { to{transform:rotate(360deg)} }
         .animate-spin { animation: spin 1s linear infinite; }
+        .md-content p { margin: 0.4em 0; }
+        .md-content li { margin: 0.2em 0; }
       `}</style>
 
       <div className="max-w-5xl mx-auto p-4" style={{ position: "relative", zIndex: 10 }}>
@@ -775,135 +868,120 @@ export default function Hulukipedia() {
               Multiple matches found. Select the correct entity:
             </p>
             <div className="space-y-2">
-              {clarifications.map((opt, i) => (
+              {clarifications.map((c, i) => (
                 <button
                   key={i}
-                  onClick={() => startDossier(opt, mode)}
+                  onClick={() => startDossier(c, mode)}
                   className="w-full text-left p-3 rounded-md transition-all"
-                  style={{ border: `1px solid ${t.border}` }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.bgSection}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = "transparent"}
+                  style={{ backgroundColor: t.bgSection, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = t.accentGold}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = t.border}
                 >
-                  <div className="font-bold" style={{ color: t.accentGold }}>{opt.name}</div>
-                  <div className="text-sm italic" style={{ color: t.textSecondary }}>{opt.knownFor}</div>
+                  <div className="font-bold">{c.name}</div>
+                  <div className="text-xs mt-0.5" style={{ color: t.textSecondary }}>{c.knownFor}</div>
                 </button>
               ))}
+              <button
+                onClick={() => startDossier({ name: nameInput.trim(), knownFor: detailsInput.trim() }, mode)}
+                className="w-full text-left p-3 rounded-md transition-all text-xs"
+                style={{ backgroundColor: "transparent", border: `1px dashed ${t.border}`, color: t.textSecondary }}
+              >
+                None of these — proceed with "{nameInput}"
+              </button>
             </div>
-            <button
-              onClick={() => { setClarifications(null); }}
-              className="mt-4 w-full py-2 px-4 rounded-md font-bold transition-all"
-              style={{ backgroundColor: t.border, color: t.bgContainer }}
-            >
-              New Search
-            </button>
           </div>
         )}
 
         {/* ═══ RESULTS VIEW ═══ */}
         {view === "results" && (
           <div className="space-y-6">
-            {/* Header Bar */}
-            <div className="flex flex-wrap justify-between items-center pb-4 gap-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+            {/* Results Header */}
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <p style={{ color: t.textSecondary, fontFamily: "'Roboto Mono', monospace", fontSize: "0.75rem" }}>COMPILATION FOR:</p>
-                <h2 className="text-2xl font-bold" style={{ color: t.accentGold }}>{subject.name.toUpperCase()}</h2>
+                <h2 className="text-2xl font-bold" style={{ color: t.accentGold, fontFamily: "'Roboto Mono', monospace" }}>
+                  {subject.name.toUpperCase()}
+                </h2>
+                {subject.details && (
+                  <p className="text-sm" style={{ color: t.textSecondary }}>{subject.details}</p>
+                )}
               </div>
-              <div className="flex gap-2 flex-wrap items-center">
-                <ProviderSelector
-                  provider={globalProvider}
-                  model={globalModel}
-                  onProviderChange={(p) => { setGlobalProvider(p); setGlobalModel(PROVIDERS[p].models[0].id); }}
-                  onModelChange={setGlobalModel}
-                  theme={theme}
-                />
-                <button onClick={reset} className="flex items-center gap-1 py-2 px-3 rounded-md text-sm font-bold transition-all" style={{ backgroundColor: t.bgSection, color: t.textPrimary, border: `1px solid ${t.border}` }}>
-                  <Search size={14} /> New Target
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={copyAllText}
+                  className="flex items-center gap-1 py-1.5 px-3 rounded-md text-xs font-bold"
+                  style={{ backgroundColor: t.bgSection, border: `1px solid ${t.border}`, color: t.textSecondary }}
+                >
+                  <Copy size={12} /> Copy All
                 </button>
-                <button onClick={copyAllText} className="flex items-center gap-1 py-2 px-3 rounded-md text-sm font-bold transition-all" style={{ backgroundColor: "#7c3aed", color: "white" }}>
-                  <Copy size={14} /> Copy All
+                <button
+                  onClick={reset}
+                  className="flex items-center gap-1 py-1.5 px-3 rounded-md text-xs font-bold"
+                  style={{ backgroundColor: t.bgSection, border: `1px solid ${t.border}`, color: t.textSecondary }}
+                >
+                  <RefreshCw size={12} /> New Search
                 </button>
               </div>
             </div>
 
             {/* Main Dossier Card */}
             <div className="p-4 md:p-6 shadow-xl space-y-6" style={cardStyle}>
-              {/* ── Row 1: Visual ID + Intel ── */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Visual ID */}
-                <div>
-                  <div style={sectionTitleStyle}><Image size={16} /> Visual ID</div>
-                  {/* Image source toggle */}
-                  <div className="flex gap-1 mb-2">
-                    <button
-                      onClick={() => setImageSource("venice")}
-                      className="flex-1 py-1 px-2 rounded text-xs font-bold transition-all"
-                      style={{
-                        backgroundColor: imageSource === "venice" ? "#8b5cf6" : t.bgSection,
-                        color: imageSource === "venice" ? "white" : t.textSecondary,
-                        border: `1px solid ${imageSource === "venice" ? "#8b5cf6" : t.border}`,
-                      }}
-                    >
-                      Venice AI
-                    </button>
-                    <button
-                      onClick={() => setImageSource("pollinations")}
-                      className="flex-1 py-1 px-2 rounded text-xs font-bold transition-all"
-                      style={{
-                        backgroundColor: imageSource === "pollinations" ? "#16a34a" : t.bgSection,
-                        color: imageSource === "pollinations" ? "white" : t.textSecondary,
-                        border: `1px solid ${imageSource === "pollinations" ? "#16a34a" : t.border}`,
-                      }}
-                    >
-                      Pollinations
-                    </button>
+              <h3 className="text-xl font-bold text-center tracking-widest" style={{ color: t.accentGold, fontFamily: "'Roboto Mono', monospace" }}>
+                DOSSIER
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Image Panel */}
+                <div style={sectionStyle}>
+                  <div style={{ ...sectionTitleStyle }}>
+                    <Image size={16} /> Portrait
                   </div>
-                  {imageSource === "venice" && (
-                    <select
-                      value={imageModel}
-                      onChange={e => setImageModel(e.target.value)}
-                      className="w-full mb-2 rounded text-xs py-1 px-2"
-                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
-                    >
-                      {IMAGE_MODELS.map(m => (
-                        <option key={m.id} value={m.id}>{m.name}</option>
-                      ))}
-                    </select>
-                  )}
-                  <GenBtn
-                    onClick={generateImage}
-                    loading={loading.image}
-                    className="w-full mb-2"
-                    style={{ backgroundColor: t.accentGold, color: "#111" }}
-                  >
-                    <Sparkles size={14} className="mr-1" /> Generate Portrait
-                  </GenBtn>
-                  <div
-                    className="rounded-md flex items-center justify-center overflow-hidden"
-                    style={{ ...sectionStyle, aspectRatio: "1", padding: 0 }}
-                  >
-                    {loading.image ? (
-                      <Spinner size={40} />
-                    ) : imageUrl ? (
-                      <img src={imageUrl} alt={subject.name} className="w-full h-full object-cover" />
+                  <div className="flex flex-col gap-2">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Generated portrait" className="w-full rounded-md" style={{ maxHeight: "300px", objectFit: "cover" }} />
                     ) : (
-                      <span className="text-sm p-4 text-center" style={{ color: t.textSecondary }}>
-                        Click Generate to create AI portrait
-                      </span>
+                      <div className="flex items-center justify-center rounded-md" style={{ height: "200px", backgroundColor: t.bgMain, border: `1px dashed ${t.border}` }}>
+                        {loading.image ? <Spinner size={32} /> : <Image size={48} style={{ opacity: 0.2 }} />}
+                      </div>
                     )}
-                  </div>
-                  <div className="mt-2 grid grid-cols-3 gap-1">
-                    {getImageLinks().map((link, i) => (
-                      <a
-                        key={i}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center py-1.5 px-2 rounded text-xs font-bold transition-all"
-                        style={{ backgroundColor: t.accentGold, color: "#111" }}
+                    <div className="flex gap-1 flex-wrap">
+                      <select
+                        value={imageModel}
+                        onChange={e => setImageModel(e.target.value)}
+                        className="flex-1 rounded text-xs px-2 py-1"
+                        style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
                       >
-                        {link.name}
-                      </a>
-                    ))}
+                        {IMAGE_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setImageSource("venice")}
+                        className="flex-1 text-xs py-1 rounded font-bold"
+                        style={{ backgroundColor: imageSource === "venice" ? "#8b5cf6" : t.bgMain, color: imageSource === "venice" ? "white" : t.textSecondary, border: `1px solid ${t.border}` }}
+                      >
+                        Venice AI
+                      </button>
+                      <button
+                        onClick={() => setImageSource("pollinations")}
+                        className="flex-1 text-xs py-1 rounded font-bold"
+                        style={{ backgroundColor: imageSource === "pollinations" ? "#0ea5e9" : t.bgMain, color: imageSource === "pollinations" ? "white" : t.textSecondary, border: `1px solid ${t.border}` }}
+                      >
+                        Pollinations
+                      </button>
+                    </div>
+                    <GenBtn onClick={generateImage} loading={loading.image} style={{ backgroundColor: t.accentGold, color: "#111" }}>
+                      <Sparkles size={14} className="mr-1" /> Generate Portrait
+                    </GenBtn>
+                    <div className="flex gap-1 flex-wrap">
+                      {getImageLinks().map(link => (
+                        <a key={link.name} href={link.url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-center py-1.5 px-2 rounded text-xs font-bold transition-all"
+                          style={{ backgroundColor: t.accentGold, color: "#111" }}
+                        >
+                          {link.name}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -979,7 +1057,7 @@ export default function Hulukipedia() {
               {/* ── Physical Description ── */}
               <div style={sectionStyle}>
                 <SectionHeader icon={<PersonStanding size={16} />} title="Physical Description" sectionKey="physical" />
-                <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
+                <div className="min-h-[50px] md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
                   {loading.physical ? (
                     <div className="flex justify-center py-4"><Spinner size={20} /></div>
                   ) : (
@@ -1008,7 +1086,7 @@ export default function Hulukipedia() {
                 {loading.comm ? (
                   <div className="flex justify-center py-4"><Spinner size={20} /></div>
                 ) : (
-                  <EditableSection content={comm} onChange={setComm} style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
+                  <EditableSection content={comm} onChange={setComm} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
                 )}
                 <GenBtn onClick={() => generateSection("comm", setComm, "comm")} loading={loading.comm} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Profile
@@ -1021,7 +1099,7 @@ export default function Hulukipedia() {
                 {loading.convo ? (
                   <div className="flex justify-center py-4"><Spinner size={20} /></div>
                 ) : (
-                  <EditableSection content={convo} onChange={setConvo} style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
+                  <EditableSection content={convo} onChange={setConvo} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
                 )}
                 <GenBtn onClick={() => generateSection("convo", setConvo, "convo")} loading={loading.convo} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Examples
@@ -1034,7 +1112,7 @@ export default function Hulukipedia() {
                 {loading.psych ? (
                   <div className="flex justify-center py-4"><Spinner size={20} /></div>
                 ) : (
-                  <EditableSection content={psych} onChange={setPsych} style={{ fontFamily: "'Architects Daughter', cursive", fontSize: "0.95rem" }} />
+                  <EditableSection content={psych} onChange={setPsych} className="md-content" style={{ fontFamily: "'Architects Daughter', cursive", fontSize: "0.95rem" }} />
                 )}
                 <GenBtn onClick={() => generateSection("psych", setPsych, "psych")} loading={loading.psych} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Analyst Notes
@@ -1047,7 +1125,7 @@ export default function Hulukipedia() {
                 {loading.strategic ? (
                   <div className="flex justify-center py-4"><Spinner size={20} /></div>
                 ) : (
-                  <EditableSection content={strategic} onChange={setStrategic} style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
+                  <EditableSection content={strategic} onChange={setStrategic} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
                 )}
                 <GenBtn onClick={() => generateSection("strategic", setStrategic, "strategic")} loading={loading.strategic} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Analysis
@@ -1071,7 +1149,7 @@ export default function Hulukipedia() {
                 {loading.add1 ? (
                   <div className="flex justify-center py-4"><Spinner size={20} /></div>
                 ) : (
-                  <EditableSection content={addendum1} onChange={setAddendum1} style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
+                  <EditableSection content={addendum1} onChange={setAddendum1} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
                 )}
                 <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: "#0d9488", color: "white" }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Report" : "Generate Timeline"}
@@ -1088,7 +1166,7 @@ export default function Hulukipedia() {
                 {loading.add2 ? (
                   <div className="flex justify-center py-4"><Spinner size={20} /></div>
                 ) : (
-                  <EditableSection content={addendum2} onChange={setAddendum2} style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
+                  <EditableSection content={addendum2} onChange={setAddendum2} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
                 )}
                 <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: "#4f46e5", color: "white" }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Simulation" : "Generate Analysis"}
@@ -1099,7 +1177,7 @@ export default function Hulukipedia() {
             {/* Footer */}
             <footer className="text-center py-4" style={{ fontFamily: "'Satisfy', cursive", color: t.accentGold, fontSize: "0.875rem" }}>
               <p><strong>Disclaimer:</strong> AI-generated content. May contain inaccuracies.</p>
-              <p className="mt-1" style={{ fontSize: "0.75rem", color: t.textSecondary }}>Hulukipedia — A Team Tomorrow Production</p>
+              <p className="mt-1" style={{ fontSize: "0.75rem", color: t.textSecondary }}>Hulukipedia — A Team Tomorrow Production 🦅</p>
             </footer>
           </div>
         )}
