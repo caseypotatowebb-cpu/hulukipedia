@@ -67,14 +67,18 @@ After a successful deployment, the code must be backed up to GitHub so other tea
 
 ---
 
-## 4. Current Known Issues (The To-Do List)
+## 4. Current Known Issues & Recent Fixes (As of May 2026)
 
-For teammates jumping in, here is what currently needs fixing:
+**✅ RECENTLY FIXED (v2.1.0):**
+1. **Markdown Rendering:** Replaced the hand-rolled regex with `react-markdown` and `remark-gfm`. All dossier sections now render proper headings, lists, tables, and code blocks.
+2. **JSON Parsing:** Hardened the `parseJsonArray` function to handle trailing commas, single quotes, markdown fences, and multiple extraction strategies.
+3. **Venice Model List:** Updated the UI and backend to use Commander's actual favorites (GPT-4o, GLM 4.7 Flash Heretic, Claude Sonnet 4.5, Qwen 3.5, Venice Role Play, Grok 4.20, Aion 2.0, etc.).
+4. **Anthropic API:** Version header bumped to `2024-10-22`.
+5. **Venice Web Search:** The backend already correctly passes `enable_web_search: "on"` when requested.
 
-1.  **Markdown Rendering (Frontend):** The generated text currently displays raw markdown syntax (like `**bold**`) instead of formatted text. A markdown-to-HTML renderer (like `react-markdown`) needs to be implemented in `src/Hulukipedia.jsx`.
-2.  **Confirmed Intel JSON Parsing (Frontend/Backend):** The AI sometimes returns text that isn't perfectly formatted JSON, causing the Confirmed Intel section to fail to load. The parsing logic needs to be more forgiving, perhaps using regex to extract the JSON block.
-3.  **Venice Web Search (Backend):** Venice supports web search during generation, but the backend (`worker/index.js`) isn't currently passing the parameter to enable it when users request it.
-4.  **Venice Model Selection (Frontend):** The frontend only offers a few Venice models in the dropdowns. The full catalog needs to be added to the `providers` array in `src/Hulukipedia.jsx`.
+**⚠️ WHAT STILL NEEDS WORK:**
+- **Frontend State Management:** The React component is massive (>1200 lines). It should eventually be broken down into smaller components (e.g., `DossierCard.jsx`, `SearchPanel.jsx`).
+- **Additional API Providers:** We have the framework for OpenRouter and Anthropic, but the UI mostly leans on Venice and Perplexity. More tools could be wired into the frontend buttons.
 
 ---
 
