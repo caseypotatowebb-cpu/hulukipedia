@@ -47,20 +47,22 @@ export default {
             name: "Venice AI",
             capabilities: ["text", "image", "search"],
             models: [
-              "venice-uncensored",
+              "openai-gpt-4o-2024-11-20",
+              "olafangensan-glm-4.7-flash-heretic",
+              "claude-sonnet-4-5",
+              "qwen3-5-35b-a3b",
+              "venice-uncensored-role-play",
+              "qwen-3-6-plus",
+              "mistral-small-2603",
+              "grok-4-20",
+              "venice-uncensored-1-2",
+              "aion-labs-aion-2-0",
+              "deepseek-v4-pro",
+              "deepseek-v4-flash",
+              "grok-4-3",
+              "kimi-k2-6",
               "llama-3.3-70b",
-              "llama-3.1-405b",
-              "zai-org-glm-5-1",
-              "deepseek-r1-671b",
-              "kimi-k2-5",
-              "qwen3-235b-a22b",
               "qwen3-vl-235b-a22b",
-              "llama-3.2-11b-vision",
-              "qwen-2.5-coder-32b",
-              "deepseek-coder-v2-lite",
-              "llama-3.2-3b",
-              "qwen-2.5-72b",
-              "mistral-31-24b",
             ],
           },
           {
@@ -91,7 +93,7 @@ export default {
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "2.0.0" });
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "2.1.0" });
     }
 
     // ─── Static assets ───
@@ -147,7 +149,7 @@ async function callVenice(env, systemPrompt, userPrompt, maxTokens, model, useSe
   const apiKey = env.VENICE_API_KEY;
   if (!apiKey) return jsonResponse({ error: "Venice API key not configured" }, 500, origin);
 
-  const selectedModel = model || "venice-uncensored";
+  const selectedModel = model || "openai-gpt-4o-2024-11-20";
 
   const veniceBody = {
     model: selectedModel,
@@ -215,7 +217,7 @@ async function callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch
     headers: {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
+      "anthropic-version": "2024-10-22",
     },
     body: JSON.stringify(anthropicBody),
   });

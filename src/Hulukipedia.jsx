@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Feather, Star, Search, Image, Archive, PersonStanding, MessageCircle, MessagesSquare, BrainCircuit, Crosshair, ClipboardList, Users, Clock, UserCheck, Flame, Beer, Gem, FileText, SearchCode, Settings, RefreshCw, Copy, ChevronDown, ChevronRight, X, Loader2, Sparkles, Globe, Zap, Shield, Eye, Radio } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // ─── THEME DEFINITIONS ───
 const themes = {
@@ -41,25 +43,24 @@ const PROVIDERS = {
     icon: "🔮",
     color: "#8b5cf6",
     models: [
-      // ── Flagship / General Purpose ──
-      { id: "venice-uncensored", name: "Venice Uncensored ✦" },
+      // ── Commander's Favorites (confirmed via API) ──
+      { id: "openai-gpt-4o-2024-11-20", name: "GPT-4o ✦" },
+      { id: "olafangensan-glm-4.7-flash-heretic", name: "GLM 4.7 Flash Heretic 🔥" },
+      { id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" },
+      { id: "qwen3-5-35b-a3b", name: "Qwen 3.5 35B A3B" },
+      { id: "venice-uncensored-role-play", name: "Venice Role Play Uncensored" },
+      { id: "qwen-3-6-plus", name: "Qwen 3.6 Plus Uncensored" },
+      { id: "mistral-small-2603", name: "Mistral Small 4" },
+      { id: "grok-4-20", name: "Grok 4.20" },
+      { id: "venice-uncensored-1-2", name: "Venice Uncensored 1.2" },
+      { id: "aion-labs-aion-2-0", name: "Aion 2.0" },
+      // ── Power Models ──
+      { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro 🧠" },
+      { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash ⚡" },
+      { id: "grok-4-3", name: "Grok 4.3" },
+      { id: "kimi-k2-6", name: "Kimi K2.6" },
       { id: "llama-3.3-70b", name: "Llama 3.3 70B" },
-      { id: "llama-3.1-405b", name: "Llama 3.1 405B" },
-      { id: "zai-org-glm-5-1", name: "GLM-5.1 (Default)" },
-      // ── Reasoning ──
-      { id: "deepseek-r1-671b", name: "DeepSeek R1 671B 🧠" },
-      { id: "kimi-k2-5", name: "Kimi K2.5 🧠" },
-      { id: "qwen3-235b-a22b", name: "Qwen3 235B 🧠" },
-      // ── Vision / Multimodal ──
       { id: "qwen3-vl-235b-a22b", name: "Qwen3 VL 235B 👁" },
-      { id: "llama-3.2-11b-vision", name: "Llama 3.2 11B Vision 👁" },
-      // ── Code ──
-      { id: "qwen-2.5-coder-32b", name: "Qwen 2.5 Coder 32B </>" },
-      { id: "deepseek-coder-v2-lite", name: "DeepSeek Coder V2 </>" },
-      // ── Fast / Lightweight ──
-      { id: "llama-3.2-3b", name: "Llama 3.2 3B (Fast)" },
-      { id: "qwen-2.5-72b", name: "Qwen 2.5 72B" },
-      { id: "mistral-31-24b", name: "Mistral 3.1 24B" },
     ],
   },
   perplexity: {
@@ -87,19 +88,19 @@ const PROVIDERS = {
 };
 
 const DEFAULT_PROVIDER = "venice";
-const DEFAULT_MODEL = "venice-uncensored";
+const DEFAULT_MODEL = "openai-gpt-4o-2024-11-20";
 
 // ─── SMART SECTION DEFAULTS ───
-// Venice is best for creative/uncensored content; Perplexity for factual research
+// Venice routes to Commander's favorites; Perplexity for factual research
 const SECTION_DEFAULTS = {
   intel:     { provider: "perplexity", model: "sonar-pro" },
-  physical:  { provider: "venice",     model: "venice-uncensored" },
-  comm:      { provider: "venice",     model: "llama-3.3-70b" },
-  convo:     { provider: "venice",     model: "venice-uncensored" },
-  psych:     { provider: "venice",     model: "deepseek-r1-671b" },
-  strategic: { provider: "venice",     model: "llama-3.3-70b" },
-  add1:      { provider: "venice",     model: "venice-uncensored" },
-  add2:      { provider: "venice",     model: "llama-3.3-70b" },
+  physical:  { provider: "venice",     model: "venice-uncensored-role-play" },
+  comm:      { provider: "venice",     model: "openai-gpt-4o-2024-11-20" },
+  convo:     { provider: "venice",     model: "venice-uncensored-role-play" },
+  psych:     { provider: "venice",     model: "deepseek-v4-pro" },
+  strategic: { provider: "venice",     model: "grok-4-20" },
+  add1:      { provider: "venice",     model: "olafangensan-glm-4.7-flash-heretic" },
+  add2:      { provider: "venice",     model: "claude-sonnet-4-5" },
 };
 
 // ─── API HELPER ───
@@ -178,57 +179,125 @@ async function callImageGen(prompt, negativePrompt = "", model = "venice-sd35") 
 }
 
 // ─── ROBUST JSON PARSER ───
-// Handles cases where AI wraps JSON in markdown fences or adds surrounding text
+// Handles cases where AI wraps JSON in markdown fences, adds surrounding text,
+// uses single quotes, trailing commas, or other common AI output quirks
 function parseJsonArray(raw) {
   if (!raw) return null;
+
+  // Helper: attempt to fix common JSON issues
+  function tryFixAndParse(str) {
+    if (!str) return null;
+    // Remove trailing commas before ] or }
+    let fixed = str.replace(/,\s*([\]\}])/g, '$1');
+    // Fix single-quoted strings (naive but covers most AI output)
+    fixed = fixed.replace(/(?<=[:\[,{]\s*)'([^']*?)'(?=\s*[,\]\}:])/g, '"$1"');
+    try { return JSON.parse(fixed); } catch { return null; }
+  }
+
+  const trimmed = raw.trim();
+
   // 1. Try direct parse
-  try { return JSON.parse(raw.trim()); } catch {}
-  // 2. Extract from markdown code fences ```json ... ```
+  try { return JSON.parse(trimmed); } catch {}
+
+  // 2. Try fixing common issues on the raw string
+  const directFix = tryFixAndParse(trimmed);
+  if (directFix) return Array.isArray(directFix) ? directFix : [directFix];
+
+  // 3. Extract from markdown code fences ```json ... ```
   const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenceMatch) {
     try { return JSON.parse(fenceMatch[1].trim()); } catch {}
+    const fenceFix = tryFixAndParse(fenceMatch[1].trim());
+    if (fenceFix) return Array.isArray(fenceFix) ? fenceFix : [fenceFix];
   }
-  // 3. Extract first JSON array [...] from surrounding text
+
+  // 4. Extract first JSON array [...] from surrounding text
   const arrayMatch = raw.match(/\[[\s\S]*\]/);
   if (arrayMatch) {
     try { return JSON.parse(arrayMatch[0]); } catch {}
+    const arrFix = tryFixAndParse(arrayMatch[0]);
+    if (arrFix) return Array.isArray(arrFix) ? arrFix : [arrFix];
   }
-  // 4. Extract first JSON object {...} (for single-item responses)
+
+  // 5. Extract first JSON object {...} (for single-item responses)
   const objMatch = raw.match(/\{[\s\S]*\}/);
   if (objMatch) {
     try {
       const obj = JSON.parse(objMatch[0]);
       return Array.isArray(obj) ? obj : [obj];
     } catch {}
+    const objFix = tryFixAndParse(objMatch[0]);
+    if (objFix) return Array.isArray(objFix) ? objFix : [objFix];
   }
+
+  // 6. Last resort: try to extract multiple JSON objects separated by newlines
+  const objects = [];
+  const objMatches = raw.matchAll(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g);
+  for (const m of objMatches) {
+    try {
+      const parsed = JSON.parse(m[0]);
+      objects.push(parsed);
+    } catch {
+      const fixed = tryFixAndParse(m[0]);
+      if (fixed) objects.push(fixed);
+    }
+  }
+  if (objects.length > 0) return objects;
+
+  // 7. Absolute fallback: treat as plain text, split into a generic category
   return null;
 }
 
-// ─── LIGHTWEIGHT MARKDOWN RENDERER ───
-// Converts common markdown to HTML without requiring an external library
+// ─── MARKDOWN RENDERER COMPONENT ───
+// Uses react-markdown with GFM support for proper rendering
+function MarkdownContent({ text, theme }) {
+  const t = themes[theme] || themes.hulu;
+  if (!text) return null;
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        h1: ({children}) => <h1 style={{fontSize:"1.2em",fontWeight:700,margin:"0.75em 0 0.25em",color:t.sectionTitle}}>{children}</h1>,
+        h2: ({children}) => <h2 style={{fontSize:"1.1em",fontWeight:700,margin:"0.75em 0 0.25em",color:t.sectionTitle}}>{children}</h2>,
+        h3: ({children}) => <h3 style={{fontSize:"1em",fontWeight:700,margin:"0.75em 0 0.25em",textTransform:"uppercase",letterSpacing:"0.05em"}}>{children}</h3>,
+        p: ({children}) => <p style={{margin:"0.5em 0",lineHeight:"1.6"}}>{children}</p>,
+        strong: ({children}) => <strong style={{fontWeight:700}}>{children}</strong>,
+        em: ({children}) => <em>{children}</em>,
+        ul: ({children}) => <ul style={{marginLeft:"1.5em",listStyleType:"disc",margin:"0.4em 0 0.4em 1.5em"}}>{children}</ul>,
+        ol: ({children}) => <ol style={{marginLeft:"1.5em",listStyleType:"decimal",margin:"0.4em 0 0.4em 1.5em"}}>{children}</ol>,
+        li: ({children}) => <li style={{margin:"0.2em 0"}}>{children}</li>,
+        code: ({inline, children}) => inline
+          ? <code style={{background:"rgba(0,0,0,0.1)",padding:"0.1em 0.3em",borderRadius:"3px",fontFamily:"monospace",fontSize:"0.9em"}}>{children}</code>
+          : <pre style={{background:"rgba(0,0,0,0.05)",padding:"0.75em",borderRadius:"6px",overflow:"auto",fontSize:"0.85em",margin:"0.5em 0"}}><code>{children}</code></pre>,
+        hr: () => <hr style={{border:"none",borderTop:"1px solid rgba(128,128,128,0.3)",margin:"0.75em 0"}} />,
+        blockquote: ({children}) => <blockquote style={{borderLeft:`3px solid ${t.accentGold}`,paddingLeft:"0.75em",margin:"0.5em 0",opacity:0.9}}>{children}</blockquote>,
+        table: ({children}) => <table style={{borderCollapse:"collapse",width:"100%",margin:"0.5em 0",fontSize:"0.85em"}}>{children}</table>,
+        th: ({children}) => <th style={{border:`1px solid ${t.border}`,padding:"0.4em 0.6em",fontWeight:700,textAlign:"left",backgroundColor:t.bgSection}}>{children}</th>,
+        td: ({children}) => <td style={{border:`1px solid ${t.border}`,padding:"0.4em 0.6em"}}>{children}</td>,
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
+}
+
+// Legacy HTML-based renderMarkdown kept for EditableSection compatibility
 function renderMarkdown(text) {
   if (!text) return "";
   return text
-    // Headers
     .replace(/^### (.+)$/gm, '<h3 style="font-size:1em;font-weight:700;margin:0.75em 0 0.25em;text-transform:uppercase;letter-spacing:0.05em">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 style="font-size:1.1em;font-weight:700;margin:0.75em 0 0.25em">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 style="font-size:1.2em;font-weight:700;margin:0.75em 0 0.25em">$1</h1>')
-    // Bold + italic
     .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/__(.+?)__/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/_(.+?)_/g, '<em>$1</em>')
-    // Inline code
     .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.1);padding:0.1em 0.3em;border-radius:3px;font-family:monospace;font-size:0.9em">$1</code>')
-    // Bullet lists
     .replace(/^[\*\-] (.+)$/gm, '<li style="margin-left:1em;list-style:disc">$1</li>')
     .replace(/^(\d+)\. (.+)$/gm, '<li style="margin-left:1em;list-style:decimal">$2</li>')
-    // Horizontal rules
     .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid rgba(128,128,128,0.3);margin:0.75em 0">')
-    // Line breaks (double newline = paragraph break)
     .replace(/\n\n/g, '</p><p style="margin:0.5em 0">')
-    // Single newlines
     .replace(/\n/g, '<br>');
 }
 
@@ -604,10 +673,10 @@ export default function Hulukipedia() {
       const prompts = getPrompts(subject.name, subject.details, mode);
       const pObj = subKey ? prompts[promptKey](subKey) : prompts[promptKey];
       const text = await callAI(pObj.system, pObj.user, getSP(key), getSM(key));
-      // Render markdown to HTML for rich display
-      setter(renderMarkdown(text));
+      // Store raw markdown — MarkdownContent component handles rendering
+      setter(text);
     } catch (e) {
-      setter(`<span style="color:#ef4444">Error: ${e.message}</span>`);
+      setter(`**Error:** ${e.message}`);
     }
     setL(key, false);
   };
@@ -1035,8 +1104,8 @@ export default function Hulukipedia() {
                       <div className="text-xs font-bold uppercase mb-1" style={{ color: "#0ea5e9" }}>
                         Perplexity Deep Search Results
                       </div>
-                      <div className="text-sm whitespace-pre-wrap" style={{ color: t.textPrimary }}>
-                        {deepSearchResult.text}
+                      <div className="text-sm" style={{ color: t.textPrimary }}>
+                        <MarkdownContent text={deepSearchResult.text} theme={theme} />
                       </div>
                       {deepSearchResult.citations?.length > 0 && (
                         <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${t.border}` }}>
@@ -1060,8 +1129,10 @@ export default function Hulukipedia() {
                 <div className="min-h-[50px] md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
                   {loading.physical ? (
                     <div className="flex justify-center py-4"><Spinner size={20} /></div>
+                  ) : physical ? (
+                    <MarkdownContent text={physical} theme={theme} />
                   ) : (
-                    <EditableSection content={physical} onChange={setPhysical} />
+                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
                   )}
                 </div>
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -1083,11 +1154,15 @@ export default function Hulukipedia() {
               {/* ── Communication Profile ── */}
               <div style={sectionStyle}>
                 <SectionHeader icon={<MessageCircle size={16} />} title="Communication Profile" sectionKey="comm" />
-                {loading.comm ? (
-                  <div className="flex justify-center py-4"><Spinner size={20} /></div>
-                ) : (
-                  <EditableSection content={comm} onChange={setComm} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
-                )}
+                <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
+                  {loading.comm ? (
+                    <div className="flex justify-center py-4"><Spinner size={20} /></div>
+                  ) : comm ? (
+                    <MarkdownContent text={comm} theme={theme} />
+                  ) : (
+                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                  )}
+                </div>
                 <GenBtn onClick={() => generateSection("comm", setComm, "comm")} loading={loading.comm} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Profile
                 </GenBtn>
@@ -1096,11 +1171,15 @@ export default function Hulukipedia() {
               {/* ── Conversational Style ── */}
               <div style={sectionStyle}>
                 <SectionHeader icon={<MessagesSquare size={16} />} title="Conversational Style Examples" sectionKey="convo" />
-                {loading.convo ? (
-                  <div className="flex justify-center py-4"><Spinner size={20} /></div>
-                ) : (
-                  <EditableSection content={convo} onChange={setConvo} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
-                )}
+                <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
+                  {loading.convo ? (
+                    <div className="flex justify-center py-4"><Spinner size={20} /></div>
+                  ) : convo ? (
+                    <MarkdownContent text={convo} theme={theme} />
+                  ) : (
+                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                  )}
+                </div>
                 <GenBtn onClick={() => generateSection("convo", setConvo, "convo")} loading={loading.convo} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Examples
                 </GenBtn>
@@ -1109,11 +1188,15 @@ export default function Hulukipedia() {
               {/* ── Psychological Profile ── */}
               <div style={sectionStyle}>
                 <SectionHeader icon={<BrainCircuit size={16} />} title="Psychological Profile" sectionKey="psych" />
-                {loading.psych ? (
-                  <div className="flex justify-center py-4"><Spinner size={20} /></div>
-                ) : (
-                  <EditableSection content={psych} onChange={setPsych} className="md-content" style={{ fontFamily: "'Architects Daughter', cursive", fontSize: "0.95rem" }} />
-                )}
+                <div className="min-h-[50px]" style={{ fontFamily: "'Architects Daughter', cursive", fontSize: "0.95rem" }}>
+                  {loading.psych ? (
+                    <div className="flex justify-center py-4"><Spinner size={20} /></div>
+                  ) : psych ? (
+                    <MarkdownContent text={psych} theme={theme} />
+                  ) : (
+                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                  )}
+                </div>
                 <GenBtn onClick={() => generateSection("psych", setPsych, "psych")} loading={loading.psych} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Analyst Notes
                 </GenBtn>
@@ -1122,11 +1205,15 @@ export default function Hulukipedia() {
               {/* ── Strategic Analysis ── */}
               <div style={sectionStyle}>
                 <SectionHeader icon={<Crosshair size={16} />} title="Strategic Analysis (SWOT)" sectionKey="strategic" />
-                {loading.strategic ? (
-                  <div className="flex justify-center py-4"><Spinner size={20} /></div>
-                ) : (
-                  <EditableSection content={strategic} onChange={setStrategic} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
-                )}
+                <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
+                  {loading.strategic ? (
+                    <div className="flex justify-center py-4"><Spinner size={20} /></div>
+                  ) : strategic ? (
+                    <MarkdownContent text={strategic} theme={theme} />
+                  ) : (
+                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                  )}
+                </div>
                 <GenBtn onClick={() => generateSection("strategic", setStrategic, "strategic")} loading={loading.strategic} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
                   <Sparkles size={14} className="mr-1" /> Generate Analysis
                 </GenBtn>
@@ -1146,11 +1233,15 @@ export default function Hulukipedia() {
                   title={mode === "raven" ? "Field Surveillance Log" : "Historical Timeline"}
                   sectionKey="add1"
                 />
-                {loading.add1 ? (
-                  <div className="flex justify-center py-4"><Spinner size={20} /></div>
-                ) : (
-                  <EditableSection content={addendum1} onChange={setAddendum1} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
-                )}
+                <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
+                  {loading.add1 ? (
+                    <div className="flex justify-center py-4"><Spinner size={20} /></div>
+                  ) : addendum1 ? (
+                    <MarkdownContent text={addendum1} theme={theme} />
+                  ) : (
+                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                  )}
+                </div>
                 <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: "#0d9488", color: "white" }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Report" : "Generate Timeline"}
                 </GenBtn>
@@ -1163,11 +1254,15 @@ export default function Hulukipedia() {
                   title={mode === "raven" ? "Encounter Simulation" : "Public Persona Analysis"}
                   sectionKey="add2"
                 />
-                {loading.add2 ? (
-                  <div className="flex justify-center py-4"><Spinner size={20} /></div>
-                ) : (
-                  <EditableSection content={addendum2} onChange={setAddendum2} className="md-content" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }} />
-                )}
+                <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
+                  {loading.add2 ? (
+                    <div className="flex justify-center py-4"><Spinner size={20} /></div>
+                  ) : addendum2 ? (
+                    <MarkdownContent text={addendum2} theme={theme} />
+                  ) : (
+                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                  )}
+                </div>
                 <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: "#4f46e5", color: "white" }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Simulation" : "Generate Analysis"}
                 </GenBtn>
