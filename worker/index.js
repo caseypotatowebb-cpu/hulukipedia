@@ -322,27 +322,48 @@ async function callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, o
 async function handleImageProxy(request, env, origin) {
   try {
     const body = await request.json();
-    const { prompt, negativePrompt, model, width, height, style } = body;
+    const { prompt, negativePrompt, model, width, height, style, aspectRatio, resolution } = body;
 
     if (!prompt) return jsonResponse({ error: "Missing prompt" }, 400, origin);
 
     const apiKey = env.VENICE_API_KEY;
     if (!apiKey) return jsonResponse({ error: "Venice API key not configured for images" }, 500, origin);
 
-    // Updated default to venice-sd35 (current Venice flagship image model)
-    const selectedModel = model || "venice-sd35";
+    // Default to nano-banana-pro for photorealistic output
+    const selectedModel = model || "nano-banana-pro";
+
+    // Resolution-tier models: nano-banana-pro, nano-banana-2, gpt-image-2
+    const resolutionTierModels = ["nano-banana-pro", "nano-banana-2", "gpt-image-2"];
+    // Aspect-ratio-only models: qwen-image-2
+    const aspectOnlyModels = ["qwen-image-2"];
+    // Pixel-based models: venice-sd35, qwen-image
+    const pixelModels = ["venice-sd35", "qwen-image"];
 
     const imgBody = {
       model: selectedModel,
       prompt,
-      negative_prompt: negativePrompt || "blurry, low quality, distorted, deformed",
-      width: width || 1024,
-      height: height || 1024,
-      format: "webp",
+      format: "png",
       safe_mode: false,
-      // Venice image parameters
       hide_watermark: true,
     };
+
+    // Add negative prompt if provided
+    if (negativePrompt) imgBody.negative_prompt = negativePrompt;
+
+    // Set sizing based on model type
+    if (resolutionTierModels.includes(selectedModel)) {
+      imgBody.aspect_ratio = aspectRatio || "1:1";
+      imgBody.resolution = resolution || "2K";
+    } else if (aspectOnlyModels.includes(selectedModel)) {
+      imgBody.aspect_ratio = aspectRatio || "1:1";
+    } else if (pixelModels.includes(selectedModel)) {
+      imgBody.width = width || 1024;
+      imgBody.height = height || 1024;
+    } else {
+      // Unknown model — try resolution-tier first (most common for newer models)
+      imgBody.aspect_ratio = aspectRatio || "1:1";
+      imgBody.resolution = resolution || "2K";
+    }
 
     if (style) imgBody.style_preset = style;
 
@@ -362,7 +383,10 @@ async function handleImageProxy(request, env, origin) {
       return jsonResponse({ error: `Venice image returned non-JSON response (HTTP ${res.status})` }, 502, origin);
     }
 
-    if (!res.ok) return jsonResponse({ error: data.error || data.detail || `Venice image error: ${res.status}` }, res.status, origin);
+    if (!res.ok) {
+      const errMsg = data?.error?.message || data?.error || data?.detail || `Venice image error: ${res.status}`;
+      return jsonResponse({ error: errMsg }, res.status, origin);
+    }
 
     const imageBase64 = data.images?.[0] || "";
     if (!imageBase64) return jsonResponse({ error: "Venice returned no image data" }, 502, origin);

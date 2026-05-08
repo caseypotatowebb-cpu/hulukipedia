@@ -160,19 +160,19 @@ async function callDeepSearch(query, systemPrompt = null) {
   }
 }
 
-async function callImageGen(prompt, negativePrompt = "", model = "venice-sd35") {
+async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pro", aspectRatio = "1:1", resolution = "2K") {
   try {
     const res = await fetch(`${API_BASE}/api/image`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, negativePrompt, model }),
+      body: JSON.stringify({ prompt, negativePrompt, model, aspectRatio, resolution }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
       throw new Error(err.error || `HTTP ${res.status}`);
     }
     const data = await res.json();
-    return data.image ? `data:image/webp;base64,${data.image}` : null;
+    return data.image ? `data:image/png;base64,${data.image}` : null;
   } catch (e) {
     throw new Error(`Image generation failed: ${e.message}`);
   }
@@ -521,12 +521,12 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model 
 
 // ─── IMAGE MODEL SELECTOR ───
 const IMAGE_MODELS = [
-  { id: "venice-sd35", name: "Venice SD 3.5 (Default)" },
-  { id: "flux-dev", name: "Flux Dev" },
-  { id: "flux-dev-uncensored", name: "Flux Dev Uncensored" },
-  { id: "nano-banana-pro", name: "Nano Banana Pro" },
-  { id: "z-image-turbo", name: "Z-Image Turbo (Fast)" },
-  { id: "stable-diffusion-3.5", name: "SD 3.5" },
+  { id: "nano-banana-pro", name: "Nano Banana Pro (Photorealistic)" },
+  { id: "nano-banana-2", name: "Nano Banana 2" },
+  { id: "gpt-image-2", name: "GPT Image 2" },
+  { id: "grok-imagine-image", name: "Grok Imagine" },
+  { id: "qwen-image-2", name: "Qwen Image 2" },
+  { id: "venice-sd35", name: "Venice SD 3.5" },
 ];
 
 // ─── MAIN COMPONENT ───
@@ -565,7 +565,7 @@ export default function Hulukipedia() {
   const [addendum1, setAddendum1] = useState("");
   const [addendum2, setAddendum2] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
-  const [imageModel, setImageModel] = useState("venice-sd35");
+  const [imageModel, setImageModel] = useState("nano-banana-pro");
   const [imageSource, setImageSource] = useState("venice"); // "venice" or "pollinations"
   const [deepSearchResult, setDeepSearchResult] = useState(null);
 
