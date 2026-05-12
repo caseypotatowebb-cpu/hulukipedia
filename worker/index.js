@@ -69,7 +69,7 @@ export default {
             id: "anthropic",
             name: "Anthropic Claude",
             capabilities: ["text"],
-            models: ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"],
+            models: ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
           },
           {
             id: "perplexity",
@@ -202,7 +202,7 @@ async function callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch
   if (!apiKey) return jsonResponse({ error: "Anthropic API key not configured" }, 500, origin);
 
   const anthropicBody = {
-    model: model || "claude-sonnet-4-20250514",
+    model: model || "claude-sonnet-4-20250514", // Default to Claude Sonnet 4 (confirmed available)
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
@@ -217,7 +217,7 @@ async function callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch
     headers: {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
-      "anthropic-version": "2024-10-22",
+      "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify(anthropicBody),
   });

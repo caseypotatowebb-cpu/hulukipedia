@@ -34,8 +34,9 @@ const PROVIDERS = {
     color: "#d97706",
     models: [
       { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
-      { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet" },
-      { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku" },
+      { id: "claude-opus-4-20250514", name: "Claude Opus 4" },
+      { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5" },
+      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
     ],
   },
   venice: {
@@ -93,7 +94,7 @@ const DEFAULT_MODEL = "openai-gpt-4o-2024-11-20";
 // ─── SMART SECTION DEFAULTS ───
 // Venice routes to Commander's favorites; Perplexity for factual research
 const SECTION_DEFAULTS = {
-  intel:     { provider: "perplexity", model: "sonar-pro" },
+  intel:     { provider: "perplexity", model: "sonar" },
   physical:  { provider: "venice",     model: "venice-uncensored-role-play" },
   comm:      { provider: "venice",     model: "openai-gpt-4o-2024-11-20" },
   convo:     { provider: "venice",     model: "venice-uncensored-role-play" },
