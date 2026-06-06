@@ -107,12 +107,12 @@ const SECTION_DEFAULTS = {
 // ─── API HELPER ───
 const API_BASE = window.location.origin;
 
-async function callAI(systemPrompt, userPrompt, provider = DEFAULT_PROVIDER, model = null) {
+async function callAI(systemPrompt, userPrompt, provider = DEFAULT_PROVIDER, model = null, maxTokens = 2000) {
   try {
     const res = await fetch(`${API_BASE}/api/ai`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemPrompt, userPrompt, maxTokens: 1500, useSearch: false, provider, model }),
+      body: JSON.stringify({ systemPrompt, userPrompt, maxTokens, useSearch: false, provider, model }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -320,53 +320,61 @@ function getPrompts(subject, details, mode) {
       system: "You are a fact-checker and intelligence analyst. Be concise.",
       user: `Verify and expand on this intel about ${entity}: Category "${category}", Entry: "${entry}". If accurate, provide 1-2 sentences of additional context. If inaccurate, provide the correction.`,
     }),
-    physical: (tone) => {
+    physical: (tone, researchContext) => {
       const tones = {
-        blue: "Write a clinical/medical-style physical description",
-        green: "Write a glamorous magazine-feature physical description",
-        yellow: "Write a candid, appreciative bar-talk physical description",
-        red: "Write a raw, unfiltered, locker-room physical description",
+        blue: "Write a clinical, anatomically-precise physical description",
+        green: "Write a glamorous, admiring magazine-feature physical description",
+        yellow: "Write a candid, appreciative bar-talk physical description — how a friend would describe them to someone who's never seen them",
+        red: "Write a raw, unfiltered, locker-room physical description — hold nothing back, describe exactly what people notice and think but don't say out loud",
       };
+      const ragContext = researchContext
+        ? `\n\n=== MANDATORY RESEARCH DATA (OVERRIDE YOUR ASSUMPTIONS WITH THESE FACTS) ===\n${researchContext}\n=== END RESEARCH DATA ===\n\nYou MUST describe the person as the research shows them, NOT as you assume they should look based on their job/role. If the research says they're curvy and thick, describe them as curvy and thick — do NOT convert that into 'athletic' or 'toned' or 'lean'. Trust the research over your instincts.\n\n`
+        : "";
       return {
-        system: `You write vivid physical descriptions. ${fictional ? "This is a fictional character — be creative and detailed." : "This is a real person — base on publicly known appearance."}`,
-        user: `${tones[tone]} of ${entity}. Cover build, face, distinguishing features, and overall presence. 150-200 words.`,
+        system: `You write vivid, specific physical descriptions that focus on what humans actually notice about a person — their body shape, proportions, the way they carry themselves, what makes them physically distinctive compared to others around them. ${fictional ? "This is a fictional character — be creative, detailed, and specific about their physical form." : "This is a real person. You MUST describe their ACTUAL appearance based on the research provided, NOT a generic archetype based on their job or background. If they're curvy, say so. If they're thin, say so. If they have a notably large or small feature, describe it honestly. Do NOT default to 'athletic build' unless that is genuinely accurate. Describe what makes THIS person's body different from others in similar roles."}`,
+        user: `${tones[tone]} of ${entity}.${ragContext}Focus on: overall body type and proportions (be SPECIFIC — pear-shaped? hourglass? slim? thick? where do they carry weight?), height and frame, face (bone structure, eyes, lips, skin), hair, distinguishing features, and physical presence/energy. Describe what someone would actually notice first, second, and third when seeing them. Do NOT sanitize or genericize — be honest and specific. 200-300 words.`,
       };
     },
-    comm: {
-      system: "You are a communications analyst profiling speech patterns.",
-      user: `Write a communication profile for ${entity}. Cover: vocabulary level, speech patterns, tone tendencies, persuasion style, notable verbal habits, and how they adjust communication for different audiences. 150-200 words.`,
+    comm: (researchContext) => {
+      const ragContext = researchContext
+        ? `\n\nRESEARCH FINDINGS — use these as the basis for your analysis, cite specific examples from this data:\n${researchContext}\n\n`
+        : "";
+      return {
+        system: `You are a communications analyst who profiles speech patterns by citing SPECIFIC examples. Every claim you make must be backed by a concrete example — a quote, a scene, a documented interaction, or a described behavior. Do not make abstract claims without evidence. ${fictional ? "Draw from canonical scenes, dialogue, and character moments." : "Draw from interviews, public appearances, documented conversations, and media interactions."}`,
+        user: `Write a communication profile for ${entity}.${ragContext}For EACH of the following, provide your assessment AND a specific example that proves it:\n- Vocabulary level and word choice patterns (give an example phrase or quote)\n- Default emotional tone and how it shifts under pressure (describe a specific moment)\n- Persuasion and influence tactics (cite a specific instance)\n- Notable verbal habits, catchphrases, or speech quirks\n- How they adjust communication for different audiences (give two contrasting examples)\n- What their communication style reveals about their psychology\n\nDo NOT just list traits — SHOW them through examples. 250-350 words.`,
+      };
     },
     convo: {
-      system: "You write realistic dialogue examples showing how a subject speaks in different contexts.",
-      user: `Write 3 conversation examples for ${entity} in different contexts (casual, professional, under pressure). Each should be 2-4 lines of dialogue. Label each with the context. Format clearly.`,
+      system: `You write realistic, character-accurate dialogue that captures exactly how someone talks — their rhythm, word choices, humor style, deflection tactics, and emotional tells. ${fictional ? "Base this on canonical dialogue from the source material. These should sound like lines that could appear in the show/book/game." : "Base this on real interviews, documented conversations, and public appearances. These should sound like things this person would actually say."}`,
+      user: `Write 4 conversation examples for ${entity} that reveal different facets of how they communicate:\n1. CASUAL/COMFORTABLE — talking to someone they trust, guard down\n2. PROFESSIONAL/PUBLIC — their "on" mode, how they present to the world\n3. UNDER PRESSURE/CONFLICT — when pushed, threatened, or cornered\n4. FLIRTING/CHARM — how they use attraction, humor, or charisma\n\nEach example should be 3-5 lines of realistic dialogue (not just their lines — include the other person's responses to show the dynamic). Make it feel like eavesdropping on a real conversation, not a script. Label each clearly.`,
     },
     psych: {
-      system: "You are a psychological profiler writing analyst field notes in a slightly informal, insightful style.",
-      user: `Write psychological analyst notes for ${entity}. Cover: core motivations, defense mechanisms, attachment style, cognitive patterns, emotional regulation, and potential vulnerabilities. Write as handwritten-style analyst notes. 200-250 words.`,
+      system: `You are a psychological profiler writing analyst field notes. Your style is informal but razor-sharp — like a brilliant therapist's private notebook. You see through surface behavior to the machinery underneath. ${fictional ? "Analyze this character as if they were a real patient. What would their therapist write after 10 sessions?" : "Analyze this person based on observable patterns in their public behavior, decisions, and relationships."}`,
+      user: `Write psychological analyst notes for ${entity}. Structure as handwritten-style field notes with these sections:\n\n**CORE DRIVE** — What actually motivates them at the deepest level (not what they say motivates them)\n**ARMOR** — Their primary defense mechanisms and how they protect themselves emotionally\n**ATTACHMENT** — How they bond, what they need from others, and what makes them pull away\n**COGNITIVE STYLE** — How they think, decide, and process the world (intuitive vs analytical, fast vs deliberate)\n**PRESSURE RESPONSE** — What happens when they're stressed, scared, or cornered\n**BLIND SPOTS** — What they can't see about themselves, and what could be used against them\n\nWrite like you're scribbling notes between sessions. Be specific, be honest, be a little irreverent. 250-350 words.`,
     },
     strategic: {
-      system: "You are a strategic analyst conducting SWOT analysis.",
-      user: `Write a SWOT analysis for ${entity}. Format with clear Strengths, Weaknesses, Opportunities, and Threats sections. 3-4 bullet points each. Be specific and insightful.`,
+      system: `You are a strategic analyst who thinks like a chess player — you see leverage points, vulnerabilities, untapped potential, and incoming threats that others miss. Your analysis is specific, actionable, and occasionally uncomfortable in its honesty. ${fictional ? "Analyze this character's strategic position within their story/world." : "Analyze this person's strategic position in their career, relationships, and public life."}`,
+      user: `Write a strategic SWOT analysis for ${entity}. For each section, be RUTHLESSLY specific — no generic filler like "strong work ethic" or "competitive landscape."\n\n**STRENGTHS** — What gives them genuine power or advantage? What do they have that others in their position don't? (4-5 points)\n**WEAKNESSES** — What are their real vulnerabilities? What patterns consistently hurt them? What can't they help doing? (4-5 points)\n**OPPORTUNITIES** — What doors are open to them that they may not be fully exploiting? What's the next level look like? (3-4 points)\n**THREATS** — What could realistically derail them? What external forces or internal patterns pose genuine danger? (3-4 points)\n\nBe specific enough that this analysis could only apply to THIS person/character, not anyone else in a similar role.`,
     },
     addendum1: {
       system: fictional
-        ? "You write immersive fictional field surveillance logs."
-        : "You write factual historical timelines.",
+        ? "You write immersive fictional field surveillance logs that read like they were written by a bored but observant agent on a stakeout. Include small human details that make it feel real."
+        : "You write compelling biographical timelines that highlight turning points, not just dates. You understand that a person's life story is defined by the moments that changed their trajectory.",
       user: fictional
-        ? `Write a field surveillance log for ${entity}. Include timestamps, location notes, observed behaviors, and analyst commentary. Make it feel like real field notes. 200-250 words.`
-        : `Write a key events timeline for ${entity}. List 8-12 significant dates/events in chronological order with brief descriptions. Format: DATE — EVENT.`,
+        ? `Write a field surveillance log for ${entity}. Use realistic timestamps over a 4-6 hour window. Include: location details (specific enough to feel real), observed behaviors (body language, habits, interactions), overheard fragments of conversation, and analyst commentary in [brackets]. End with a brief assessment. Make it feel like a real stakeout report written by someone who's been watching too long. 250-350 words.`
+        : `Write a key events timeline for ${entity}. List 10-15 significant moments in chronological order. For each, don't just state what happened — explain WHY it mattered and how it changed their trajectory. Format: **DATE** — EVENT — *significance*. Include early life turning points, not just career highlights.`,
     },
     addendum2: {
       system: fictional
-        ? "You write realistic encounter simulation briefings."
-        : "You analyze public personas and media presence.",
+        ? "You write encounter simulation briefings that feel like they came from a handler prepping an agent for a high-stakes meeting. Practical, specific, slightly paranoid."
+        : "You analyze the gap between public image and private reality. You're interested in authenticity, performance, and what the camera doesn't show.",
       user: fictional
-        ? `Write an encounter simulation briefing for meeting ${entity}. Cover: recommended approach, conversation openers, topics to avoid, expected reactions, and extraction protocol. 200-250 words.`
-        : `Write a public persona analysis for ${entity}. Cover: media image vs. private behavior, brand management, public perception trends, and authenticity assessment. 200-250 words.`,
+        ? `Write an encounter simulation briefing for meeting ${entity}. Structure as:\n**APPROACH VECTOR** — How to get close without triggering suspicion\n**OPENERS** — 3 conversation starters ranked by risk/reward\n**LANDMINES** — Topics that will shut them down or make them hostile\n**TELLS** — How to read their emotional state in real-time\n**EXTRACTION** — How to end the interaction cleanly\n\nWrite like a handler who's done this before and doesn't want their agent to get burned. 250-350 words.`
+        : `Write a public persona analysis for ${entity}. Cover:\n- The gap between their public image and what leaks through in unguarded moments\n- How they manage their brand (consciously or unconsciously)\n- How public perception has shifted over time and why\n- What they're performing vs. what appears genuine\n- Their relationship with fame/attention/scrutiny\n\nBe specific. Use examples. Don't be afraid to be a little cynical where warranted. 250-350 words.`,
     },
     imagePrompt: {
-      system: "You generate concise image generation prompts. Respond with ONLY the prompt text, nothing else.",
-      user: `Create a detailed image generation prompt for a portrait of ${entity}. ${fictional ? "Cinematic, dramatic lighting, highly detailed fantasy/sci-fi art style." : "Photorealistic, professional portrait photography, 8k detail."} Include physical features, clothing, expression, and mood. One paragraph.`,
+      system: `You generate concise, highly specific image generation prompts. Respond with ONLY the prompt text, nothing else. Never include the person's name in the prompt — describe their appearance instead. Focus on physical features that make them recognizable without naming them.`,
+      user: `Create a detailed image generation prompt for a portrait of ${entity}. ${fictional ? "Cinematic, dramatic lighting, highly detailed. Describe their exact appearance from the source material — body type, face, hair, clothing, expression." : "Photorealistic, professional portrait photography, 8k detail. Describe their ACTUAL physical appearance accurately — real body type, real face shape, real hair, typical clothing."} Do NOT use their name in the prompt. Instead describe: ethnicity/skin tone, body type and proportions, face shape and features, hair color/style/length, typical clothing/style, expression and mood, and setting. One detailed paragraph, 50-80 words.`,
     },
   };
 }
@@ -671,8 +679,46 @@ export default function Hulukipedia() {
     setL(key, true);
     setter("");
     try {
+      // For physical and comm sections, do a RAG step first:
+      // Search for real information about the person, then feed it into the creative prompt
+      let researchContext = null;
+      const needsRAG = (promptKey === "physical" || promptKey === "comm");
+      
+      if (needsRAG && subject.name) {
+        try {
+          // Step 1: Research the person's actual appearance/communication style
+          const researchQuery = promptKey === "physical"
+            ? `${subject.name}${subject.details ? " " + subject.details : ""} physical appearance body type proportions height build curves figure face features what do they actually look like compared to others`
+            : `${subject.name}${subject.details ? " " + subject.details : ""} communication style how they talk speech patterns interviews quotes personality`;
+          
+          const researchResult = await callAIWithSearch(
+            "You are a research assistant. Provide ONLY factual, specific details. No opinions, no filler. List concrete physical details or communication examples you find.",
+            researchQuery,
+            "venice",
+            null
+          );
+          if (researchResult && researchResult.length > 50) {
+            researchContext = researchResult;
+          }
+        } catch (ragErr) {
+          // RAG failed silently — proceed without it, the prompt still works
+          console.log("RAG step failed, proceeding without research context:", ragErr.message);
+        }
+      }
+
+      // Step 2: Generate the actual section content with research context
       const prompts = getPrompts(subject.name, subject.details, mode);
-      const pObj = subKey ? prompts[promptKey](subKey) : prompts[promptKey];
+      let pObj;
+      if (promptKey === "physical") {
+        // physical takes (tone, researchContext)
+        pObj = prompts.physical(subKey, researchContext);
+      } else if (promptKey === "comm") {
+        // comm takes (researchContext)
+        pObj = prompts.comm(researchContext);
+      } else {
+        pObj = subKey ? prompts[promptKey](subKey) : prompts[promptKey];
+      }
+      
       const text = await callAI(pObj.system, pObj.user, getSP(key), getSM(key));
       // Store raw markdown — MarkdownContent component handles rendering
       setter(text);

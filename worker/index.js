@@ -116,7 +116,7 @@ async function handleAIProxy(request, env, origin) {
     const {
       systemPrompt,
       userPrompt,
-      maxTokens = 1500,
+      maxTokens = 2000,
       useSearch = false,
       provider = "venice",   // Venice is now the primary default
       model,
