@@ -3,4 +3,4 @@ compatibility_date = "2024-12-01"
 main = "worker/index.js"
 
 # Static assets from the Vite build
-assets = { directory = "./dist" }
+assets = { directory = "./dist", binding = "ASSETS", not_found_handling = "single-page-application" }

@@ -68,3 +68,50 @@ echo "your-key-here" | wrangler secret put SECRET_NAME
 # Check deployment status
 wrangler whoami
 ```
+
+---
+
+## v3.0.1 — Security & Fixes
+
+Review-driven fixes shipped in v3.0.1:
+
+- **Section provider switcher** — Fixed a state race where picking a new provider for a
+  section left it paired with the old provider (broke API routing). Model-only changes now
+  preserve the queued provider.
+- **CORS** — The worker now echoes the request's `Origin` header (instead of its own origin)
+  on every response, so cross-origin browsers and teammates' agents are no longer blocked.
+  `x-app-token` is allowed in CORS headers.
+- **OpenAI reasoning models** — `o1*`, `o3*`, and `gpt-5*` now use `max_completion_tokens`
+  and omit `temperature` (they reject `max_tokens` / non-default temperature).
+- **xAI agentic search** — `useSearch` now calls the `/v1/responses` agentic tools endpoint
+  with `web_search` + `x_search` tools and parses the Responses-API output shape.
+- **maxTokens clamp** — Client-supplied `maxTokens` is clamped to 1–8000.
+- **SPA asset binding** — `wrangler.toml` now sets `binding = "ASSETS"` and
+  `not_found_handling = "single-page-application"` so client routes resolve.
+- **UI hardening** — Copy All guards against intel categories without `entries`; image
+  generation failures now surface an error message in the Portrait panel; the Confirmed
+  Intel verifier uses the real search mode instead of a hardcoded one.
+- **Repo hygiene** — Added `.gitignore`, `dev`/`build`/`deploy` npm scripts, and `wrangler`
+  as a devDependency.
+
+### Optional team token (`APP_TOKEN`)
+
+The `/api` endpoints proxy paid AI APIs. They remain fully open by default. To restrict
+access, set a Worker secret:
+
+```bash
+wrangler secret put APP_TOKEN
+```
+
+Once set, POST requests to `/api/ai`, `/api/image`, and `/api/search` are allowed only when
+either:
+
+- the request comes from the app's own frontend (its `Origin` matches the worker origin), so
+  the deployed UI needs no token, **or**
+- the request carries a matching `x-app-token` header — this is how teammates' agents
+  authenticate.
+
+Requests failing both checks get `401 { "error": "Missing or invalid x-app-token" }`. If
+`APP_TOKEN` is unset, behavior is unchanged (no token required).
+
+Redeploy after changes with `npm run deploy`.

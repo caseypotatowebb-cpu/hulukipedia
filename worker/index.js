@@ -17,29 +17,50 @@
  *   - Uncensored: include_venice_system_prompt: false removes content guardrails
  *   - Image generation: /api/v1/image/generate with nano-banana-pro default
  *
+ * Optional team token (APP_TOKEN):
+ *   The /api endpoints proxy paid AI APIs. To restrict access, set a Worker
+ *   secret with `wrangler secret put APP_TOKEN`. Once set, POST requests to
+ *   /api/ai, /api/image, /api/search are allowed only when the request comes
+ *   from the app's own frontend (Origin matches the worker origin) OR carries
+ *   a matching `x-app-token` header. Teammates' agents send `x-app-token`.
+ *   If APP_TOKEN is unset, the proxy stays fully open (no behavior change).
+ *
  * A Team Tomorrow Production 🦅
  */
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const reqOrigin = request.headers.get("Origin");
 
     // ─── CORS preflight ───
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders(url.origin) });
+      return new Response(null, { headers: corsHeaders(reqOrigin) });
+    }
+
+    // ─── Optional team token gate for the paid /api POST endpoints ───
+    const protectedPost =
+      request.method === "POST" &&
+      (url.pathname === "/api/ai" || url.pathname === "/api/image" || url.pathname === "/api/search");
+    if (protectedPost && env.APP_TOKEN) {
+      const sameOrigin = reqOrigin === url.origin;
+      const hasToken = request.headers.get("x-app-token") === env.APP_TOKEN;
+      if (!sameOrigin && !hasToken) {
+        return jsonResponse({ error: "Missing or invalid x-app-token" }, 401, reqOrigin);
+      }
     }
 
     // ─── API Routes ───
     if (url.pathname === "/api/ai" && request.method === "POST") {
-      return handleAIProxy(request, env, url.origin);
+      return handleAIProxy(request, env, reqOrigin);
     }
 
     if (url.pathname === "/api/image" && request.method === "POST") {
-      return handleImageProxy(request, env, url.origin);
+      return handleImageProxy(request, env, reqOrigin);
     }
 
     if (url.pathname === "/api/search" && request.method === "POST") {
-      return handleSearchProxy(request, env, url.origin);
+      return handleSearchProxy(request, env, reqOrigin);
     }
 
     if (url.pathname === "/api/providers") {
@@ -111,11 +132,11 @@ export default {
             models: ["grok-4.3", "grok-4.20", "grok-build-0.1"],
           },
         ],
-      }, 200, url.origin);
+      }, 200, reqOrigin);
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.0.0" });
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.0.1" }, 200, reqOrigin);
     }
 
     // ─── Static assets ───
@@ -135,7 +156,7 @@ export default {
 async function handleAIProxy(request, env, origin) {
   try {
     const body = await request.json();
-    const {
+    let {
       systemPrompt,
       userPrompt,
       maxTokens = 2000,
@@ -147,6 +168,8 @@ async function handleAIProxy(request, env, origin) {
     if (!systemPrompt || !userPrompt) {
       return jsonResponse({ error: "Missing systemPrompt or userPrompt" }, 400, origin);
     }
+
+    maxTokens = Math.min(Math.max(parseInt(maxTokens) || 2000, 1), 8000);
 
     switch (provider) {
       case "venice":
@@ -346,15 +369,24 @@ async function callOpenAI(env, systemPrompt, userPrompt, maxTokens, model, origi
 
   const selectedModel = model || "gpt-4o";
 
+  // Reasoning models (o1*, o3*, gpt-5*) require max_completion_tokens and reject
+  // a non-default temperature.
+  const isReasoning = /^(o\d|gpt-5)/.test(selectedModel);
+
   const oaiBody = {
     model: selectedModel,
-    max_tokens: maxTokens,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    temperature: 0.7,
   };
+
+  if (isReasoning) {
+    oaiBody.max_completion_tokens = maxTokens;
+  } else {
+    oaiBody.max_tokens = maxTokens;
+    oaiBody.temperature = 0.7;
+  }
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -433,6 +465,56 @@ async function callXAI(env, systemPrompt, userPrompt, maxTokens, model, useSearc
 
   const selectedModel = model || "grok-4.3";
 
+  // xAI's built-in web/X search lives on the agentic /v1/responses endpoint,
+  // not chat completions. Without search we keep the standard chat call.
+  if (useSearch) {
+    const responsesBody = {
+      model: selectedModel,
+      input: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [{ type: "web_search" }, { type: "x_search" }],
+      max_output_tokens: maxTokens,
+    };
+
+    const res = await fetch("https://api.x.ai/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(responsesBody),
+    });
+
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      return jsonResponse({ error: `xAI returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+    }
+
+    if (!res.ok) {
+      const errMsg = data?.error?.message || `xAI/Grok error: ${res.status}`;
+      return jsonResponse({ error: errMsg }, res.status, origin);
+    }
+
+    let text = "";
+    if (typeof data.output_text === "string") {
+      text = data.output_text;
+    } else if (Array.isArray(data.output)) {
+      text = data.output
+        .filter(item => item?.type === "message")
+        .map(item => (item.content || [])
+          .filter(c => c?.type === "output_text")
+          .map(c => c.text || "")
+          .join(""))
+        .join("");
+    }
+    const citations = data.citations || [];
+    return jsonResponse({ text, citations, provider: "xai", model: selectedModel }, 200, origin);
+  }
+
   const xaiBody = {
     model: selectedModel,
     max_tokens: maxTokens,
@@ -442,13 +524,6 @@ async function callXAI(env, systemPrompt, userPrompt, maxTokens, model, useSearc
     ],
     temperature: 0.7,
   };
-
-  // Grok supports web search and X search as tools
-  if (useSearch) {
-    xaiBody.tools = [
-      { type: "web_search", search: { mode: "auto" } },
-    ];
-  }
 
   const res = await fetch("https://api.x.ai/v1/chat/completions", {
     method: "POST",
@@ -674,7 +749,7 @@ function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, x-app-token",
     "Access-Control-Max-Age": "86400",
   };
 }

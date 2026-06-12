@@ -506,7 +506,7 @@ function EditableSection({ content, onChange, className = "", style = {} }) {
 }
 
 // ─── INTEL ENTRY ───
-function IntelEntry({ entry, category, subject, details, theme, provider, model }) {
+function IntelEntry({ entry, category, subject, details, theme, provider, model, mode }) {
   const [expanded, setExpanded] = useState(false);
   const [verification, setVerification] = useState(null);
   const [verifying, setVerifying] = useState(false);
@@ -518,7 +518,7 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model 
     if (verification) return;
     setVerifying(true);
     try {
-      const p = getPrompts(subject, details, "raven").verify(category, entry);
+      const p = getPrompts(subject, details, mode).verify(category, entry);
       const text = await callAIWithSearch(p.system, p.user, provider, model);
       setVerification(text);
     } catch (e) {
@@ -608,6 +608,7 @@ export default function Hulukipedia() {
   const [addendum1, setAddendum1] = useState("");
   const [addendum2, setAddendum2] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
+  const [imageError, setImageError] = useState(null);
   const [imageModel, setImageModel] = useState("nano-banana-pro");
   const [imageSource, setImageSource] = useState("venice"); // "venice" or "pollinations"
   const [deepSearchResult, setDeepSearchResult] = useState(null);
@@ -765,6 +766,7 @@ export default function Hulukipedia() {
   const generateImage = async () => {
     setL("image", true);
     setImageUrl(null);
+    setImageError(null);
     try {
       const p = getPrompts(subject.name, subject.details, mode);
       const prompt = await callAI(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel);
@@ -778,6 +780,7 @@ export default function Hulukipedia() {
       }
     } catch (e) {
       setImageUrl(null);
+      setImageError(e.message);
     }
     setL("image", false);
   };
@@ -787,7 +790,7 @@ export default function Hulukipedia() {
       `DOSSIER: ${subject.name.toUpperCase()}`,
       subject.details ? `Context: ${subject.details}` : "",
       "\n═══ CONFIRMED INTEL ═══",
-      intel.map(c => `${c.category}:\n${c.entries.map(e => `  — ${e}`).join("\n")}`).join("\n"),
+      intel.map(c => `${c.category}:\n${(c.entries || []).map(e => `  — ${e}`).join("\n")}`).join("\n"),
       "\n═══ PHYSICAL DESCRIPTION ═══",
       physical.replace(/<br>/g, "\n").replace(/<[^>]*>/g, ""),
       "\n═══ COMMUNICATION PROFILE ═══",
@@ -850,7 +853,7 @@ export default function Hulukipedia() {
         onProviderChange={(p) => setSP(sectionKey, p)}
         onModelChange={(m) => setSectionProviders(prev => ({
           ...prev,
-          [sectionKey]: { ...prev[sectionKey], provider: getSP(sectionKey), model: m },
+          [sectionKey]: { provider: prev[sectionKey]?.provider || globalProvider, model: m },
         }))}
         theme={theme}
         compact
@@ -1093,6 +1096,9 @@ export default function Hulukipedia() {
                         {loading.image ? <Spinner size={32} /> : <Image size={48} style={{ opacity: 0.2 }} />}
                       </div>
                     )}
+                    {imageError && (
+                      <div className="text-xs" style={{ color: "#ef4444" }}>{imageError}</div>
+                    )}
                     <div className="flex gap-1 flex-wrap">
                       <select
                         value={imageModel}
@@ -1160,6 +1166,7 @@ export default function Hulukipedia() {
                               theme={theme}
                               provider={getSP("intel")}
                               model={getSM("intel")}
+                              mode={mode}
                             />
                           ))}
                         </div>
