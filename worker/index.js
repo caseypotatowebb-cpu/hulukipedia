@@ -8,11 +8,14 @@
  *   - anthropic  (Claude — reliable structured output)
  *   - perplexity (Deep search / RAG with citations)
  *   - openrouter (Model routing — access to 200+ models)
+ *   - openai     (GPT-4o, GPT-5, o1 — direct from OpenAI)
+ *   - gemini     (Google Gemini 2.5 Flash/Pro — fast + multimodal)
+ *   - xai        (Grok 4.3, Grok 4.20 — uncensored + X search)
  *
  * Venice integration notes:
  *   - Web search: enabled via venice_parameters.enable_web_search
  *   - Uncensored: include_venice_system_prompt: false removes content guardrails
- *   - Image generation: /api/v1/image/generate with venice-sd35 default
+ *   - Image generation: /api/v1/image/generate with nano-banana-pro default
  *
  * A Team Tomorrow Production 🦅
  */
@@ -86,14 +89,33 @@ export default {
               "google/gemini-2.5-flash",
               "openai/gpt-4o",
               "meta-llama/llama-3.3-70b-instruct",
+              "x-ai/grok-4.3",
             ],
+          },
+          {
+            id: "openai",
+            name: "OpenAI",
+            capabilities: ["text"],
+            models: ["gpt-4o", "gpt-4o-mini", "gpt-5", "o1", "o1-mini", "o3-mini"],
+          },
+          {
+            id: "gemini",
+            name: "Google Gemini",
+            capabilities: ["text"],
+            models: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+          },
+          {
+            id: "xai",
+            name: "Grok (xAI)",
+            capabilities: ["text", "search"],
+            models: ["grok-4.3", "grok-4.20", "grok-build-0.1"],
           },
         ],
       }, 200, url.origin);
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "2.1.0" });
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.0.0" });
     }
 
     // ─── Static assets ───
@@ -118,7 +140,7 @@ async function handleAIProxy(request, env, origin) {
       userPrompt,
       maxTokens = 2000,
       useSearch = false,
-      provider = "venice",   // Venice is now the primary default
+      provider = "venice",
       model,
     } = body;
 
@@ -135,6 +157,12 @@ async function handleAIProxy(request, env, origin) {
         return await callPerplexity(env, systemPrompt, userPrompt, maxTokens, model, origin);
       case "openrouter":
         return await callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, origin);
+      case "openai":
+        return await callOpenAI(env, systemPrompt, userPrompt, maxTokens, model, origin);
+      case "gemini":
+        return await callGemini(env, systemPrompt, userPrompt, maxTokens, model, origin);
+      case "xai":
+        return await callXAI(env, systemPrompt, userPrompt, maxTokens, model, useSearch, origin);
       default:
         return jsonResponse({ error: `Unknown provider: ${provider}` }, 400, origin);
     }
@@ -159,11 +187,8 @@ async function callVenice(env, systemPrompt, userPrompt, maxTokens, model, useSe
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
-    // Venice-specific parameters
     venice_parameters: {
-      // Disable Venice's default system prompt so our prompts are fully respected
       include_venice_system_prompt: false,
-      // Enable web search when requested — Venice's built-in grounded search
       enable_web_search: useSearch ? "on" : "off",
     },
   };
@@ -190,7 +215,6 @@ async function callVenice(env, systemPrompt, userPrompt, maxTokens, model, useSe
   }
 
   const text = data.choices?.[0]?.message?.content || "";
-  // Venice may return citations in web search mode
   const citations = data.citations || data.choices?.[0]?.message?.citations || [];
   return jsonResponse({ text, citations, provider: "venice", model: selectedModel }, 200, origin);
 }
@@ -202,7 +226,7 @@ async function callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch
   if (!apiKey) return jsonResponse({ error: "Anthropic API key not configured" }, 500, origin);
 
   const anthropicBody = {
-    model: model || "claude-sonnet-4-20250514", // Default to Claude Sonnet 4 (confirmed available)
+    model: model || "claude-sonnet-4-20250514",
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
@@ -312,6 +336,143 @@ async function callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, o
 
   const text = data.choices?.[0]?.message?.content || "";
   return jsonResponse({ text, provider: "openrouter", model: orBody.model }, 200, origin);
+}
+
+
+// ─── OpenAI (GPT-4o, GPT-5, o1) ───
+async function callOpenAI(env, systemPrompt, userPrompt, maxTokens, model, origin) {
+  const apiKey = env.OPENAI_API_KEY;
+  if (!apiKey) return jsonResponse({ error: "OpenAI API key not configured" }, 500, origin);
+
+  const selectedModel = model || "gpt-4o";
+
+  const oaiBody = {
+    model: selectedModel,
+    max_tokens: maxTokens,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+  };
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(oaiBody),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `OpenAI returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
+  if (!res.ok) {
+    const errMsg = data?.error?.message || `OpenAI error: ${res.status}`;
+    return jsonResponse({ error: errMsg }, res.status, origin);
+  }
+
+  const text = data.choices?.[0]?.message?.content || "";
+  return jsonResponse({ text, provider: "openai", model: selectedModel }, 200, origin);
+}
+
+
+// ─── Google Gemini (OpenAI-compatible endpoint) ───
+async function callGemini(env, systemPrompt, userPrompt, maxTokens, model, origin) {
+  const apiKey = env.GEMINI_API_KEY;
+  if (!apiKey) return jsonResponse({ error: "Gemini API key not configured" }, 500, origin);
+
+  const selectedModel = model || "gemini-2.5-flash";
+
+  // Gemini supports OpenAI-compatible endpoint
+  const geminiBody = {
+    model: selectedModel,
+    max_tokens: maxTokens,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+  };
+
+  const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(geminiBody),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `Gemini returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
+  if (!res.ok) {
+    const errMsg = data?.error?.message || data?.error?.status || `Gemini error: ${res.status}`;
+    return jsonResponse({ error: errMsg }, res.status, origin);
+  }
+
+  const text = data.choices?.[0]?.message?.content || "";
+  return jsonResponse({ text, provider: "gemini", model: selectedModel }, 200, origin);
+}
+
+
+// ─── xAI Grok (OpenAI-compatible endpoint) ───
+async function callXAI(env, systemPrompt, userPrompt, maxTokens, model, useSearch, origin) {
+  const apiKey = env.XAI_API_KEY;
+  if (!apiKey) return jsonResponse({ error: "xAI API key not configured" }, 500, origin);
+
+  const selectedModel = model || "grok-4.3";
+
+  const xaiBody = {
+    model: selectedModel,
+    max_tokens: maxTokens,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+  };
+
+  // Grok supports web search and X search as tools
+  if (useSearch) {
+    xaiBody.tools = [
+      { type: "web_search", search: { mode: "auto" } },
+    ];
+  }
+
+  const res = await fetch("https://api.x.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(xaiBody),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `xAI returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
+  if (!res.ok) {
+    const errMsg = data?.error?.message || `xAI/Grok error: ${res.status}`;
+    return jsonResponse({ error: errMsg }, res.status, origin);
+  }
+
+  const text = data.choices?.[0]?.message?.content || "";
+  return jsonResponse({ text, provider: "xai", model: selectedModel }, 200, origin);
 }
 
 

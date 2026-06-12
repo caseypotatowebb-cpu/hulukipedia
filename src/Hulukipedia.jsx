@@ -84,6 +84,40 @@ const PROVIDERS = {
       { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
       { id: "openai/gpt-4o", name: "GPT-4o" },
       { id: "meta-llama/llama-3.3-70b-instruct", name: "Llama 3.3 70B" },
+      { id: "x-ai/grok-4.3", name: "Grok 4.3 (OR)" },
+    ],
+  },
+  openai: {
+    name: "OpenAI",
+    icon: "🧠",
+    color: "#10a37f",
+    models: [
+      { id: "gpt-4o", name: "GPT-4o" },
+      { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+      { id: "gpt-5", name: "GPT-5" },
+      { id: "o1", name: "o1 (Reasoning)" },
+      { id: "o1-mini", name: "o1 Mini" },
+      { id: "o3-mini", name: "o3 Mini" },
+    ],
+  },
+  gemini: {
+    name: "Google Gemini",
+    icon: "💎",
+    color: "#4285f4",
+    models: [
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash ⚡" },
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+      { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash" },
+    ],
+  },
+  xai: {
+    name: "Grok (xAI)",
+    icon: "🚀",
+    color: "#1d9bf0",
+    models: [
+      { id: "grok-4.3", name: "Grok 4.3 (Latest)" },
+      { id: "grok-4.20", name: "Grok 4.20 (Unfiltered)" },
+      { id: "grok-build-0.1", name: "Grok Build (Code)" },
     ],
   },
 };
@@ -95,12 +129,12 @@ const DEFAULT_MODEL = "openai-gpt-4o-2024-11-20";
 // Venice routes to Commander's favorites; Perplexity for factual research
 const SECTION_DEFAULTS = {
   intel:     { provider: "perplexity", model: "sonar" },
-  physical:  { provider: "venice",     model: "venice-uncensored-role-play" },
+  physical:  { provider: "xai",       model: "grok-4.20" },
   comm:      { provider: "venice",     model: "openai-gpt-4o-2024-11-20" },
   convo:     { provider: "venice",     model: "venice-uncensored-role-play" },
   psych:     { provider: "venice",     model: "deepseek-v4-pro" },
-  strategic: { provider: "venice",     model: "grok-4-20" },
-  add1:      { provider: "venice",     model: "olafangensan-glm-4.7-flash-heretic" },
+  strategic: { provider: "xai",       model: "grok-4.3" },
+  add1:      { provider: "gemini",     model: "gemini-2.5-flash" },
   add2:      { provider: "venice",     model: "claude-sonnet-4-5" },
 };
 
