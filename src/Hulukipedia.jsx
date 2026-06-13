@@ -138,6 +138,18 @@ const SECTION_DEFAULTS = {
   add2:      { provider: "venice",     model: "claude-sonnet-4-5" },
 };
 
+// ─── ROLE-PLAY MODEL DEFAULTS ───
+// "Recommended for role-play" ordering. Default = strongest believable-persona
+// model in the existing catalog. Priority: Anthropic Claude (top Sonnet/Opus) >
+// OpenAI GPT-5.x > xAI Grok. All IDs map to real entries already in PROVIDERS.
+const ROLEPLAY_DEFAULT_PROVIDER = "anthropic";
+const ROLEPLAY_DEFAULT_MODEL = "claude-sonnet-4-5-20250929"; // Claude Sonnet 4.5
+const ROLEPLAY_ALTERNATES = [
+  { provider: "anthropic", model: "claude-opus-4-20250514", label: "Claude Opus 4 — emotional nuance" },
+  { provider: "openai", model: "gpt-5", label: "GPT-5 — honors detailed character briefs" },
+  { provider: "xai", model: "grok-4.20", label: "Grok 4.20 — unfiltered personality" },
+];
+
 // ─── API HELPER ───
 const API_BASE = window.location.origin;
 
@@ -211,6 +223,22 @@ async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pr
   } catch (e) {
     throw new Error(`Image generation failed: ${e.message}`);
   }
+}
+
+// ─── ROLE-PLAY CHAT ───
+// The /api/ai worker endpoint takes a single system + user prompt (no messages
+// array), so we serialize the running conversation into the user prompt as a
+// transcript and re-inject the "Absolute Speech Rules" to fight recency drift.
+async function callRolePlay(systemPrompt, history, latestUserMsg, speechRules, provider, model) {
+  const transcript = history
+    .map(m => `${m.role === "user" ? "User" : "You (in character)"}: ${m.content}`)
+    .join("\n");
+  const userPrompt =
+    (transcript ? `Conversation so far:\n${transcript}\n\n` : "") +
+    `User: ${latestUserMsg}\n\n` +
+    `[ABSOLUTE SPEECH RULES — obey these above all else]\n${speechRules}\n\n` +
+    `Respond now, in first person and fully in character, to the user's latest message. Output only your spoken reply — no narration tags, no meta-commentary.`;
+  return await callAI(systemPrompt, userPrompt, provider, model, 1500);
 }
 
 // ─── ROBUST JSON PARSER ───
@@ -407,8 +435,8 @@ function getPrompts(subject, details, mode) {
         : `Write a public persona analysis for ${entity}. Cover:\n- The gap between their public image and what leaks through in unguarded moments\n- How they manage their brand (consciously or unconsciously)\n- How public perception has shifted over time and why\n- What they're performing vs. what appears genuine\n- Their relationship with fame/attention/scrutiny\n\nBe specific. Use examples. Don't be afraid to be a little cynical where warranted. 250-350 words.`,
     },
     imagePrompt: {
-      system: `You generate concise, highly specific image generation prompts. Respond with ONLY the prompt text, nothing else. Never include the person's name in the prompt — describe their appearance instead. Focus on physical features that make them recognizable without naming them.`,
-      user: `Create a detailed image generation prompt for a portrait of ${entity}. ${fictional ? "Cinematic, dramatic lighting, highly detailed. Describe their exact appearance from the source material — body type, face, hair, clothing, expression." : "Photorealistic, professional portrait photography, 8k detail. Describe their ACTUAL physical appearance accurately — real body type, real face shape, real hair, typical clothing."} Do NOT use their name in the prompt. Instead describe: ethnicity/skin tone, body type and proportions, face shape and features, hair color/style/length, typical clothing/style, expression and mood, and setting. One detailed paragraph, 50-80 words.`,
+      system: "You generate concise image generation prompts. Respond with ONLY the prompt text, nothing else.",
+      user: `Create a detailed image generation prompt for a portrait of ${entity}. ${fictional ? "Cinematic, dramatic lighting, highly detailed fantasy/sci-fi art style." : "Photorealistic, professional portrait photography, 8k detail."} Include physical features, clothing, expression, and mood. One paragraph.`,
     },
   };
 }
@@ -421,6 +449,55 @@ function Spinner({ size = 20, className = "" }) {
       className={`animate-spin ${className}`}
       style={{ animation: "spin 1s linear infinite" }}
     />
+  );
+}
+
+// ─── LIGHTBOX COMPONENT ───
+// Google-Images-style click-to-enlarge overlay. Closes on backdrop click,
+// the X button, or the Escape key. No dependencies beyond React.
+function Lightbox({ src, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (!src) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        backgroundColor: "rgba(0,0,0,0.85)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "2rem", cursor: "zoom-out",
+      }}
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        aria-label="Close"
+        style={{
+          position: "absolute", top: "1rem", right: "1rem",
+          backgroundColor: "rgba(0,0,0,0.5)", color: "#fff",
+          border: "1px solid rgba(255,255,255,0.3)", borderRadius: "9999px",
+          width: "2.5rem", height: "2.5rem", display: "flex",
+          alignItems: "center", justifyContent: "center", cursor: "pointer",
+        }}
+      >
+        <X size={20} />
+      </button>
+      <img
+        src={src}
+        alt="Enlarged view"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxHeight: "90vh", maxWidth: "90vw", objectFit: "contain",
+          borderRadius: "0.5rem", boxShadow: "0 0 40px rgba(0,0,0,0.6)",
+          cursor: "default",
+        }}
+      />
+    </div>
   );
 }
 
@@ -613,6 +690,19 @@ export default function Hulukipedia() {
   const [imageSource, setImageSource] = useState("venice"); // "venice" or "pollinations"
   const [deepSearchResult, setDeepSearchResult] = useState(null);
 
+  // Lightbox (Part B) — shared by portrait + role-play chat images
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+
+  // Role-play (Part C) — session-only, cleared on reload + new search
+  const [rpProvider, setRpProvider] = useState(ROLEPLAY_DEFAULT_PROVIDER);
+  const [rpModel, setRpModel] = useState(ROLEPLAY_DEFAULT_MODEL);
+  const [rpMessages, setRpMessages] = useState([]); // { role: "user"|"character", content, image? }
+  const [rpInput, setRpInput] = useState("");
+  const [rpLoading, setRpLoading] = useState(false);
+  const [rpImgLoading, setRpImgLoading] = useState(false);
+  const [rpError, setRpError] = useState(null);
+  const rpThreadRef = useRef(null);
+
   // Loading states
   const [loading, setLoading] = useState({});
   const setL = (key, val) => setLoading(p => ({ ...p, [key]: val }));
@@ -649,6 +739,8 @@ export default function Hulukipedia() {
     setIntel([]); setPhysical(""); setComm(""); setConvo("");
     setPsych(""); setStrategic(""); setAddendum1(""); setAddendum2("");
     setImageUrl(null); setDeepSearchResult(null);
+    // Clear role-play session on every new dossier (session-only memory)
+    setRpMessages([]); setRpInput(""); setRpError(null);
     setView("results");
     generateIntel(sub.name, sub.knownFor || detailsInput.trim(), m);
   };
@@ -785,6 +877,127 @@ export default function Hulukipedia() {
     setL("image", false);
   };
 
+  // ─── ROLE-PLAY (Part C) ───
+  const stripHtml = (s) => (s || "").replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]*>/g, "").trim();
+
+  // A dossier is considered to exist once core character data is present.
+  const dossierExists = !!(subject.name && (intel.length > 0 || physical || comm));
+
+  // Re-injected right before generation to fight recency drift.
+  const rpSpeechRules = `You ARE ${subject.name}. Speak only in first person as ${subject.name}. Never break character. Never mention being an AI, a model, or a simulation. No disclaimers, no narration, no stage directions. Match the exact speech patterns, vocabulary, cadence, and personality shown in the communication examples — this is a precise impersonation, not a generic impression.`;
+
+  const buildRolePlaySystemPrompt = () => {
+    const sheet = [];
+    sheet.push(`# CHARACTER SHEET — ${subject.name}${subject.details ? ` (${subject.details})` : ""}`);
+    if (intel.length > 0) {
+      sheet.push(`\n## Confirmed Intel\n${intel
+        .map(c => `### ${c.category}\n${(c.entries || []).map(e => `- ${e}`).join("\n")}`)
+        .join("\n")}`);
+    }
+    const phys = stripHtml(physical);
+    if (phys) sheet.push(`\n## Physical Description (RAG-accurate)\n${phys}`);
+    const commText = stripHtml(comm);
+    if (commText) sheet.push(`\n## Communication Style — VOICE ANCHORS\n${commText}`);
+    const convoText = stripHtml(convo);
+    if (convoText) sheet.push(`\n## Conversational Style\n${convoText}`);
+    const psychText = stripHtml(psych);
+    if (psychText) sheet.push(`\n## Psychological Profile\n${psychText}`);
+    const stratText = stripHtml(strategic);
+    if (stratText) sheet.push(`\n## Strategic Analysis\n${stratText}`);
+    const a1 = stripHtml(addendum1);
+    if (a1) sheet.push(`\n## Addendum 1\n${a1}`);
+    const a2 = stripHtml(addendum2);
+    if (a2) sheet.push(`\n## Addendum 2\n${a2}`);
+
+    return `You are fully embodying a real/known character for an immersive role-play. Below is the complete dossier assembled for this character. Become them.
+
+${sheet.join("\n")}
+
+# HOW TO PLAY
+- Speak in the FIRST PERSON as ${subject.name}. You ARE this person.
+- Stay strictly in-persona at all times. Never break character, never add AI meta-commentary, never add disclaimers or safety notes.
+- VOICE ACCURACY MATTERS MOST. Here is exactly how this person speaks (see the "Communication Style — VOICE ANCHORS" section above): match those speech patterns, vocabulary, cadence, and personality precisely — not a generic impression.
+- Use the physical description and all intel to stay consistent with who they are.
+- Keep replies natural and in-scene. Do not narrate actions in third person unless the character themselves would.
+
+${rpSpeechRules}`;
+  };
+
+  const sendRolePlayMessage = async () => {
+    const msg = rpInput.trim();
+    if (!msg || rpLoading) return;
+    setRpError(null);
+    const history = rpMessages.map(m => ({ role: m.role === "user" ? "user" : "character", content: m.content }));
+    setRpMessages(prev => [...prev, { role: "user", content: msg }]);
+    setRpInput("");
+    setRpLoading(true);
+    try {
+      const system = buildRolePlaySystemPrompt();
+      const reply = await callRolePlay(system, history, msg, rpSpeechRules, rpProvider, rpModel);
+      setRpMessages(prev => [...prev, { role: "character", content: reply || "..." }]);
+    } catch (e) {
+      setRpError(e.message);
+    }
+    setRpLoading(false);
+  };
+
+  const generateRolePlayImage = async () => {
+    if (rpImgLoading) return;
+    setRpError(null);
+    setRpImgLoading(true);
+    try {
+      // Build an image prompt from appearance + recent conversation context,
+      // reusing the reverted (name-included) pipeline.
+      const p = getPrompts(subject.name, subject.details, mode);
+      const recent = rpMessages.slice(-6)
+        .map(m => `${m.role === "user" ? "User" : subject.name}: ${m.content}`)
+        .join("\n");
+      const contextualUser = `${p.imagePrompt.user}\n\nGround the scene in this recent conversation so the portrait reflects the current moment, mood, and setting:\n${recent || "(no conversation yet — default portrait)"}`;
+      const prompt = await callAI(p.imagePrompt.system, contextualUser, globalProvider, globalModel);
+      const dataUrl = await callImageGen(prompt, "", imageModel);
+      setRpMessages(prev => [...prev, { role: "character", content: "", image: dataUrl }]);
+    } catch (e) {
+      setRpError(e.message);
+    }
+    setRpImgLoading(false);
+  };
+
+  const clearRolePlay = () => {
+    setRpMessages([]);
+    setRpInput("");
+    setRpError(null);
+  };
+
+  const saveRolePlayMarkdown = () => {
+    const ts = new Date().toLocaleString();
+    const lines = [`# Conversation with ${subject.name}`, `*${ts}*`, ""];
+    rpMessages.forEach(m => {
+      if (m.image) {
+        lines.push(`**${subject.name}:** [generated image]`);
+        lines.push(`![generated image](${m.image.length > 200 ? "data:image/png;base64,…" : m.image})`);
+      } else {
+        lines.push(`**${m.role === "user" ? "User" : subject.name}:** ${m.content}`);
+      }
+      lines.push("");
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `conversation-${subject.name.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Auto-scroll the chat thread to the newest message.
+  useEffect(() => {
+    if (rpThreadRef.current) {
+      rpThreadRef.current.scrollTop = rpThreadRef.current.scrollHeight;
+    }
+  }, [rpMessages, rpLoading, rpImgLoading]);
+
   const copyAllText = () => {
     const sections = [
       `DOSSIER: ${subject.name.toUpperCase()}`,
@@ -817,6 +1030,7 @@ export default function Hulukipedia() {
     setDetailsInput("");
     setClarifications(null);
     setSectionProviders(SECTION_DEFAULTS);
+    setRpMessages([]); setRpInput(""); setRpError(null);
   };
 
   // ─── SEARCH LINKS ───
@@ -1090,7 +1304,14 @@ export default function Hulukipedia() {
                   </div>
                   <div className="flex flex-col gap-2">
                     {imageUrl ? (
-                      <img src={imageUrl} alt="Generated portrait" className="w-full rounded-md" style={{ maxHeight: "300px", objectFit: "cover" }} />
+                      <img
+                        src={imageUrl}
+                        alt="Generated portrait"
+                        onClick={() => setLightboxSrc(imageUrl)}
+                        className="w-full rounded-md"
+                        style={{ maxHeight: "300px", objectFit: "cover", cursor: "pointer" }}
+                        title="Click to enlarge"
+                      />
                     ) : (
                       <div className="flex items-center justify-center rounded-md" style={{ height: "200px", backgroundColor: t.bgMain, border: `1px dashed ${t.border}` }}>
                         {loading.image ? <Spinner size={32} /> : <Image size={48} style={{ opacity: 0.2 }} />}
@@ -1357,6 +1578,129 @@ export default function Hulukipedia() {
               </div>
             </div>
 
+            {/* ═══ ROLE-PLAY / INTERACTIVE CHARACTER (Part C) ═══ */}
+            {dossierExists && (
+              <div className="p-4 md:p-6 shadow-xl space-y-4" style={cardStyle}>
+                <h3 className="text-xl font-bold text-center tracking-widest" style={{ color: t.accentGold, fontFamily: "'Roboto Mono', monospace" }}>
+                  ROLE-PLAY: TALK TO {subject.name.toUpperCase()}
+                </h3>
+                <p className="text-xs italic text-center" style={{ color: t.textSecondary }}>
+                  Grounded on the full dossier above. First-person, strictly in-persona. Session-only — clears on reload or a new search.
+                </p>
+
+                {/* Model picker + controls */}
+                <div className="flex items-center justify-between gap-2 flex-wrap" style={sectionStyle}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold uppercase" style={{ color: t.textSecondary, letterSpacing: "0.05em" }}>
+                      Role-play model
+                    </span>
+                    <ProviderSelector
+                      provider={rpProvider}
+                      model={rpModel}
+                      onProviderChange={(p) => { setRpProvider(p); setRpModel(PROVIDERS[p].models[0].id); }}
+                      onModelChange={setRpModel}
+                      theme={theme}
+                      compact
+                    />
+                    <span className="text-xs" style={{ color: t.textSecondary }}>
+                      Recommended: {ROLEPLAY_ALTERNATES.map(a => a.label.split(" — ")[0]).join(" · ")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={clearRolePlay}
+                      className="flex items-center gap-1 py-1.5 px-3 rounded-md text-xs font-bold"
+                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textSecondary }}
+                    >
+                      <RefreshCw size={12} /> Clear
+                    </button>
+                    <button
+                      onClick={saveRolePlayMarkdown}
+                      disabled={rpMessages.length === 0}
+                      className="flex items-center gap-1 py-1.5 px-3 rounded-md text-xs font-bold"
+                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textSecondary, opacity: rpMessages.length === 0 ? 0.5 : 1 }}
+                    >
+                      <FileText size={12} /> Save as Markdown
+                    </button>
+                  </div>
+                </div>
+
+                {/* Chat thread */}
+                <div
+                  ref={rpThreadRef}
+                  className="rounded-md p-3 space-y-3 overflow-y-auto"
+                  style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, maxHeight: "420px", minHeight: "160px" }}
+                >
+                  {rpMessages.length === 0 && !rpLoading && (
+                    <p className="text-sm italic" style={{ color: t.textSecondary }}>
+                      Start the conversation — say hello to {subject.name}.
+                    </p>
+                  )}
+                  {rpMessages.map((m, i) => (
+                    <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className="rounded-lg px-3 py-2 text-sm"
+                        style={{
+                          maxWidth: "80%",
+                          backgroundColor: m.role === "user" ? t.accentGold : t.bgSection,
+                          color: m.role === "user" ? "#111" : t.textPrimary,
+                          border: m.role === "user" ? "none" : `1px solid ${t.border}`,
+                        }}
+                      >
+                        {!m.image && (
+                          <div className="text-xs font-bold mb-1" style={{ opacity: 0.7 }}>
+                            {m.role === "user" ? "You" : subject.name}
+                          </div>
+                        )}
+                        {m.image ? (
+                          <img
+                            src={m.image}
+                            alt={`Scene with ${subject.name}`}
+                            onClick={() => setLightboxSrc(m.image)}
+                            className="rounded-md"
+                            style={{ maxWidth: "260px", maxHeight: "260px", objectFit: "cover", cursor: "pointer" }}
+                            title="Click to enlarge"
+                          />
+                        ) : (
+                          <div style={{ whiteSpace: "pre-wrap" }}>{m.content}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {(rpLoading || rpImgLoading) && (
+                    <div className="flex justify-start">
+                      <div className="rounded-lg px-3 py-2 text-sm flex items-center gap-2" style={{ backgroundColor: t.bgSection, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                        <Spinner size={14} /> {rpImgLoading ? "Generating image…" : `${subject.name} is typing…`}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {rpError && (
+                  <div className="text-xs" style={{ color: "#ef4444" }}>{rpError}</div>
+                )}
+
+                {/* Input row */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={rpInput}
+                    onChange={e => setRpInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendRolePlayMessage(); } }}
+                    placeholder={`Message ${subject.name}…`}
+                    className="flex-1 rounded-md px-4 py-2 outline-none text-sm"
+                    style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                  />
+                  <GenBtn onClick={sendRolePlayMessage} loading={rpLoading} style={{ backgroundColor: t.accentGold, color: "#111" }}>
+                    <MessageCircle size={14} className="mr-1" /> Send
+                  </GenBtn>
+                  <GenBtn onClick={generateRolePlayImage} loading={rpImgLoading} style={{ backgroundColor: "#8b5cf6", color: "white" }}>
+                    <Image size={14} className="mr-1" /> Image
+                  </GenBtn>
+                </div>
+              </div>
+            )}
+
             {/* Footer */}
             <footer className="text-center py-4" style={{ fontFamily: "'Satisfy', cursive", color: t.accentGold, fontSize: "0.875rem" }}>
               <p><strong>Disclaimer:</strong> AI-generated content. May contain inaccuracies.</p>
@@ -1365,6 +1709,9 @@ export default function Hulukipedia() {
           </div>
         )}
       </div>
+
+      {/* ═══ LIGHTBOX (Part B) — shared by portrait + chat images ═══ */}
+      <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }
