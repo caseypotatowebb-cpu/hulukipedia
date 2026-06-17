@@ -568,11 +568,28 @@ async function handleImageProxy(request, env, origin) {
     // Default to nano-banana-pro for photorealistic output
     const selectedModel = model || "nano-banana-pro";
 
-    // Resolution-tier models: nano-banana-pro, nano-banana-2, gpt-image-2
-    const resolutionTierModels = ["nano-banana-pro", "nano-banana-2", "gpt-image-2"];
-    // Aspect-ratio-only models: qwen-image-2
-    const aspectOnlyModels = ["qwen-image-2"];
-    // Pixel-based models: venice-sd35, qwen-image
+    // Resolution-tier models (use aspect_ratio + resolution: "1K"/"2K"/"4K")
+    const resolutionTierModels = [
+      "nano-banana-pro", "nano-banana-2",
+      "gpt-image-2", "gpt-image-1-5",
+      "grok-imagine-image", "grok-imagine-image-quality",
+      "flux-2-pro", "flux-2-max",
+      "qwen-image-2", "qwen-image-2-pro",
+      "seedream-v4", "seedream-v5-lite",
+      "ideogram-v4",
+      "krea-v2-large", "krea-v2-medium",
+      "recraft-v4", "recraft-v4-pro",
+      "hunyuan-image-v3",
+      "imagineart-1.5-pro",
+      "wan-2-7-text-to-image", "wan-2-7-pro-text-to-image",
+      "lustify-sdxl", "lustify-v7", "lustify-v8",
+      "wai-Illustrious",
+      "chroma",
+      "z-image-turbo",
+    ];
+    // Aspect-ratio-only models (no resolution field)
+    const aspectOnlyModels = [];
+    // Pixel-based models (use width + height)
     const pixelModels = ["venice-sd35", "qwen-image"];
 
     const imgBody = {

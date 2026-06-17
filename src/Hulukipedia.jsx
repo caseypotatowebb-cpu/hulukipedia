@@ -641,12 +641,52 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model,
 
 // ─── IMAGE MODEL SELECTOR ───
 const IMAGE_MODELS = [
-  { id: "nano-banana-pro", name: "Nano Banana Pro (Photorealistic)" },
-  { id: "nano-banana-2", name: "Nano Banana 2" },
-  { id: "gpt-image-2", name: "GPT Image 2" },
-  { id: "grok-imagine-image", name: "Grok Imagine" },
-  { id: "qwen-image-2", name: "Qwen Image 2" },
-  { id: "venice-sd35", name: "Venice SD 3.5" },
+  // ── Photorealistic / Portrait-optimized ──
+  { id: "nano-banana-pro",            name: "Nano Banana Pro ★ (Photorealistic)" },
+  { id: "nano-banana-2",              name: "Nano Banana 2" },
+  // ── Flux family ──
+  { id: "flux-2-pro",                 name: "Flux 2 Pro" },
+  { id: "flux-2-max",                 name: "Flux 2 Max" },
+  // ── GPT / OpenAI-backed ──
+  { id: "gpt-image-2",                name: "GPT Image 2" },
+  { id: "gpt-image-1-5",              name: "GPT Image 1.5" },
+  // ── Grok / xAI ──
+  { id: "grok-imagine-image",         name: "Grok Imagine" },
+  { id: "grok-imagine-image-quality", name: "Grok Imagine (Quality)" },
+  // ── Qwen / Alibaba ──
+  { id: "qwen-image-2",               name: "Qwen Image 2" },
+  { id: "qwen-image-2-pro",           name: "Qwen Image 2 Pro" },
+  { id: "qwen-image",                 name: "Qwen Image (Highest Quality)" },
+  // ── Seedream / ByteDance ──
+  { id: "seedream-v4",                name: "Seedream v4" },
+  { id: "seedream-v5-lite",           name: "Seedream v5 Lite" },
+  // ── Ideogram ──
+  { id: "ideogram-v4",                name: "Ideogram v4" },
+  // ── Krea ──
+  { id: "krea-v2-large",              name: "Krea v2 Large" },
+  { id: "krea-v2-medium",             name: "Krea v2 Medium" },
+  // ── Recraft ──
+  { id: "recraft-v4",                 name: "Recraft v4" },
+  { id: "recraft-v4-pro",             name: "Recraft v4 Pro" },
+  // ── Hunyuan / Tencent ──
+  { id: "hunyuan-image-v3",           name: "Hunyuan Image v3" },
+  // ── ImagineArt ──
+  { id: "imagineart-1.5-pro",         name: "ImagineArt 1.5 Pro" },
+  // ── Wan / Video-to-Image ──
+  { id: "wan-2-7-text-to-image",      name: "Wan 2.7 Text-to-Image" },
+  { id: "wan-2-7-pro-text-to-image",  name: "Wan 2.7 Pro Text-to-Image" },
+  // ── Lustify (Uncensored) ──
+  { id: "lustify-sdxl",               name: "Lustify SDXL" },
+  { id: "lustify-v7",                 name: "Lustify v7 (Uncensored)" },
+  { id: "lustify-v8",                 name: "Lustify v8 (Uncensored)" },
+  // ── WAI Illustrious (Anime) ──
+  { id: "wai-Illustrious",            name: "WAI Illustrious (Anime)" },
+  // ── Chroma ──
+  { id: "chroma",                     name: "Chroma" },
+  // ── Z-Image (Fastest) ──
+  { id: "z-image-turbo",              name: "Z-Image Turbo ⚡ (Fastest)" },
+  // ── Venice Classic ──
+  { id: "venice-sd35",                name: "Venice SD 3.5" },
 ];
 
 // ─── MAIN COMPONENT ───
@@ -1036,11 +1076,19 @@ ${rpSpeechRules}`;
   // ─── SEARCH LINKS ───
   const getImageLinks = () => {
     const term = encodeURIComponent(subject.name);
-    return [
-      { name: "Google", url: `https://www.google.com/search?tbm=isch&q=${term}` },
-      { name: "Bing", url: `https://www.bing.com/images/search?q=${term}` },
+    const base = [
+      { name: "Google",    url: `https://www.google.com/search?tbm=isch&q=${term}` },
+      { name: "Bing",      url: `https://www.bing.com/images/search?q=${term}` },
       { name: "Pinterest", url: `https://www.pinterest.com/search/pins/?q=${term}` },
     ];
+    if (mode === "raven") {
+      // Raven = fictional characters — Rule 34 is the go-to
+      base.push({ name: "Rule 34", url: `https://rule34.xxx/index.php?page=post&s=list&tags=${term}`, nsfw: true });
+    } else {
+      // Starling = real people — CelebJihad covers leaked/candid content
+      base.push({ name: "Celeb Jihad", url: `https://celebjihad.com/?s=${term}`, nsfw: true });
+    }
+    return base;
   };
 
   // ─── BUTTON COMPONENT ───
@@ -1353,9 +1401,11 @@ ${rpSpeechRules}`;
                       {getImageLinks().map(link => (
                         <a key={link.name} href={link.url} target="_blank" rel="noopener noreferrer"
                           className="flex items-center justify-center py-1.5 px-2 rounded text-xs font-bold transition-all"
-                          style={{ backgroundColor: t.accentGold, color: "#111" }}
+                          style={link.nsfw
+                            ? { backgroundColor: "#dc2626", color: "white", border: "1px solid #991b1b" }
+                            : { backgroundColor: t.accentGold, color: "#111" }}
                         >
-                          {link.name}
+                          {link.nsfw ? "🔞 " : ""}{link.name}
                         </a>
                       ))}
                     </div>
