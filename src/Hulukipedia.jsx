@@ -728,6 +728,7 @@ export default function Hulukipedia() {
   const [imageError, setImageError] = useState(null);
   const [imageModel, setImageModel] = useState("nano-banana-pro");
   const [imageSource, setImageSource] = useState("venice"); // "venice" or "pollinations"
+  const [imageSearchEnabled, setImageSearchEnabled] = useState(false); // web search for prompt gen
   const [deepSearchResult, setDeepSearchResult] = useState(null);
 
   // Lightbox (Part B) — shared by portrait + role-play chat images
@@ -901,7 +902,9 @@ export default function Hulukipedia() {
     setImageError(null);
     try {
       const p = getPrompts(subject.name, subject.details, mode);
-      const prompt = await callAI(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel);
+      const prompt = imageSearchEnabled
+        ? await callAIWithSearch(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel)
+        : await callAI(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel);
       if (imageSource === "venice") {
         const dataUrl = await callImageGen(prompt, "", imageModel);
         setImageUrl(dataUrl);
@@ -1394,6 +1397,14 @@ ${rpSpeechRules}`;
                         Pollinations
                       </button>
                     </div>
+                    <button
+                      onClick={() => setImageSearchEnabled(!imageSearchEnabled)}
+                      className="w-full text-xs py-1 rounded font-bold flex items-center justify-center gap-1"
+                      style={{ backgroundColor: imageSearchEnabled ? "#0ea5e9" : t.bgMain, color: imageSearchEnabled ? "white" : t.textSecondary, border: `1px solid ${t.border}` }}
+                      title="When enabled, the AI will search the web for what this person/character looks like before generating the image prompt"
+                    >
+                      <Globe size={12} /> Web Search {imageSearchEnabled ? "ON" : "OFF"}
+                    </button>
                     <GenBtn onClick={generateImage} loading={loading.image} style={{ backgroundColor: t.accentGold, color: "#111" }}>
                       <Sparkles size={14} className="mr-1" /> Generate Portrait
                     </GenBtn>
