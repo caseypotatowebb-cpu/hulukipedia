@@ -1,21 +1,29 @@
 # Hulukipedia — Cloudflare Deployment Handoff Notes
 
 **Deployed by:** Autumn (Pearl Peregrine) — Team Tomorrow  
-**Latest Version:** v3.0.3 (June 18, 2026)  
+**Latest Version:** v3.0.4 (June 18, 2026)  
 **Live URL:** https://hulukipedia.teamtomorrowlabs.workers.dev  
 
 ---
 
-## 1. What Was Done (v3.0.3 State)
+## 1. What Was Done (v3.0.4 State)
 
 Hulukipedia is deployed to Cloudflare Workers as a live web application. The app is fully functional with multi-provider AI support. All API keys are stored as encrypted Cloudflare Worker secrets.
 
 **Key Features Currently Live:**
 - **Search & Clarification:** Defaults to Perplexity (Sonar model) for initial search and fact-finding.
-- **Image Generation:** Uses Venice AI's API. The default model is **Nano Banana Pro**, which has been reverted to its original, simple prompt structure (`"Photorealistic, professional portrait photography, 8k detail. Include physical features, clothing, expression, and mood. One paragraph."`). This applies to both fictional (Raven) and real (Starling) subjects to ensure photorealistic outputs.
+- **Image Generation:** Uses Venice AI's API. The default model is **Nano Banana Pro**, which has been reverted to its original, simple prompt structure. Both modes (Raven/Starling) now produce photorealistic outputs:
+  - Starling (real): `"Photorealistic, professional portrait photography, 8k detail."`
+  - Raven (fictional): `"Photorealistic, cinematic lighting, highly detailed. Describe them as they would appear in a live-action adaptation or real-world encounter."`
+- **Web Search Toggle (NEW in v3.0.4):** A "Web Search ON/OFF" button in the Portrait panel. When enabled, the AI searches the web for what the character/person looks like before writing the image prompt. Default: OFF. Useful for obscure characters.
 - **Expanded Model Support:** The frontend dropdown now supports 30 Venice image models (including Flux, Qwen, Seedream, Krea, Recraft, etc.), categorized correctly in the worker.
 - **NSFW Sources:** Rule34 links appear in Raven mode; CelebJihad links appear in Starling mode. They are styled in red with a 🔞 indicator.
 - **Other Preserved Features:** Lightbox for images, Role-Play chat interface, and `ROLEPLAY_ALTERNATES` configurations are fully intact.
+
+**Image Generation Verified (June 18, 2026):**
+- Lara Croft (Raven/fictional): 2048x2048 photorealistic cinematic portrait — looks like Alicia Vikander's Tomb Raider. Stunning.
+- Scarlett Johansson (Starling/real): 2048x2048 clean studio portrait — accurate likeness, natural skin, professional lighting.
+- Both modes confirmed producing 9MB+ high-quality PNG outputs via Nano Banana Pro.
 
 ## 2. Deployment Gotchas & Workflow (CRITICAL)
 
