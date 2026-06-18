@@ -1,25 +1,69 @@
 # Hulukipedia — Cloudflare Deployment Handoff Notes
 
 **Deployed by:** Autumn (Pearl Peregrine) — Team Tomorrow  
-**Date:** April 11, 2026  
+**Latest Version:** v3.0.3 (June 18, 2026)  
 **Live URL:** https://hulukipedia.teamtomorrowlabs.workers.dev  
-**Cloudflare Account:** Team Tomorrow Labs  
 
 ---
 
-## What Was Done
+## 1. What Was Done (v3.0.3 State)
 
-Hulukipedia has been deployed to Cloudflare Workers as a live web application. The app is fully functional with multi-provider AI support. All API keys are stored as encrypted Cloudflare Worker secrets — they never touch the browser.
+Hulukipedia is deployed to Cloudflare Workers as a live web application. The app is fully functional with multi-provider AI support. All API keys are stored as encrypted Cloudflare Worker secrets.
 
-## Architecture
+**Key Features Currently Live:**
+- **Search & Clarification:** Defaults to Perplexity (Sonar model) for initial search and fact-finding.
+- **Image Generation:** Uses Venice AI's API. The default model is **Nano Banana Pro**, which has been reverted to its original, simple prompt structure (`"Photorealistic, professional portrait photography, 8k detail. Include physical features, clothing, expression, and mood. One paragraph."`). This applies to both fictional (Raven) and real (Starling) subjects to ensure photorealistic outputs.
+- **Expanded Model Support:** The frontend dropdown now supports 30 Venice image models (including Flux, Qwen, Seedream, Krea, Recraft, etc.), categorized correctly in the worker.
+- **NSFW Sources:** Rule34 links appear in Raven mode; CelebJihad links appear in Starling mode. They are styled in red with a 🔞 indicator.
+- **Other Preserved Features:** Lightbox for images, Role-Play chat interface, and `ROLEPLAY_ALTERNATES` configurations are fully intact.
+
+## 2. Deployment Gotchas & Workflow (CRITICAL)
+
+The standard `wrangler deploy` command **will not work** due to Cloudflare authentication conflicts. 
+
+**The Problem:** The system `CLOUDFLARE_API_TOKEN` is a Global API Key, which requires `X-Auth-Email` and `X-Auth-Key` headers. Wrangler expects a Bearer token and will fail or get stuck in an OAuth loop (which hits a captcha).
+
+**The Solution:** Use the custom Python deployment script (`deploy.py`) located in the project root. It handles the three-step Workers-with-Assets flow via the Cloudflare REST API.
+
+**Deployment Steps:**
+1. Build the frontend: `cd /home/ubuntu/hulukipedia && pnpm build` (or `./node_modules/.bin/vite build`)
+2. Run the deploy script: `python3 deploy.py`
+3. Commit and push to GitHub: `cd /home/ubuntu/hulukipedia-repo && git add -A && git commit -m "..." && git push origin main`
+
+**CRITICAL WARNING:** Always `git pull` the repo before making edits to the local working directory. The repo may contain features (like Lightbox or Role-Play) pushed by other agents that are not present in the local sandbox. If you deploy from an out-of-sync local directory, you will overwrite the live worker with missing features.
+
+## 3. Strategic Roadmap (Commander's Vision)
+
+The following initiatives have been outlined for future development by the Commander:
+
+### A. Merge Raven and Starling Modes
+- **Goal:** Remove the hard fork between fictional (Raven) and real (Starling) modes.
+- **Rationale:** The AI infrastructure is now capable of contextually distinguishing between characters and actors without upfront user selection.
+- **Implementation:** Create a unified search mode. Contextual features (like Rule34 vs. CelebJihad) should trigger based on the AI's classification of the subject rather than a manual toggle.
+
+### B. Expand the Surveillance/Encounter Engine
+- **Goal:** Turn the "following them around" section into a highly configurable simulation engine.
+- **Implementation:** Allow the user to adjust parameters such as:
+  - **Observer Identity:** Who is conducting the surveillance?
+  - **Mission/Intent:** Is it a passive follow, an extraction, an assassination, or a casual encounter?
+  - **Scenario:** Extreme or different role-play situations to demonstrate the character's behavior accurately under stress.
+
+### C. Multi-Pose Image Batches
+- **Goal:** Move away from a single clean headshot as the default visual output.
+- **Implementation:** Generate a batch of 3-5 varied prompts (e.g., portrait, full body, candid, action pose, signature scene) and hit Nano Banana Pro for all of them. This will provide a more immersive and useful visual dossier.
+
+## 4. Persistent Cloud Computer Status
+There is a persistent cloud computer (Pearl Perch) available for the team. 
+- **Note:** Only one thread can actively bridge to the cloud computer at a time. If you encounter timeouts or connection issues, another agent thread is likely actively working on it.
+- **Action:** If you need to use Pearl Perch as the primary dev environment, coordinate with the active thread or wait for the session to clear. The local sandbox is fine for quick edits if you pull from the repo first.
+
+---
+
+## 5. Architecture & API Providers (Legacy Notes)
 
 The app has two layers:
-
-1. **Frontend** — A Vite + React app (built from the original JSX) served as static files from Cloudflare's edge network. Located in `/src/Hulukipedia.jsx`.
-
-2. **Backend** — A Cloudflare Worker (`/worker/index.js`) that serves the frontend and acts as a secure API proxy. All AI calls go through this proxy so API keys stay hidden.
-
-## API Providers Wired Up
+1. **Frontend** — A Vite + React app served as static files from Cloudflare's edge network. Located in `/src/Hulukipedia.jsx`.
+2. **Backend** — A Cloudflare Worker (`/worker/index.js`) that serves the frontend and acts as a secure API proxy.
 
 | Provider | Secret Name | Endpoint | Capabilities |
 |---|---|---|---|
@@ -28,90 +72,5 @@ The app has two layers:
 | Perplexity Sonar | `PERPLEXITY_API_KEY` | `/api/ai` (provider: "perplexity") + `/api/search` | RAG search with citations |
 | OpenRouter | `OPENROUTER_API_KEY` | `/api/ai` (provider: "openrouter") | Multi-model routing (200+ models) |
 
-## For Spring (GitHub)
-
-Push the `/home/ubuntu/hulukipedia` directory to the `caseypotatowebb-cpu/hulukipedia` repo. Key files:
-
-- `worker/index.js` — the Cloudflare Worker backend
-- `src/Hulukipedia.jsx` — the main React component
-- `wrangler.toml` — Cloudflare deployment config
-- `package.json`, `vite.config.js` — build config
-
-To redeploy after changes: `cd hulukipedia && npx vite build && wrangler deploy`
-
-## For Monday (App Logic)
-
-Two known issues from the original Gemini version that carried over:
-
-1. **Confirmed Intel JSON parsing** — The AI sometimes returns slightly malformed JSON for the intel section. The parsing logic in the `compileIntel` function could use a more forgiving parser or a retry mechanism.
-
-2. **Markdown rendering** — Generated text shows raw markdown syntax (`**bold**`, `###` headers) instead of formatted text. A markdown-to-HTML renderer (like `marked` or `react-markdown`) would fix this across all sections.
-
-## For Wednesday (Architecture Review)
-
-The provider selection system works at two levels: a global default provider selector in the header, and per-section override dropdowns. Each section can independently choose its provider and model. The backend routes based on the `provider` field in the request body.
-
-The `/api/providers` endpoint returns the full list of available providers and models, which the frontend uses to populate dropdowns dynamically.
-
-## Deployment Commands
-
-```bash
-# Build frontend
-cd /home/ubuntu/hulukipedia && npx vite build
-
-# Deploy to Cloudflare
-wrangler deploy
-
-# Add/update a secret
-echo "your-key-here" | wrangler secret put SECRET_NAME
-
-# Check deployment status
-wrangler whoami
-```
-
----
-
-## v3.0.1 — Security & Fixes
-
-Review-driven fixes shipped in v3.0.1:
-
-- **Section provider switcher** — Fixed a state race where picking a new provider for a
-  section left it paired with the old provider (broke API routing). Model-only changes now
-  preserve the queued provider.
-- **CORS** — The worker now echoes the request's `Origin` header (instead of its own origin)
-  on every response, so cross-origin browsers and teammates' agents are no longer blocked.
-  `x-app-token` is allowed in CORS headers.
-- **OpenAI reasoning models** — `o1*`, `o3*`, and `gpt-5*` now use `max_completion_tokens`
-  and omit `temperature` (they reject `max_tokens` / non-default temperature).
-- **xAI agentic search** — `useSearch` now calls the `/v1/responses` agentic tools endpoint
-  with `web_search` + `x_search` tools and parses the Responses-API output shape.
-- **maxTokens clamp** — Client-supplied `maxTokens` is clamped to 1–8000.
-- **SPA asset binding** — `wrangler.toml` now sets `binding = "ASSETS"` and
-  `not_found_handling = "single-page-application"` so client routes resolve.
-- **UI hardening** — Copy All guards against intel categories without `entries`; image
-  generation failures now surface an error message in the Portrait panel; the Confirmed
-  Intel verifier uses the real search mode instead of a hardcoded one.
-- **Repo hygiene** — Added `.gitignore`, `dev`/`build`/`deploy` npm scripts, and `wrangler`
-  as a devDependency.
-
 ### Optional team token (`APP_TOKEN`)
-
-The `/api` endpoints proxy paid AI APIs. They remain fully open by default. To restrict
-access, set a Worker secret:
-
-```bash
-wrangler secret put APP_TOKEN
-```
-
-Once set, POST requests to `/api/ai`, `/api/image`, and `/api/search` are allowed only when
-either:
-
-- the request comes from the app's own frontend (its `Origin` matches the worker origin), so
-  the deployed UI needs no token, **or**
-- the request carries a matching `x-app-token` header — this is how teammates' agents
-  authenticate.
-
-Requests failing both checks get `401 { "error": "Missing or invalid x-app-token" }`. If
-`APP_TOKEN` is unset, behavior is unchanged (no token required).
-
-Redeploy after changes with `npm run deploy`.
+The `/api` endpoints proxy paid AI APIs. They remain fully open by default. To restrict access, set a Worker secret: `wrangler secret put APP_TOKEN`. Once set, POST requests to `/api/ai`, `/api/image`, and `/api/search` are allowed only when either the request comes from the app's own frontend or carries a matching `x-app-token` header.
