@@ -122,8 +122,8 @@ const PROVIDERS = {
   },
 };
 
-const DEFAULT_PROVIDER = "venice";
-const DEFAULT_MODEL = "openai-gpt-4o-2024-11-20";
+const DEFAULT_PROVIDER = "perplexity";
+const DEFAULT_MODEL = "sonar";
 
 // ─── SMART SECTION DEFAULTS ───
 // Venice routes to Commander's favorites; Perplexity for factual research
@@ -436,7 +436,7 @@ function getPrompts(subject, details, mode) {
     },
     imagePrompt: {
       system: "You generate concise image generation prompts. Respond with ONLY the prompt text, nothing else.",
-      user: `Create a detailed image generation prompt for a portrait of ${entity}. ${fictional ? "Cinematic, dramatic lighting, highly detailed fantasy/sci-fi art style." : "Photorealistic, professional portrait photography, 8k detail."} Include physical features, clothing, expression, and mood. One paragraph.`,
+      user: `Create a detailed image generation prompt for a portrait of ${entity}. ${fictional ? "Photorealistic, cinematic lighting, highly detailed. Describe them as they would appear in a live-action adaptation or real-world encounter." : "Photorealistic, professional portrait photography, 8k detail."} Include physical features, clothing, expression, and mood. One paragraph.`,
     },
   };
 }
