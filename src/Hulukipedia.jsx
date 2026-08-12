@@ -730,11 +730,11 @@ const VISUAL_SCENE_RECIPES = [
     aspectRatio: "3:4",
     artDirection: "a cohesive high-end editorial lookbook, natural anatomy, visual marketing polish, an intentional wardrobe and environment",
     shots: [
-      { label: "Full-Length Hero", direction: "full-length hero frame, poised stance, camera at a natural fashion-editorial distance" },
-      { label: "Three-Quarter Detail", direction: "three-quarter standing frame, relaxed but deliberate pose, face and styling clearly readable" },
-      { label: "Seated Editorial", direction: "seated or leaning editorial frame, confident body language, textured environment supporting the subject" },
-      { label: "Walking Arrival", direction: "mid-stride arrival frame, candid movement while maintaining polished campaign energy" },
-      { label: "Close Character Frame", direction: "medium close character frame, expressive posture and eye contact, not an ID-photo crop" },
+      { label: "Full-Length Hero", direction: "a SINGLE full-length hero frame; the subject is standing in a poised, balanced stance, camera at a natural fashion-editorial distance" },
+      { label: "Three-Quarter Detail", direction: "a SINGLE three-quarter-length frame; the subject is leaning naturally against a location-appropriate surface, not standing straight toward camera; face and styling clearly readable" },
+      { label: "Seated Editorial", direction: "a SINGLE seated editorial frame; the subject is unmistakably seated on a location-appropriate bench, step, crate, or chair, with confident relaxed body language; never standing" },
+      { label: "Walking Arrival", direction: "a SINGLE candid motion frame; the subject is unmistakably mid-stride and moving through the location, with natural clothing movement; never static or posed" },
+      { label: "Close Character Frame", direction: "a SINGLE waist-up character frame with expressive posture and eye contact; do not repeat the full-body standing pose from the other lookbook shots" },
     ],
   },
   {
