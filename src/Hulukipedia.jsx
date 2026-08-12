@@ -207,12 +207,12 @@ async function callDeepSearch(query, systemPrompt = null) {
   }
 }
 
-async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pro", aspectRatio = "1:1", resolution = "2K") {
+async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pro", aspectRatio = "1:1", resolution = "2K", width = null, height = null) {
   try {
     const res = await fetch(`${API_BASE}/api/image`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, negativePrompt, model, aspectRatio, resolution }),
+      body: JSON.stringify({ prompt, negativePrompt, model, aspectRatio, resolution, width, height }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -640,6 +640,7 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model,
 }
 
 // ─── IMAGE MODEL SELECTOR ───
+// Model IDs and capabilities were verified against Venice's live image catalog on 2026-08-12.
 // ─── FICTIONAL OPERATION PRESETS ───
 // These controls steer Raven's narrative addendums without turning them into real-world operational advice.
 const OPERATION_MISSIONS = [
@@ -669,53 +670,152 @@ function buildOperationContext(operation) {
 }
 
 const IMAGE_MODELS = [
-  // ── Photorealistic / Portrait-optimized ──
-  { id: "nano-banana-pro",            name: "Nano Banana Pro ★ (Photorealistic)" },
-  { id: "nano-banana-2",              name: "Nano Banana 2" },
-  // ── Flux family ──
-  { id: "flux-2-pro",                 name: "Flux 2 Pro" },
-  { id: "flux-2-max",                 name: "Flux 2 Max" },
-  // ── GPT / OpenAI-backed ──
-  { id: "gpt-image-2",                name: "GPT Image 2" },
-  { id: "gpt-image-1-5",              name: "GPT Image 1.5" },
-  // ── Grok / xAI ──
-  { id: "grok-imagine-image",         name: "Grok Imagine" },
-  { id: "grok-imagine-image-quality", name: "Grok Imagine (Quality)" },
-  // ── Qwen / Alibaba ──
-  { id: "qwen-image-2",               name: "Qwen Image 2" },
-  { id: "qwen-image-2-pro",           name: "Qwen Image 2 Pro" },
-  { id: "qwen-image",                 name: "Qwen Image (Highest Quality)" },
-  // ── Seedream / ByteDance ──
-  { id: "seedream-v4",                name: "Seedream v4" },
-  { id: "seedream-v5-lite",           name: "Seedream v5 Lite" },
-  // ── Ideogram ──
-  { id: "ideogram-v4",                name: "Ideogram v4" },
-  // ── Krea ──
-  { id: "krea-v2-large",              name: "Krea v2 Large" },
-  { id: "krea-v2-medium",             name: "Krea v2 Medium" },
-  // ── Recraft ──
-  { id: "recraft-v4",                 name: "Recraft v4" },
-  { id: "recraft-v4-pro",             name: "Recraft v4 Pro" },
-  // ── Hunyuan / Tencent ──
-  { id: "hunyuan-image-v3",           name: "Hunyuan Image v3" },
-  // ── ImagineArt ──
-  { id: "imagineart-1.5-pro",         name: "ImagineArt 1.5 Pro" },
-  // ── Wan / Video-to-Image ──
-  { id: "wan-2-7-text-to-image",      name: "Wan 2.7 Text-to-Image" },
-  { id: "wan-2-7-pro-text-to-image",  name: "Wan 2.7 Pro Text-to-Image" },
-  // ── Lustify (Uncensored) ──
-  { id: "lustify-sdxl",               name: "Lustify SDXL" },
-  { id: "lustify-v7",                 name: "Lustify v7 (Uncensored)" },
-  { id: "lustify-v8",                 name: "Lustify v8 (Uncensored)" },
-  // ── WAI Illustrious (Anime) ──
-  { id: "wai-Illustrious",            name: "WAI Illustrious (Anime)" },
-  // ── Chroma ──
-  { id: "chroma",                     name: "Chroma" },
-  // ── Z-Image (Fastest) ──
-  { id: "z-image-turbo",              name: "Z-Image Turbo ⚡ (Fastest)" },
-  // ── Venice Classic ──
-  { id: "venice-sd35",                name: "Venice SD 3.5" },
+  { id: "nano-banana-pro", group: "Portrait & identity", name: "Nano Banana Pro ★", note: "Best default for photorealistic, identity-led sets · 1K/2K/4K" },
+  { id: "nano-banana-2", group: "Portrait & identity", name: "Nano Banana 2", note: "High-detail prompt capacity and Venice web-search support · 1K/2K/4K" },
+  { id: "nano-banana-2-lite", group: "Portrait & identity", name: "Nano Banana 2 Lite", note: "Lighter, quicker Nano Banana family option" },
+  { id: "grok-imagine-image-2-0", group: "Portrait & identity", name: "Grok Imagine 2.0", note: "Latest Grok visual model · 1K/2K" },
+  { id: "grok-imagine-image-quality", group: "Portrait & identity", name: "Grok Imagine High Quality (SOTA)", note: "Higher-fidelity Grok output · 1K/2K" },
+  { id: "grok-imagine-image", group: "Portrait & identity", name: "Grok Imagine", note: "Fast Grok visual generation · 1K/2K" },
+  { id: "gpt-image-2", group: "Portrait & identity", name: "GPT Image 2", note: "Highest detail control · 1K/2K/4K" },
+  { id: "gpt-image-1-5", group: "Portrait & identity", name: "GPT Image 1.5", note: "Strong stylized or editorial compositions" },
+
+  { id: "flux-2-pro", group: "Cinematic & editorial", name: "Flux 2 Pro", note: "Polished cinematic detail" },
+  { id: "flux-2-max", group: "Cinematic & editorial", name: "Flux 2 Max", note: "Maximum Flux composition latitude" },
+  { id: "seedream-v5-pro", group: "Cinematic & editorial", name: "Seedream V5 Pro", note: "Prompt-thinking support · 1K/2K" },
+  { id: "seedream-v5-lite", group: "Cinematic & editorial", name: "Seedream V5 Lite", note: "Lightweight cinematic option" },
+  { id: "seedream-v4", group: "Cinematic & editorial", name: "Seedream V4.5", note: "Proven composition model" },
+  { id: "luma-uni-1-max", group: "Cinematic & editorial", name: "Luma Uni-1 Max", note: "Premium style-reference support" },
+  { id: "luma-uni-1", group: "Cinematic & editorial", name: "Luma Uni-1", note: "Style-reference support" },
+  { id: "krea-2-turbo", group: "Cinematic & editorial", name: "Krea 2 Turbo", note: "Fast wide-angle editorial output · 1K/2K" },
+  { id: "krea-v2-large", group: "Cinematic & editorial", name: "Krea v2 Large", note: "Style-reference support" },
+  { id: "krea-v2-medium", group: "Cinematic & editorial", name: "Krea v2 Medium", note: "Style-reference support, lighter model" },
+  { id: "hunyuan-image-v3", group: "Cinematic & editorial", name: "Hunyuan Image 3.0", note: "Experimental high-detail scene model" },
+  { id: "imagineart-1.5-pro", group: "Cinematic & editorial", name: "ImagineArt 1.5 Pro", note: "Editorial and visual-marketing scenes" },
+  { id: "ideogram-v4", group: "Cinematic & editorial", name: "Ideogram V4", note: "Design-forward scene composition" },
+  { id: "recraft-v4-pro", group: "Cinematic & editorial", name: "Recraft V4 Pro", note: "Premium art direction and design" },
+  { id: "recraft-v4", group: "Cinematic & editorial", name: "Recraft V4", note: "Clean, composed visual direction" },
+
+  { id: "qwen-image-3-pro", group: "Precision & experimental", name: "Qwen Image 3 Pro", note: "Prompt-thinking support · 1K/2K" },
+  { id: "qwen-image-3", group: "Precision & experimental", name: "Qwen Image 3", note: "Prompt-thinking support · 1K/2K" },
+  { id: "qwen-image-2-pro", group: "Precision & experimental", name: "Qwen Image 2 Pro", note: "High-detail Qwen composition" },
+  { id: "qwen-image-2", group: "Precision & experimental", name: "Qwen Image 2", note: "General Qwen visual model" },
+  { id: "qwen-image", group: "Precision & experimental", name: "Qwen Image", note: "Classic high-quality Qwen option" },
+  { id: "wan-2-7-pro-text-to-image", group: "Precision & experimental", name: "Wan 2.7 Pro", note: "Premium Wan scene rendering" },
+  { id: "wan-2-7-text-to-image", group: "Precision & experimental", name: "Wan 2.7", note: "Flexible Wan scene rendering" },
+
+  { id: "lustify-v8", group: "Specialty", name: "Lustify V8", note: "Uncensored SDXL family checkpoint" },
+  { id: "lustify-v7", group: "Specialty", name: "Lustify V7", note: "Uncensored SDXL family checkpoint" },
+  { id: "lustify-sdxl", group: "Specialty", name: "Lustify SDXL", note: "Classic Lustify model" },
+  { id: "wai-Illustrious", group: "Specialty", name: "Anime (WAI)", note: "Illustrated/anime styling" },
+  { id: "z-image-turbo", group: "Specialty", name: "Z-Image Turbo ⚡", note: "Fastest live option" },
+  { id: "chroma", group: "Specialty", name: "Chroma", note: "Distinctive rendered style" },
+  { id: "venice-sd35", group: "Specialty", name: "Venice SD35", note: "Classic private Venice model" },
 ];
+
+const ASPECT_DIMENSIONS = {
+  "1:1": { width: 1024, height: 1024 },
+  "3:4": { width: 896, height: 1152 },
+  "2:3": { width: 896, height: 1344 },
+  "3:2": { width: 1344, height: 896 },
+  "4:5": { width: 960, height: 1200 },
+  "16:9": { width: 1344, height: 768 },
+  "9:16": { width: 768, height: 1344 },
+};
+
+const VISUAL_SCENE_RECIPES = [
+  {
+    id: "editorial",
+    label: "Editorial Lookbook",
+    description: "Polished visual-marketing shots with clear styling, posture, and camera intention.",
+    aspectRatio: "3:4",
+    artDirection: "a cohesive high-end editorial lookbook, natural anatomy, visual marketing polish, an intentional wardrobe and environment",
+    shots: [
+      { label: "Full-Length Hero", direction: "full-length hero frame, poised stance, camera at a natural fashion-editorial distance" },
+      { label: "Three-Quarter Detail", direction: "three-quarter standing frame, relaxed but deliberate pose, face and styling clearly readable" },
+      { label: "Seated Editorial", direction: "seated or leaning editorial frame, confident body language, textured environment supporting the subject" },
+      { label: "Walking Arrival", direction: "mid-stride arrival frame, candid movement while maintaining polished campaign energy" },
+      { label: "Close Character Frame", direction: "medium close character frame, expressive posture and eye contact, not an ID-photo crop" },
+    ],
+  },
+  {
+    id: "turnaround",
+    label: "Character Turnaround",
+    description: "Useful, identity-consistent coverage across the front, profile, and three-quarter views.",
+    aspectRatio: "3:4",
+    artDirection: "a clean but cinematic character-lookbook environment with consistent lighting and wardrobe across every angle",
+    shots: [
+      { label: "Front View", direction: "full-length front view, balanced posture, hands naturally placed, clear silhouette" },
+      { label: "Three-Quarter View", direction: "full-length three-quarter view, natural shift of weight, face and silhouette both readable" },
+      { label: "Rear Three-Quarter", direction: "rear three-quarter view with a subtle head turn, character silhouette and styling clearly visible" },
+      { label: "Profile in Motion", direction: "side-profile frame in a natural walking or turning motion, anatomically believable" },
+      { label: "Detail Portrait", direction: "medium portrait that anchors facial expression, hair, and wardrobe details" },
+    ],
+  },
+  {
+    id: "motion",
+    label: "Motion & Presence",
+    description: "Dynamic body language and real-world movement instead of repeated headshots.",
+    aspectRatio: "16:9",
+    artDirection: "a kinetic, photorealistic scene with believable motion, environmental depth, and cinematic composition",
+    shots: [
+      { label: "Approaching Frame", direction: "walking toward camera through the scene, natural stride, full body visible" },
+      { label: "Side Motion", direction: "side-on motion frame, purposeful movement, environment streaking subtly behind the subject" },
+      { label: "Over-the-Shoulder Pause", direction: "over-the-shoulder pause, subject glances back with a readable expression" },
+      { label: "Action Detail", direction: "mid-action medium shot that captures a characteristic gesture or interaction" },
+      { label: "After the Moment", direction: "quiet aftermath frame, subject at rest after motion, strong atmosphere and character presence" },
+    ],
+  },
+  {
+    id: "candid",
+    label: "Candid Day Out",
+    description: "Warm, documentary-style scenes that make the subject feel like a person in the world.",
+    aspectRatio: "3:2",
+    artDirection: "a natural-light documentary scene with candid human behavior, lived-in environment, and editorial realism",
+    shots: [
+      { label: "Arrival", direction: "arriving at the location, full or three-quarter body framing, spontaneous body language" },
+      { label: "Small Interaction", direction: "a candid social or environmental interaction that reveals personality without posing for camera" },
+      { label: "Quiet Moment", direction: "a quieter medium frame, the subject focused on something in the environment" },
+      { label: "Walking Away", direction: "walking-away or rear three-quarter candid frame, natural clothing movement and setting detail" },
+      { label: "Candid Portrait", direction: "unforced portrait caught between moments, soft expression, realistic environmental depth" },
+    ],
+  },
+  {
+    id: "cinematic",
+    label: "Cinematic Evening",
+    description: "A dramatic, story-led set with practical lights, atmosphere, and expressive framing.",
+    aspectRatio: "16:9",
+    artDirection: "a cinematic evening scene with practical lighting, rich environmental atmosphere, intentional color contrast, and grounded photorealism",
+    shots: [
+      { label: "Establishing Arrival", direction: "wide establishing shot that situates the subject in a vivid evening setting" },
+      { label: "Mid-Scene Portrait", direction: "medium scene portrait, active environmental light, tense or reflective expression" },
+      { label: "Three-Quarter Drama", direction: "three-quarter full-body dramatic frame, strong silhouette and natural pose" },
+      { label: "Ambient Detail", direction: "medium detail frame with an object or setting element that supports the story" },
+      { label: "Closing Image", direction: "striking final image, subject moving through the environment or pausing under cinematic light" },
+    ],
+  },
+  {
+    id: "signature",
+    label: "Signature World",
+    description: "Put a fictional character in the environment, action, and iconography that defines them.",
+    aspectRatio: "16:9",
+    artDirection: "a canon-sensitive signature-world scene, cinematic but believable, preserving defining costume, tools, setting, and emotional tone",
+    shots: [
+      { label: "World Arrival", direction: "wide arrival image that establishes the character in their defining environment" },
+      { label: "Iconic Action", direction: "characteristic, non-violent action or interaction that reveals competence and identity" },
+      { label: "Relationship to Place", direction: "three-quarter environmental portrait showing how the subject inhabits their world" },
+      { label: "Quiet Icon", direction: "calmer medium shot with an iconic prop or environmental motif, authentic character behavior" },
+      { label: "Final Story Beat", direction: "a memorable, emotionally resonant closing beat with cinematic visual clarity" },
+    ],
+  },
+];
+
+function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief) {
+  const optionalBrief = userBrief.trim()
+    ? `Director's brief: ${userBrief.trim()}.`
+    : "Director's brief: make choices that feel natural and true to the subject's established personality and world.";
+
+  return `${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. Shot direction: ${shot.direction}. ${optionalBrief} Keep the person/character recognizably consistent with the identity anchor. Use a single coherent wardrobe and setting appropriate to this shot. Natural anatomy, clear hands, believable proportions, grounded lighting, and one readable subject. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.`;
+}
 
 // ─── MAIN COMPONENT ───
 export default function Hulukipedia() {
@@ -757,6 +857,11 @@ export default function Hulukipedia() {
   const [imageModel, setImageModel] = useState("nano-banana-pro");
   const [imageSource, setImageSource] = useState("venice"); // "venice" or "pollinations"
   const [imageSearchEnabled, setImageSearchEnabled] = useState(false); // web search for prompt gen
+  const [visualRecipeId, setVisualRecipeId] = useState("editorial");
+  const [visualBrief, setVisualBrief] = useState("");
+  const [visualBatchSize, setVisualBatchSize] = useState(3);
+  const [visualSet, setVisualSet] = useState([]);
+  const [visualSetError, setVisualSetError] = useState(null);
   const [deepSearchResult, setDeepSearchResult] = useState(null);
 
   // Raven-only narrative controls. They affect both fictional addendums, preserving the original defaults when untouched.
@@ -786,6 +891,8 @@ export default function Hulukipedia() {
   const setL = (key, val) => setLoading(p => ({ ...p, [key]: val }));
 
   const t = themes[theme];
+  const selectedImageModel = IMAGE_MODELS.find(item => item.id === imageModel) || IMAGE_MODELS[0];
+  const selectedVisualRecipe = VISUAL_SCENE_RECIPES.find(item => item.id === visualRecipeId) || VISUAL_SCENE_RECIPES[0];
 
   // ─── SEARCH ───
   const handleSearch = async (searchMode) => {
@@ -816,7 +923,7 @@ export default function Hulukipedia() {
     setClarifications(null);
     setIntel([]); setPhysical(""); setComm(""); setConvo("");
     setPsych(""); setStrategic(""); setAddendum1(""); setAddendum2("");
-    setImageUrl(null); setDeepSearchResult(null);
+    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualBrief(""); setDeepSearchResult(null);
     setOperationConfig({ observer: "Field Observer", mission: "observe", tone: "grounded", assignment: "" });
     // Clear role-play session on every new dossier (session-only memory)
     setRpMessages([]); setRpInput(""); setRpError(null);
@@ -944,28 +1051,76 @@ export default function Hulukipedia() {
     setL(key, false);
   };
 
+  const getIdentityAnchor = async () => {
+    const p = getPrompts(subject.name, subject.details, mode);
+    return imageSearchEnabled
+      ? await callAIWithSearch(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel)
+      : await callAI(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel);
+  };
+
+  const makePollinationsUrl = (prompt, aspectRatio) => {
+    const dimensions = ASPECT_DIMENSIONS[aspectRatio] || ASPECT_DIMENSIONS["1:1"];
+    const seed = Math.floor(Math.random() * 999999);
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&nologo=true&width=${dimensions.width}&height=${dimensions.height}`;
+  };
+
   const generateImage = async () => {
     setL("image", true);
     setImageUrl(null);
     setImageError(null);
     try {
-      const p = getPrompts(subject.name, subject.details, mode);
-      const prompt = imageSearchEnabled
-        ? await callAIWithSearch(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel)
-        : await callAI(p.imagePrompt.system, p.imagePrompt.user, globalProvider, globalModel);
+      const prompt = await getIdentityAnchor();
       if (imageSource === "venice") {
         const dataUrl = await callImageGen(prompt, "", imageModel);
         setImageUrl(dataUrl);
       } else {
-        const seed = Math.floor(Math.random() * 999999);
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&nologo=true&width=512&height=512`;
-        setImageUrl(url);
+        setImageUrl(makePollinationsUrl(prompt, "1:1"));
       }
     } catch (e) {
       setImageUrl(null);
       setImageError(e.message);
     }
     setL("image", false);
+  };
+
+  const generateVisualSet = async () => {
+    if (loading.visualSet) return;
+    setL("visualSet", true);
+    setVisualSetError(null);
+    const recipe = selectedVisualRecipe;
+    const shots = recipe.shots.slice(0, Number(visualBatchSize));
+    const pendingSet = shots.map((shot, index) => ({
+      id: `${Date.now()}-${index}`,
+      label: shot.label,
+      direction: shot.direction,
+      status: "queued",
+      image: null,
+      error: null,
+    }));
+    setVisualSet(pendingSet);
+
+    try {
+      const identityAnchor = await getIdentityAnchor();
+      for (let index = 0; index < shots.length; index += 1) {
+        const shot = shots[index];
+        const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief);
+        setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "generating" } : item));
+        try {
+          const dimensions = ASPECT_DIMENSIONS[recipe.aspectRatio] || ASPECT_DIMENSIONS["1:1"];
+          const image = imageSource === "venice"
+            ? await callImageGen(prompt, "", imageModel, recipe.aspectRatio, "2K", dimensions.width, dimensions.height)
+            : makePollinationsUrl(prompt, recipe.aspectRatio);
+          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "ready", image, prompt } : item));
+          if (index === 0 && image) setImageUrl(image);
+        } catch (e) {
+          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "error", error: e.message } : item));
+        }
+      }
+    } catch (e) {
+      setVisualSet([]);
+      setVisualSetError(e.message);
+    }
+    setL("visualSet", false);
   };
 
   // ─── ROLE-PLAY (Part C) ───
@@ -1426,8 +1581,15 @@ ${rpSpeechRules}`;
                         className="flex-1 rounded text-xs px-2 py-1"
                         style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
                       >
-                        {IMAGE_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                        {[...new Set(IMAGE_MODELS.map(m => m.group))].map(group => (
+                          <optgroup key={group} label={group}>
+                            {IMAGE_MODELS.filter(m => m.group === group).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                          </optgroup>
+                        ))}
                       </select>
+                    </div>
+                    <div className="text-[10px] leading-snug" style={{ color: t.textSecondary }}>
+                      {selectedImageModel.note}
                     </div>
                     <div className="flex gap-1">
                       <button
@@ -1539,6 +1701,109 @@ ${rpSpeechRules}`;
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* ── Visual Scene Studio ── */}
+              <div style={{ ...sectionStyle, borderColor: t.accentGold }}>
+                <div style={{ ...sectionTitleStyle, color: t.accentGold }}>
+                  <Sparkles size={16} /> Visual Scene Studio
+                  <span className="ml-auto text-[10px] normal-case tracking-normal font-normal" style={{ color: t.textSecondary }}>
+                    Direct a set, not another headshot.
+                  </span>
+                </div>
+                <p className="text-xs mb-3" style={{ color: t.textSecondary }}>
+                  Generate independent images with a shared subject anchor and different poses, angles, or moments. Each result opens separately in the lightbox.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>SCENE RECIPE</label>
+                    <select
+                      value={visualRecipeId}
+                      onChange={e => setVisualRecipeId(e.target.value)}
+                      className="w-full rounded text-sm px-2 py-2"
+                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                    >
+                      {VISUAL_SCENE_RECIPES.map(recipe => <option key={recipe.id} value={recipe.id}>{recipe.label}</option>)}
+                    </select>
+                    <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{selectedVisualRecipe.description}</div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>SET SIZE</label>
+                    <select
+                      value={visualBatchSize}
+                      onChange={e => setVisualBatchSize(Number(e.target.value))}
+                      className="w-full rounded text-sm px-2 py-2"
+                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                    >
+                      <option value={3}>3 standalone images</option>
+                      <option value={5}>5-image lookbook</option>
+                    </select>
+                    <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>
+                      {selectedVisualRecipe.aspectRatio} framing · {selectedImageModel.name}
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>DIRECTOR'S BRIEF <span className="font-normal">(optional)</span></label>
+                    <textarea
+                      value={visualBrief}
+                      onChange={e => setVisualBrief(e.target.value)}
+                      placeholder="e.g., beach boardwalk at sunset, relaxed summer wardrobe, self-possessed mood, candid visual-marketing feel"
+                      rows={3}
+                      className="w-full rounded text-sm p-2"
+                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary, resize: "vertical" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                  <GenBtn onClick={generateVisualSet} loading={loading.visualSet} style={{ backgroundColor: t.accentGold, color: "#111", flex: 1 }}>
+                    <Sparkles size={14} className="mr-1" /> Generate {visualBatchSize}-Image Visual Set
+                  </GenBtn>
+                  {visualSet.length > 0 && (
+                    <button
+                      onClick={() => { setVisualSet([]); setVisualSetError(null); }}
+                      className="text-xs px-3 py-2 rounded font-bold"
+                      style={{ backgroundColor: t.bgMain, color: t.textSecondary, border: `1px solid ${t.border}` }}
+                    >
+                      Clear Set
+                    </button>
+                  )}
+                </div>
+                {visualSetError && <div className="text-xs mt-2" style={{ color: "#ef4444" }}>{visualSetError}</div>}
+
+                {visualSet.length > 0 && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {visualSet.map((item, index) => (
+                      <div key={item.id} className="overflow-hidden rounded-md" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}` }}>
+                        <div className="flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.16)", aspectRatio: selectedVisualRecipe.aspectRatio.replace(":", " / ") }}>
+                          {item.status === "ready" && item.image ? (
+                            <img
+                              src={item.image}
+                              alt={`${selectedVisualRecipe.label}: ${item.label}`}
+                              onClick={() => setLightboxSrc(item.image)}
+                              className="w-full h-full object-cover cursor-pointer"
+                              title="Click to enlarge"
+                            />
+                          ) : item.status === "error" ? (
+                            <span className="text-xs px-3 text-center" style={{ color: "#ef4444" }}>{item.error || "Image generation failed."}</span>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2 text-xs" style={{ color: t.textSecondary }}>
+                              <Spinner size={20} />
+                              <span>{item.status === "generating" ? "Rendering scene..." : "Queued"}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="px-3 py-2">
+                          <div className="text-xs font-bold" style={{ color: t.accentGold }}>{String(index + 1).padStart(2, "0")} · {item.label}</div>
+                          <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{item.direction}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* ── Physical Description ── */}

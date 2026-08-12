@@ -568,29 +568,33 @@ async function handleImageProxy(request, env, origin) {
     // Default to nano-banana-pro for photorealistic output
     const selectedModel = model || "nano-banana-pro";
 
-    // Resolution-tier models (use aspect_ratio + resolution: "1K"/"2K"/"4K")
+    // Capability families verified against Venice's live /models?type=image catalog (2026-08-12).
+    // Tiered models accept both aspect_ratio and explicit 1K/2K/4K resolution.
     const resolutionTierModels = [
       "nano-banana-pro", "nano-banana-2",
-      "gpt-image-2", "gpt-image-1-5",
-      "grok-imagine-image", "grok-imagine-image-quality",
-      "flux-2-pro", "flux-2-max",
-      "qwen-image-2", "qwen-image-2-pro",
-      "seedream-v4", "seedream-v5-lite",
-      "ideogram-v4",
-      "krea-v2-large", "krea-v2-medium",
-      "recraft-v4", "recraft-v4-pro",
-      "hunyuan-image-v3",
-      "imagineart-1.5-pro",
-      "wan-2-7-text-to-image", "wan-2-7-pro-text-to-image",
-      "lustify-sdxl", "lustify-v7", "lustify-v8",
-      "wai-Illustrious",
-      "chroma",
-      "z-image-turbo",
+      "gpt-image-2",
+      "grok-imagine-image", "grok-imagine-image-quality", "grok-imagine-image-2-0",
+      "krea-2-turbo",
+      "qwen-image-3", "qwen-image-3-pro",
+      "seedream-v5-pro",
     ];
-    // Aspect-ratio-only models (no resolution field)
-    const aspectOnlyModels = [];
-    // Pixel-based models (use width + height)
-    const pixelModels = ["venice-sd35", "qwen-image"];
+    // These models advertise aspect-ratio control without resolution tiers.
+    const aspectOnlyModels = [
+      "flux-2-pro", "flux-2-max", "gpt-image-1-5",
+      "qwen-image", "qwen-image-2", "qwen-image-2-pro",
+      "seedream-v4", "seedream-v5-lite",
+      "ideogram-v4", "krea-v2-large", "krea-v2-medium",
+      "luma-uni-1", "luma-uni-1-max",
+      "recraft-v4", "recraft-v4-pro",
+      "hunyuan-image-v3", "imagineart-1.5-pro",
+      "wan-2-7-text-to-image", "wan-2-7-pro-text-to-image",
+      "nano-banana-2-lite",
+    ];
+    // Legacy/pixel-controlled models expose a width/height divisor rather than ratio presets.
+    const pixelModels = [
+      "venice-sd35", "lustify-sdxl", "lustify-v7", "lustify-v8",
+      "wai-Illustrious", "chroma", "z-image-turbo", "bria-bg-remover",
+    ];
 
     const imgBody = {
       model: selectedModel,
@@ -610,6 +614,7 @@ async function handleImageProxy(request, env, origin) {
     } else if (aspectOnlyModels.includes(selectedModel)) {
       imgBody.aspect_ratio = aspectRatio || "1:1";
     } else if (pixelModels.includes(selectedModel)) {
+      // The frontend supplies dimensions for visual sets; the classic portrait retains 1024 square output.
       imgBody.width = width || 1024;
       imgBody.height = height || 1024;
     } else {
