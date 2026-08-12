@@ -1,7 +1,7 @@
 # Hulukipedia — Team Handoff and Deployment Notes
 
 **Maintained by:** Team Tomorrow Labs  
-**Latest deployed source:** [`ef15b01`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/ef15b01) — August 12, 2026  
+**Latest deployed source:** [`74d4ad9`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/74d4ad9) — August 12, 2026  
 **Live application:** <https://hulukipedia.teamtomorrowlabs.workers.dev>
 
 ---
@@ -10,7 +10,7 @@
 
 Hulukipedia is a React/Vite dossier generator served through a Cloudflare Worker. The frontend is a static asset bundle and the Worker is the secure proxy for text generation, research, web search, and image generation. Provider credentials are stored as Cloudflare Worker secrets rather than in the browser bundle.
 
-The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, Venice image-model selection, and the image-prompt web-search toggle. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes.
+The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, a current Venice image-model catalog, the image-prompt web-search toggle, and the new Visual Scene Studio. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes.
 
 | Area | Current behavior |
 |---|---|
@@ -21,6 +21,25 @@ The current production state includes Perplexity Sonar as the initial research d
 | Image sources | Venice AI primary; Pollinations fallback. |
 | External image links | Raven exposes Rule34; Starling exposes CelebJihad; both are visually labeled NSFW. |
 | Role-play | Session-only character conversation with its own provider/model controls. |
+| Visual Scene Studio | Generates three or five standalone scene images with shared identity grounding, varied poses, and a director's brief. |
+
+## New: Visual Scene Studio & Current Venice Catalog
+
+The Portrait panel now contains an audited, grouped catalog of Venice image models. The list was refreshed directly from Venice's live `GET /api/v1/models?type=image` response on August 12, 2026. It adds Grok Imagine 2.0, Krea 2 Turbo, Luma Uni-1 / Max, Nano Banana 2 Lite, Seedream V5 Pro, Qwen Image 3 / Pro, and corrected model labels such as Seedream V4.5 and Anime (WAI). The image Worker now distinguishes resolution-tier, aspect-ratio, and pixel-controlled models rather than applying the same request shape to nearly everything.
+
+**Visual Scene Studio** is the new full-width gallery beneath the dossier’s Portrait/Intel row. It preserves the original single-portrait flow and adds a deliberate multi-image path:
+
+| Control | Behavior |
+|---|---|
+| **Scene Recipe** | Editorial Lookbook, Character Turnaround, Motion & Presence, Candid Day Out, Cinematic Evening, or Signature World. |
+| **Set Size** | Three standalone images or a five-image lookbook. |
+| **Director's Brief** | Optional creative direction for setting, wardrobe, mood, visual-marketing intent, or narrative context. |
+| **Shared identity anchor** | A single concise identity prompt is prepared once, then applied to all cards while each card receives its own composition/pose direction. |
+| **Gallery** | Generates independent images in sequence; each card reports progress, supports error isolation, opens in the lightbox, and the first finished image also populates the legacy Portrait card. |
+
+The studio deliberately asks for **one image per prompt**, never a contact sheet or collage. Editorial Lookbook has explicit pose differentiation: standing hero, leaning three-quarter, unmistakably seated editorial, mid-stride arrival, and waist-up character framing. Other recipes use their own camera and narrative logic.
+
+**Production verification:** A live Lara Croft set used **Qwen Image 3**, Editorial Lookbook, a sea-cliff archaeological brief, and the three-image option. All three cards rendered successfully as independent full-body images. The test identified that the initial editorial pose instructions could be more forceful, so the final deployment strengthened those prompt directions before handoff. See `VISUAL_STUDIO_TEST_NOTES.md`; live catalog notes and the Qwen Image 3 request-shape smoke test are in `research_venice_catalog_2026-08-12.md`.
 
 ## New: Raven Fictional Operation Controls
 
@@ -116,7 +135,7 @@ The new Raven controls are a good foundation, not the final surveillance/encount
 | 1 | **Saveable scenario presets** | Lets the team keep and reuse strong observer/mission combinations across dossiers. |
 | 2 | **Narrative output variants** | Generate multiple branches of the same scenario, such as cooperation, refusal, escalation, and reconciliation. |
 | 3 | **Raven/Starling convergence** | Replace the hard mode split with contextual subject classification while retaining mode-specific presentation where useful. |
-| 4 | **Multi-pose portrait batches** | Produce portrait, full-body, candid, action, and signature-scene images from curated prompt variants. |
+| 4 | **Frame-level re-rolls and saved lookbooks** | Let the user regenerate one card without discarding a strong set, and save/reopen an effective direction set. |
 | 5 | **Operation-to-role-play bridge** | Allow a generated fictional encounter to seed the role-play opening message and preserve its scenario context. |
 
 ## Persistent Cloud Computer
@@ -132,11 +151,11 @@ Before handing Hulukipedia to another teammate, confirm all of the following.
 | Check | Expected state |
 |---|---|
 | `git status` | Clean working tree after push. |
-| `git log -1` | `ef15b01` or a later documented commit. |
+| `git log -1` | `74d4ad9` or a later documented commit. |
 | Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200. |
-| Live frontend asset | Contains the phrase `Do not give real-world approach instructions` after this feature release. |
-| Raven UI | Shows **Fictional Operation Parameters** in Addendums only. |
+| Live frontend asset | Contains **Visual Scene Studio** and the phrase `unmistakably seated` after this feature release. |
+| Raven UI | Shows **Fictional Operation Parameters** in Addendums only, plus the Visual Scene Studio gallery. |
 | Starling UI | Keeps its existing Historical Timeline and Public Persona Analysis behavior. |
 | Deployment strategy | `deploy.py`, not Wrangler OAuth, unless the team deliberately changes the authentication setup. |
 
-Hulukipedia is now in a stable, documented state with the new fictional operation controls deployed and the source pushed to `main`.
+Hulukipedia is now in a stable, documented state with configurable fictional operations, a current Venice image catalog, and the production-tested Visual Scene Studio deployed. Source is pushed to `main`.
