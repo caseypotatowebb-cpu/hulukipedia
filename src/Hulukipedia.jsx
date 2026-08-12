@@ -640,6 +640,34 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model,
 }
 
 // ─── IMAGE MODEL SELECTOR ───
+// ─── FICTIONAL OPERATION PRESETS ───
+// These controls steer Raven's narrative addendums without turning them into real-world operational advice.
+const OPERATION_MISSIONS = [
+  { id: "observe", label: "Observe & Document", summary: "Build a character-rich record of habits, tells, routines, and interactions." },
+  { id: "protect", label: "Protective Detail", summary: "Keep the subject safe while revealing what they notice, trust, and resist." },
+  { id: "assess", label: "Trust & Rapport Assessment", summary: "Test whether a relationship can form and what earns or loses their confidence." },
+  { id: "negotiate", label: "Negotiation / Recruitment", summary: "Explore what leverage, values, and interpersonal dynamics might move them." },
+  { id: "recover", label: "Fictional Rescue / Recovery", summary: "Frame a high-stakes narrative situation that reveals decisions under pressure." },
+  { id: "social", label: "Undercover Social Encounter", summary: "Place the observer in the subject's orbit and stress-test the social dynamics." },
+  { id: "custom", label: "Custom Narrative Assignment", summary: "Use the freeform assignment brief below as the primary fictional setup." },
+];
+
+const OPERATION_TONES = [
+  { id: "grounded", label: "Grounded Field Notes" },
+  { id: "noir", label: "Tense Noir" },
+  { id: "warm", label: "Low-Key / Character Intimate" },
+  { id: "adventure", label: "High-Stakes Adventure" },
+];
+
+function buildOperationContext(operation) {
+  const mission = OPERATION_MISSIONS.find(item => item.id === operation.mission) || OPERATION_MISSIONS[0];
+  const tone = OPERATION_TONES.find(item => item.id === operation.tone) || OPERATION_TONES[0];
+  const observer = operation.observer.trim() || "an unnamed field observer";
+  const notes = operation.assignment.trim() || "No additional assignment notes were supplied.";
+
+  return `\n\nFICTIONAL OPERATION PARAMETERS — use these to shape the scenario:\n- Observer / perspective: ${observer}\n- Narrative assignment: ${mission.label}\n- Assignment purpose: ${mission.summary}\n- Requested tone: ${tone.label}\n- Extra scenario context: ${notes}\n\nThis is fictional, character-centered scenario writing. Focus on atmosphere, behavior, emotional stakes, and believable character choices. Do not provide real-world surveillance tradecraft, coercion, evasion, weapons, entry, or actionable operational instructions.`;
+}
+
 const IMAGE_MODELS = [
   // ── Photorealistic / Portrait-optimized ──
   { id: "nano-banana-pro",            name: "Nano Banana Pro ★ (Photorealistic)" },
@@ -731,6 +759,15 @@ export default function Hulukipedia() {
   const [imageSearchEnabled, setImageSearchEnabled] = useState(false); // web search for prompt gen
   const [deepSearchResult, setDeepSearchResult] = useState(null);
 
+  // Raven-only narrative controls. They affect both fictional addendums, preserving the original defaults when untouched.
+  const [operationConfig, setOperationConfig] = useState({
+    observer: "Field Observer",
+    mission: "observe",
+    tone: "grounded",
+    assignment: "",
+  });
+  const setOperationField = (field, value) => setOperationConfig(current => ({ ...current, [field]: value }));
+
   // Lightbox (Part B) — shared by portrait + role-play chat images
   const [lightboxSrc, setLightboxSrc] = useState(null);
 
@@ -780,6 +817,7 @@ export default function Hulukipedia() {
     setIntel([]); setPhysical(""); setComm(""); setConvo("");
     setPsych(""); setStrategic(""); setAddendum1(""); setAddendum2("");
     setImageUrl(null); setDeepSearchResult(null);
+    setOperationConfig({ observer: "Field Observer", mission: "observe", tone: "grounded", assignment: "" });
     // Clear role-play session on every new dossier (session-only memory)
     setRpMessages([]); setRpInput(""); setRpError(null);
     setView("results");
@@ -885,6 +923,16 @@ export default function Hulukipedia() {
         pObj = prompts.comm(researchContext);
       } else {
         pObj = subKey ? prompts[promptKey](subKey) : prompts[promptKey];
+      }
+
+      // Raven's field log and encounter simulation become configurable narrative exercises.
+      // The original prompts remain the base; this only layers in the user's chosen setup.
+      if (mode === "raven" && (promptKey === "addendum1" || promptKey === "addendum2")) {
+        const operationContext = buildOperationContext(operationConfig);
+        pObj = {
+          system: `${pObj.system}\n\nRespect the fictional-operation boundary in the supplied scenario parameters.`,
+          user: `${pObj.user}${operationContext}`,
+        };
       }
       
       const text = await callAI(pObj.system, pObj.user, getSP(key), getSM(key));
@@ -1595,6 +1643,67 @@ ${rpSpeechRules}`;
               <h3 className="text-xl font-bold text-center tracking-widest" style={{ color: t.accentGold, fontFamily: "'Roboto Mono', monospace" }}>
                 ADDENDUMS
               </h3>
+
+              {mode === "raven" && (
+                <div className="rounded-lg p-3 space-y-3" style={{ backgroundColor: t.bgSection, border: `1px solid ${t.border}` }}>
+                  <div className="flex items-center gap-2">
+                    <Radio size={15} style={{ color: t.accentGold }} />
+                    <h4 className="text-xs font-bold tracking-widest" style={{ color: t.accentGold, fontFamily: "'Roboto Mono', monospace" }}>FICTIONAL OPERATION PARAMETERS</h4>
+                  </div>
+                  <p className="text-xs leading-relaxed" style={{ color: t.textSecondary }}>
+                    These settings reshape both Raven addendums around a particular observer and assignment, so the dossier can reveal the character in different situations.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>
+                      Observer / perspective
+                      <input
+                        value={operationConfig.observer}
+                        onChange={event => setOperationField("observer", event.target.value)}
+                        placeholder="e.g., veteran handler, old friend, rookie detective"
+                        className="mt-1 w-full rounded px-2 py-1.5 text-xs"
+                        style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
+                      />
+                    </label>
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>
+                      Narrative assignment
+                      <select
+                        value={operationConfig.mission}
+                        onChange={event => setOperationField("mission", event.target.value)}
+                        className="mt-1 w-full rounded px-2 py-1.5 text-xs"
+                        style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
+                      >
+                        {OPERATION_MISSIONS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                      </select>
+                    </label>
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>
+                      Story tone
+                      <select
+                        value={operationConfig.tone}
+                        onChange={event => setOperationField("tone", event.target.value)}
+                        className="mt-1 w-full rounded px-2 py-1.5 text-xs"
+                        style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
+                      >
+                        {OPERATION_TONES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                      </select>
+                    </label>
+                    <div className="text-xs leading-relaxed rounded px-2 py-1.5 flex items-center" style={{ backgroundColor: t.highlight, color: t.textSecondary }}>
+                      <Eye size={13} className="mr-1.5 shrink-0" />
+                      Character-driven fictional scenario writing — not real-world operational guidance.
+                    </div>
+                  </div>
+                  <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>
+                    Assignment / scenario context <span className="font-normal">(optional)</span>
+                    <textarea
+                      value={operationConfig.assignment}
+                      onChange={event => setOperationField("assignment", event.target.value)}
+                      placeholder="e.g., The observer is trying to determine whether the subject will accept help after a public setback."
+                      rows={2}
+                      className="mt-1 w-full rounded px-2 py-1.5 text-xs resize-y"
+                      style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
+                    />
+                  </label>
+                </div>
+              )}
 
               {/* Addendum 1 */}
               <div style={sectionStyle}>
