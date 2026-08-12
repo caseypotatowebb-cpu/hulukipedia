@@ -420,18 +420,18 @@ function getPrompts(subject, details, mode) {
     },
     addendum1: {
       system: fictional
-        ? "You write immersive fictional field surveillance logs that read like they were written by a bored but observant agent on a stakeout. Include small human details that make it feel real."
+        ? "You write immersive, character-accurate fictional observation logs. Your work reads like a literary case-file: attentive to small human details, emotionally grounded, and focused on what the subject's choices reveal. It is scenario fiction, never real-world surveillance guidance."
         : "You write compelling biographical timelines that highlight turning points, not just dates. You understand that a person's life story is defined by the moments that changed their trajectory.",
       user: fictional
-        ? `Write a field surveillance log for ${entity}. Use realistic timestamps over a 4-6 hour window. Include: location details (specific enough to feel real), observed behaviors (body language, habits, interactions), overheard fragments of conversation, and analyst commentary in [brackets]. End with a brief assessment. Make it feel like a real stakeout report written by someone who's been watching too long. 250-350 words.`
+        ? `Write a fictional field observation log for ${entity}. Use a compact 4-6 hour narrative window, but invent no actionable tracking details. Structure it as:\n**SCENE SETUP** — atmosphere and the emotional stakes\n**OBSERVATIONS** — body language, habits, interactions, and a brief fragment of in-character dialogue\n**PRESSURE POINT** — the moment the selected assignment tests them\n**ANALYST MARGIN NOTES** — short bracketed reflections on what the behavior reveals\n**ASSESSMENT** — what this scenario reveals about the character\n\nMake it feel like a sharp, cinematic character study. Focus on believable choices, relationships, mood, and canon-consistent behavior—not routes, tracking, entry, evasion, or practical surveillance methods. 250-350 words.`
         : `Write a key events timeline for ${entity}. List 10-15 significant moments in chronological order. For each, don't just state what happened — explain WHY it mattered and how it changed their trajectory. Format: **DATE** — EVENT — *significance*. Include early life turning points, not just career highlights.`,
     },
     addendum2: {
       system: fictional
-        ? "You write encounter simulation briefings that feel like they came from a handler prepping an agent for a high-stakes meeting. Practical, specific, slightly paranoid."
+        ? "You write character-accurate fictional encounter scenes for role-play and story analysis. Make the subject feel alive through their dialogue, emotional choices, and reactions under pressure. The output is an imaginative narrative brief, never real-world surveillance, coercion, or operational guidance."
         : "You analyze the gap between public image and private reality. You're interested in authenticity, performance, and what the camera doesn't show.",
       user: fictional
-        ? `Write an encounter simulation briefing for meeting ${entity}. Structure as:\n**APPROACH VECTOR** — How to get close without triggering suspicion\n**OPENERS** — 3 conversation starters ranked by risk/reward\n**LANDMINES** — Topics that will shut them down or make them hostile\n**TELLS** — How to read their emotional state in real-time\n**EXTRACTION** — How to end the interaction cleanly\n\nWrite like a handler who's done this before and doesn't want their agent to get burned. 250-350 words.`
+        ? `Write a fictional encounter scene for ${entity}. Let the supplied operation parameters determine whose point of view and what emotional question the scene explores. Structure as:\n**SCENE SETUP** — a cinematic, non-actionable setting and the tension in the room\n**FIRST CONTACT** — how ${entity} responds to the observer's presence\n**THE PRESSURE POINT** — the assignment's emotional or moral question comes to the surface\n**CHARACTER REVEAL** — specific choices, dialogue, body language, and a canon-consistent turn in the interaction\n**WHAT THE OBSERVER LEARNS** — a concise read on trust, values, fears, or boundaries\n**NARRATIVE BRANCHES** — three plausible story directions the scene could take next\n\nWrite with vivid but grounded detail. Do not give real-world approach instructions, tracking techniques, evasion advice, coercive tactics, weapons guidance, or step-by-step methods. 250-350 words.`
         : `Write a public persona analysis for ${entity}. Cover:\n- The gap between their public image and what leaks through in unguarded moments\n- How they manage their brand (consciously or unconsciously)\n- How public perception has shifted over time and why\n- What they're performing vs. what appears genuine\n- Their relationship with fame/attention/scrutiny\n\nBe specific. Use examples. Don't be afraid to be a little cynical where warranted. 250-350 words.`,
     },
     imagePrompt: {
@@ -1709,7 +1709,7 @@ ${rpSpeechRules}`;
               <div style={sectionStyle}>
                 <SectionHeader
                   icon={mode === "raven" ? <ClipboardList size={16} /> : <Clock size={16} />}
-                  title={mode === "raven" ? "Field Surveillance Log" : "Historical Timeline"}
+                  title={mode === "raven" ? "Field Observation Log" : "Historical Timeline"}
                   sectionKey="add1"
                 />
                 <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
