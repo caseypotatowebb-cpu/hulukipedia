@@ -1,7 +1,7 @@
 # Hulukipedia — Team Handoff and Deployment Notes
 
 **Maintained by:** Team Tomorrow Labs  
-**Latest deployed source:** [`74d4ad9`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/74d4ad9) — August 12, 2026  
+**Latest deployed source:** [`e4dfb1f`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/e4dfb1f) — August 13, 2026  
 **Live application:** <https://hulukipedia.teamtomorrowlabs.workers.dev>
 
 ---
@@ -40,6 +40,18 @@ The Portrait panel now contains an audited, grouped catalog of Venice image mode
 The studio deliberately asks for **one image per prompt**, never a contact sheet or collage. Editorial Lookbook has explicit pose differentiation: standing hero, leaning three-quarter, unmistakably seated editorial, mid-stride arrival, and waist-up character framing. Other recipes use their own camera and narrative logic.
 
 **Production verification:** A live Lara Croft set used **Qwen Image 3**, Editorial Lookbook, a sea-cliff archaeological brief, and the three-image option. All three cards rendered successfully as independent full-body images. The test identified that the initial editorial pose instructions could be more forceful, so the final deployment strengthened those prompt directions before handoff. See `VISUAL_STUDIO_TEST_NOTES.md`; live catalog notes and the Qwen Image 3 request-shape smoke test are in `research_venice_catalog_2026-08-12.md`.
+
+### Visual Scene Studio v1.1: Per-Frame Re-Roll
+
+Each completed card now retains its exact identity anchor, model/source selection, saved prompt, requested aspect ratio, output dimensions, scene direction, and take number. **Re-roll Frame** only regenerates that one card. It does not re-run the entire set or regenerate the shared identity anchor. The existing image remains visible under a re-render overlay until the new take succeeds; a failed re-roll keeps the earlier good frame intact.
+
+**Live verification:** A Pollinations three-frame Lara Croft set was generated, then only Frame 01 was re-rolled. The card updated to **Take 2** while Frames 02 and 03 stayed untouched. The full result is recorded in `VISUAL_STUDIO_REROLL_TEST_NOTES.md`.
+
+### Venice Availability: Catalog Is Not Entitlement
+
+The model dropdown remains a current upstream Venice catalog, but a listed model may not yet be enabled for the Team Tomorrow Venice credential. Qwen Image 3 is confirmed through the live 2K scene-set flow. Luma Uni-1 (aspect-ratio route) and Z-Image Turbo (pixel route) both passed through the Worker but received Venice HTTP 403 responses, demonstrating a provider entitlement limitation rather than a bad prompt or bad frontend route.
+
+The visual studio now translates this specific error into clear guidance and recommends confirmed choices: **Nano Banana Pro, Nano Banana 2, Qwen Image 3, and Qwen Image 3 Pro**. The detailed results are in `VISUAL_STUDIO_COMPATIBILITY_AUDIT.md`.
 
 ## New: Raven Fictional Operation Controls
 
@@ -135,7 +147,7 @@ The new Raven controls are a good foundation, not the final surveillance/encount
 | 1 | **Saveable scenario presets** | Lets the team keep and reuse strong observer/mission combinations across dossiers. |
 | 2 | **Narrative output variants** | Generate multiple branches of the same scenario, such as cooperation, refusal, escalation, and reconciliation. |
 | 3 | **Raven/Starling convergence** | Replace the hard mode split with contextual subject classification while retaining mode-specific presentation where useful. |
-| 4 | **Frame-level re-rolls and saved lookbooks** | Let the user regenerate one card without discarding a strong set, and save/reopen an effective direction set. |
+| 4 | **Saved lookbooks** | Persist an effective recipe, director’s brief, and selected frames so the team can reopen or share it. Frame-level re-rolls are now complete. |
 | 5 | **Operation-to-role-play bridge** | Allow a generated fictional encounter to seed the role-play opening message and preserve its scenario context. |
 
 ## Persistent Cloud Computer
@@ -151,11 +163,11 @@ Before handing Hulukipedia to another teammate, confirm all of the following.
 | Check | Expected state |
 |---|---|
 | `git status` | Clean working tree after push. |
-| `git log -1` | `74d4ad9` or a later documented commit. |
+| `git log -1` | `e4dfb1f` or a later documented commit. |
 | Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200. |
-| Live frontend asset | Contains **Visual Scene Studio** and the phrase `unmistakably seated` after this feature release. |
+| Live frontend asset | Contains **Visual Scene Studio**, `unmistakably seated`, and **Re-roll Frame** after this feature release. |
 | Raven UI | Shows **Fictional Operation Parameters** in Addendums only, plus the Visual Scene Studio gallery. |
 | Starling UI | Keeps its existing Historical Timeline and Public Persona Analysis behavior. |
 | Deployment strategy | `deploy.py`, not Wrangler OAuth, unless the team deliberately changes the authentication setup. |
 
-Hulukipedia is now in a stable, documented state with configurable fictional operations, a current Venice image catalog, and the production-tested Visual Scene Studio deployed. Source is pushed to `main`.
+Hulukipedia is now in a stable, documented state with configurable fictional operations, a current Venice image catalog, and a production-tested Visual Scene Studio that supports individual frame re-rolls. Source is pushed to `main`.
