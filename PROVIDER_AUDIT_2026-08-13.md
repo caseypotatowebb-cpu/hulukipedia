@@ -58,3 +58,39 @@ For real subjects, descriptions and non-explicit editorial lifestyle scenes can 
 ## Next Decision
 
 Build the self-contained refresh first: remove dead model choices, update active direct providers, fix dropdown direction/scroll behavior, make Grok 4.3 the relevant content default, and add the new role-play / visual-scene category controls. Do not wire Mistral until a valid Mistral key is supplied and its live account model list is checked.
+
+
+## Live account and Worker validation — 2026-08-13
+
+The refreshed provider choices were tested through the deployed Hulukipedia Worker at `https://hulukipedia.teamtomorrowlabs.workers.dev/api/ai` with the app-origin header. These checks matter because upstream catalog availability alone does not mean the Team Tomorrow account can invoke a model.
+
+| Provider | Model | Result | Notes |
+|---|---|---|---|
+| xAI | `grok-4.3` | HTTP 200, text returned | Confirmed as the Physical Description and Role-Play default. |
+| xAI | `grok-4.5` | HTTP 200, text returned | Confirmed curated alternate. |
+| xAI | `grok-4.6` | HTTP 200, text returned | Confirmed newest curated xAI choice. |
+| Anthropic | `claude-sonnet-5` | HTTP 200, text returned | Confirmed current curated default. |
+| Anthropic | `claude-opus-5` | HTTP 200, text returned | Confirmed current high-end choice. |
+| Anthropic | `claude-sonnet-4-6` | HTTP 200, text returned | Confirmed current Sonnet choice. |
+| Gemini | `gemini-3.7-flash` | HTTP 200, text returned at 512-token budget | Very short 32-token smoke returned empty text; ordinary dossier budgets are far larger. |
+| Gemini | `gemini-3.6-flash` | HTTP 200, text returned at 512-token budget | Same short-budget behavior as 3.7 Flash. |
+| Venice | `zai-org-glm-5-2` | HTTP 200, text returned at 512-token budget | Confirmed live. |
+| Venice | `venice-uncensored-role-play` | HTTP 200, text returned | Confirmed role-play alternate. |
+| OpenRouter | `anthropic/claude-sonnet-5` | HTTP 200, text returned | Confirmed current routing option. |
+| OpenAI | `gpt-4o` | HTTP 200, text returned | The only currently accessible production text model listed by this account. |
+| OpenAI | `gpt-5`, `gpt-5.6-terra` | HTTP 403 | Removed from the selector; the account does not have access. |
+
+The OpenAI account’s `/v1/models` response on 2026-08-13 listed only `gpt-4o`, `gpt-4o-2024-08-06`, and an already-shutdown `gpt-5.1-codex` (`shutdown_date: 2026-07-23`). The selector therefore intentionally exposes only `gpt-4o` rather than advertising unavailable GPT-5.x routes.
+
+The Venice `/api/v1/models?type=image` response was refreshed again on 2026-08-13. Hulukipedia’s image selector matches every image-generation model returned by that catalog. The only omitted entry is `bria-bg-remover`, which is a background-removal utility rather than a scene-generation model.
+
+## Live UI validation — 2026-08-13
+
+The production browser check confirmed the full current image-model selector, the newly added Activity Continuity, Campaign / Product Story, Duo Chemistry, and Raven-only After Dark Editorial recipes, the Presence physical-description button, direct Grok 4.3 role-play default, and the Scenario Deck. The lower Role-Play provider selector now opens upward within the visible viewport, is scrollable, and shows Grok 4.6, Grok 4.5, and Grok 4.3 without clipping.
+
+Sources: Anthropic model overview (`https://platform.claude.com/docs/en/about-claude/models/overview`); Gemini model catalog (`https://ai.google.dev/gemini-api/docs/models`); xAI model catalog (`https://docs.x.ai/developers/models`); OpenAI model documentation (`https://developers.openai.com/api/docs/models`); Mistral model overview (`https://docs.mistral.ai/models/overview`); authenticated Venice and OpenRouter model APIs.
+
+
+Additional live role-play check: on the Raven Lara Croft dossier, the Scenario Deck and Director Note rendered at the bottom of the page. The lower model menu opened upward and remained fully visible. A museum/storm/artifact Director Note was entered successfully for a live in-character response test.
+
+The live Grok 4.3 role-play response confirmed the Director Note reaches the character prompt: in the museum/storm/artifact scene, Lara replied, “That seal marks the Order of the Eclipse. I've crossed paths with them before, and I'd rather not repeat the experience tonight.” This was a focused scene response rather than a generic open-chat answer.

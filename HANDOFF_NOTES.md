@@ -1,7 +1,9 @@
 # Hulukipedia — Team Handoff and Deployment Notes
 
 **Maintained by:** Team Tomorrow Labs  
-**Latest deployed source:** [`4c24525`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/4c24525) — August 13, 2026  
+**Latest deployed source:** [`675f013`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/675f013) — August 13, 2026
+
+**Release:** `3.1.0` (the live `/api/health` response now reports this version)  
 **Live application:** <https://hulukipedia.teamtomorrowlabs.workers.dev>
 
 ---
@@ -10,7 +12,7 @@
 
 Hulukipedia is a React/Vite dossier generator served through a Cloudflare Worker. The frontend is a static asset bundle and the Worker is the secure proxy for text generation, research, web search, and image generation. Provider credentials are stored as Cloudflare Worker secrets rather than in the browser bundle.
 
-The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, a current Venice image-model catalog, the image-prompt web-search toggle, and the new Visual Scene Studio. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes.
+The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, a current Venice image-model catalog, the image-prompt web-search toggle, and the Visual Scene Studio. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes. Release 3.1.0 adds current-model curation, more creative controls, a properly upward-opening lower-page model menu, and an explicitly Grok 4.3-led Physical Description / Role-Play path.
 
 | Area | Current behavior |
 |---|---|
@@ -20,8 +22,9 @@ The current production state includes Perplexity Sonar as the initial research d
 | Image grounding | Portrait-panel **Web Search ON/OFF** toggle; defaults to OFF. |
 | Image sources | Venice AI primary; Pollinations fallback. |
 | External image links | Raven exposes Rule34; Starling exposes CelebJihad; both are visually labeled NSFW. |
-| Role-play | Session-only character conversation with its own provider/model controls. |
+| Role-play | Session-only character conversation with a dedicated provider/model picker, an active Scenario Deck, and a freeform Director Note. |
 | Visual Scene Studio | Generates three or five standalone scene images with shared identity grounding, varied poses, and a director's brief. |
+| Physical Description | Defaulted to direct xAI Grok 4.3, with research-first grounding and Clinical, Magazine, Bar Talk, Presence, and Locker Room presentation voices. |
 
 ## New: Visual Scene Studio & Current Venice Catalog
 
@@ -31,7 +34,7 @@ The Portrait panel now contains an audited, grouped catalog of Venice image mode
 
 | Control | Behavior |
 |---|---|
-| **Scene Recipe** | Editorial Lookbook, Character Turnaround, Motion & Presence, Candid Day Out, Cinematic Evening, or Signature World. |
+| **Scene Recipe** | Editorial Lookbook, Character Turnaround, Motion & Presence, Candid Day Out, Cinematic Evening, Signature World, Activity Continuity, Campaign / Product Story, Duo Chemistry, and Raven-only After Dark Editorial. |
 | **Set Size** | Three standalone images or a five-image lookbook. |
 | **Director's Brief** | Optional creative direction for setting, wardrobe, mood, visual-marketing intent, or narrative context. |
 | **Shared identity anchor** | A single concise identity prompt is prepared once, then applied to all cards while each card receives its own composition/pose direction. |
@@ -136,7 +139,26 @@ It also exposes the Worker module-upload endpoint, so it is now a capable fallba
 | xAI / Grok | `XAI_API_KEY` | Physical descriptions, strategic analysis, and direct models. |
 | OpenRouter | `OPENROUTER_API_KEY` | Additional multi-model routing. |
 
-The Worker health response still labels itself `version: "3.0.1"`; this is a stale cosmetic string in `worker/index.js`, not the live frontend feature state. Do not use that string as a release tracker. Use GitHub commit IDs and the static asset name on the deployed page instead.
+The Worker health response reports `version: "3.1.0"`. Continue to use GitHub commit IDs and the static asset name on the deployed page as the more exact release tracker.
+
+## Model and Provider Status — 3.1.0
+
+The model selector is deliberately curated rather than treated as an untested dump of provider marketing names. The full provider validation record is in `PROVIDER_AUDIT_2026-08-13.md`.
+
+| Provider | Current practical state | Team guidance |
+|---|---|---|
+| xAI | Grok 4.3, 4.5, and 4.6 all returned HTTP 200 in the live Worker. | Grok 4.3 remains the requested default for Physical Description and Role-Play; 4.5 / 4.6 are current alternates. |
+| Anthropic | Claude Sonnet 5, Sonnet 4.6, and Opus 5 all returned HTTP 200. | Use Sonnet 5 as the curated current default and Opus 5 where the extra depth is worth it. |
+| Gemini | Gemini 3.7 Flash and 3.6 Flash worked with normal output budgets; Gemini 2.0 Flash was removed. | Keep 3.7 Flash current; do not infer failure from tiny 32-token probes, which can exhaust thinking before visible output. |
+| Venice | GLM 5.2 and Venice Uncensored Role-Play were confirmed. The image selector matches the fresh live catalog except the non-generative Bria background remover. | Keep the selector curated; catalog presence and account entitlement are separate facts. |
+| OpenRouter | Claude Sonnet 5 route was confirmed. | Use it for breadth and routing, not as a replacement for direct providers when a direct key is already working. |
+| OpenAI | The actual Team Tomorrow account currently exposes GPT-4o only. GPT-5 and GPT-5.6 Terra returned HTTP 403. | The UI intentionally lists GPT-4o only until the account adds current GPT-5.x access. |
+
+### Recommended Next Integrations
+
+**Mistral is the strongest next direct provider.** It gives Hulukipedia an independently operated writing/reasoning family rather than another resale route, uses a familiar OpenAI-like chat endpoint, and current official docs identify Mistral Medium 3.5, Mistral Small 4, and Mistral Large 3 as the relevant family. The implementation should not begin until the team supplies a `MISTRAL_API_KEY`; then the first step is an authenticated `GET /v1/models` audit and a small live smoke test before exposing `mistral-medium-latest` and `mistral-small-latest` in the UI.
+
+A custom MCP connector is more valuable as a **canon and workflow bridge** than as yet another language model. The best future use is a controlled connector for Team Tomorrow lore, character sheets, planning material, or an approved source library, so Hulukipedia can retrieve private continuity before it improvises. The existing direct Venice route already covers Venice inference, so adding the Venice MCP is not currently a priority for this app.
 
 ## Next Product Moves
 
@@ -163,11 +185,12 @@ Before handing Hulukipedia to another teammate, confirm all of the following.
 | Check | Expected state |
 |---|---|
 | `git status` | Clean working tree after push. |
-| `git log -1` | `4c24525` or a later documented commit. |
-| Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200. |
-| Live frontend asset | Contains **Visual Scene Studio**, `unmistakably seated`, and **Re-roll Frame** after this feature release. |
-| Raven UI | Shows **Fictional Operation Parameters** in Addendums only, plus the Visual Scene Studio gallery. |
+| `git log -1` | `675f013` or a later documented commit. |
+| Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200 with `version: "3.1.0"`. |
+| Live frontend asset | Contains **Visual Scene Studio**, `unmistakably seated`, **Re-roll Frame**, **Duo Chemistry**, and **After Dark Editorial**. |
+| Raven UI | Shows **Fictional Operation Parameters** in Addendums, expanded Visual Scene Studio categories, and the full Raven Scenario Deck. |
+| Role-Play selector | Opens upward near the bottom of the page and shows the current Grok 4.6 / 4.5 / 4.3 choices without clipping. |
 | Starling UI | Keeps its existing Historical Timeline and Public Persona Analysis behavior. |
 | Deployment strategy | `deploy.py`, not Wrangler OAuth, unless the team deliberately changes the authentication setup. |
 
-Hulukipedia is now in a stable, documented state with configurable fictional operations, a current Venice image catalog, and a production-tested Visual Scene Studio that supports individual frame re-rolls. Source is pushed to `main`.
+Hulukipedia is now in a stable, documented state with configurable fictional operations, a current and entitlement-aware Venice image catalog, a production-tested Visual Scene Studio that supports individual frame re-rolls, and a validated current text-provider layer. Source is pushed to `main`.
