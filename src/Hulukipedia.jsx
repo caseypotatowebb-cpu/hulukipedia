@@ -1078,19 +1078,19 @@ export default function Hulukipedia() {
       }
     } catch (e) {
       setImageUrl(null);
-      setImageError(e.message);
+      setImageError(describeImageError(e, imageModel));
     }
     setL("image", false);
   };
 
-  const describeImageError = (error, attemptedModel) => {
+  function describeImageError(error, attemptedModel) {
     const raw = error?.message || String(error || "Image generation failed.");
     if (/venice image error:\s*403|\b403\b/i.test(raw)) {
       const modelName = IMAGE_MODELS.find(item => item.id === attemptedModel)?.name || attemptedModel;
       return `${modelName} is listed by Venice but is not currently enabled for the Team Tomorrow Venice account. Try Nano Banana Pro, Nano Banana 2, Qwen Image 3, or Qwen Image 3 Pro.`;
     }
     return raw;
-  };
+  }
 
   const generateVisualSet = async () => {
     if (loading.visualSet) return;
