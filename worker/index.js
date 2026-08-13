@@ -71,29 +71,19 @@ export default {
             name: "Venice AI",
             capabilities: ["text", "image", "search"],
             models: [
-              "openai-gpt-4o-2024-11-20",
-              "olafangensan-glm-4.7-flash-heretic",
-              "claude-sonnet-4-5",
-              "qwen3-5-35b-a3b",
-              "venice-uncensored-role-play",
-              "qwen-3-6-plus",
-              "mistral-small-2603",
-              "grok-4-20",
-              "venice-uncensored-1-2",
-              "aion-labs-aion-2-0",
-              "deepseek-v4-pro",
-              "deepseek-v4-flash",
-              "grok-4-3",
-              "kimi-k2-6",
-              "llama-3.3-70b",
-              "qwen3-vl-235b-a22b",
+              "zai-org-glm-5-2", "olafangensan-glm-4.7-flash-heretic",
+              "venice-uncensored-role-play", "venice-uncensored-1-2",
+              "qwen-3-7-plus", "qwen-3-6-plus", "grok-4-5", "grok-4-3",
+              "gemini-3-6-flash", "mistral-small-2603", "deepseek-v4-pro",
+              "openai-gpt-4o-2024-11-20", "claude-sonnet-4-5",
+              "aion-labs-aion-2-0", "qwen3-vl-235b-a22b",
             ],
           },
           {
             id: "anthropic",
             name: "Anthropic Claude",
             capabilities: ["text"],
-            models: ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
+            models: ["claude-sonnet-5", "claude-opus-5", "claude-sonnet-4-6", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
           },
           {
             id: "perplexity",
@@ -105,38 +95,32 @@ export default {
             id: "openrouter",
             name: "OpenRouter",
             capabilities: ["text"],
-            models: [
-              "anthropic/claude-sonnet-4-20250514",
-              "google/gemini-2.5-flash",
-              "openai/gpt-4o",
-              "meta-llama/llama-3.3-70b-instruct",
-              "x-ai/grok-4.3",
-            ],
+            models: ["anthropic/claude-sonnet-5", "google/gemini-3.7-flash", "openai/gpt-5.6-terra", "x-ai/grok-4.6", "x-ai/grok-4.3"],
           },
           {
             id: "openai",
             name: "OpenAI",
             capabilities: ["text"],
-            models: ["gpt-4o", "gpt-4o-mini", "gpt-5", "o1", "o1-mini", "o3-mini"],
+            models: ["gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.6-luna", "gpt-4o"],
           },
           {
             id: "gemini",
             name: "Google Gemini",
             capabilities: ["text"],
-            models: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+            models: ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-pro", "gemini-2.5-flash"],
           },
           {
             id: "xai",
             name: "Grok (xAI)",
             capabilities: ["text", "search"],
-            models: ["grok-4.3", "grok-4.20", "grok-build-0.1"],
+            models: ["grok-4.6", "grok-4.5", "grok-4.3"],
           },
         ],
       }, 200, reqOrigin);
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.0.1" }, 200, reqOrigin);
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.1.0" }, 200, reqOrigin);
     }
 
     // ─── Static assets ───
@@ -249,7 +233,7 @@ async function callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch
   if (!apiKey) return jsonResponse({ error: "Anthropic API key not configured" }, 500, origin);
 
   const anthropicBody = {
-    model: model || "claude-sonnet-4-20250514",
+    model: model || "claude-sonnet-5",
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
@@ -329,7 +313,7 @@ async function callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, o
   if (!apiKey) return jsonResponse({ error: "OpenRouter API key not configured" }, 500, origin);
 
   const orBody = {
-    model: model || "anthropic/claude-sonnet-4-20250514",
+    model: model || "anthropic/claude-sonnet-5",
     max_tokens: maxTokens,
     messages: [
       { role: "system", content: systemPrompt },
@@ -419,7 +403,7 @@ async function callGemini(env, systemPrompt, userPrompt, maxTokens, model, origi
   const apiKey = env.GEMINI_API_KEY;
   if (!apiKey) return jsonResponse({ error: "Gemini API key not configured" }, 500, origin);
 
-  const selectedModel = model || "gemini-2.5-flash";
+  const selectedModel = model || "gemini-3.7-flash";
 
   // Gemini supports OpenAI-compatible endpoint
   const geminiBody = {

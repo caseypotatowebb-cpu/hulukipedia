@@ -26,17 +26,18 @@ const themes = {
 };
 
 // ─── PROVIDER DEFINITIONS ───
-// Venice models curated from the full catalog (api-docs-main/model-search.js + swagger.yaml)
+// Curated against first-party docs and the authenticated Venice / OpenRouter model catalogs on 2026-08-13.
 const PROVIDERS = {
   anthropic: {
     name: "Claude (Anthropic)",
     icon: "🎭",
     color: "#d97706",
     models: [
-      { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
-      { id: "claude-opus-4-20250514", name: "Claude Opus 4" },
+      { id: "claude-sonnet-5", name: "Claude Sonnet 5 ✦" },
+      { id: "claude-opus-5", name: "Claude Opus 5" },
+      { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
       { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5" },
-      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
+      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5 ⚡" },
     ],
   },
   venice: {
@@ -44,23 +45,20 @@ const PROVIDERS = {
     icon: "🔮",
     color: "#8b5cf6",
     models: [
-      // ── Commander's Favorites (confirmed via API) ──
-      { id: "openai-gpt-4o-2024-11-20", name: "GPT-4o ✦" },
+      { id: "zai-org-glm-5-2", name: "GLM 5.2 ✦" },
       { id: "olafangensan-glm-4.7-flash-heretic", name: "GLM 4.7 Flash Heretic 🔥" },
-      { id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" },
-      { id: "qwen3-5-35b-a3b", name: "Qwen 3.5 35B A3B" },
       { id: "venice-uncensored-role-play", name: "Venice Role Play Uncensored" },
-      { id: "qwen-3-6-plus", name: "Qwen 3.6 Plus Uncensored" },
-      { id: "mistral-small-2603", name: "Mistral Small 4" },
-      { id: "grok-4-20", name: "Grok 4.20" },
       { id: "venice-uncensored-1-2", name: "Venice Uncensored 1.2" },
-      { id: "aion-labs-aion-2-0", name: "Aion 2.0" },
-      // ── Power Models ──
-      { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro 🧠" },
-      { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash ⚡" },
+      { id: "qwen-3-7-plus", name: "Qwen 3.7 Plus" },
+      { id: "qwen-3-6-plus", name: "Qwen 3.6 Plus Uncensored" },
+      { id: "grok-4-5", name: "Grok 4.5" },
       { id: "grok-4-3", name: "Grok 4.3" },
-      { id: "kimi-k2-6", name: "Kimi K2.6" },
-      { id: "llama-3.3-70b", name: "Llama 3.3 70B" },
+      { id: "gemini-3-6-flash", name: "Gemini 3.6 Flash" },
+      { id: "mistral-small-2603", name: "Mistral Small 4" },
+      { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro 🧠" },
+      { id: "openai-gpt-4o-2024-11-20", name: "GPT-4o (Compatibility)" },
+      { id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" },
+      { id: "aion-labs-aion-2-0", name: "Aion 2.0" },
       { id: "qwen3-vl-235b-a22b", name: "Qwen3 VL 235B 👁" },
     ],
   },
@@ -69,10 +67,10 @@ const PROVIDERS = {
     icon: "🔍",
     color: "#0ea5e9",
     models: [
+      { id: "sonar", name: "Sonar — factual default" },
       { id: "sonar-pro", name: "Sonar Pro" },
-      { id: "sonar", name: "Sonar" },
-      { id: "sonar-reasoning-pro", name: "Sonar Reasoning Pro" },
       { id: "sonar-reasoning", name: "Sonar Reasoning" },
+      { id: "sonar-reasoning-pro", name: "Sonar Reasoning Pro" },
     ],
   },
   openrouter: {
@@ -80,10 +78,10 @@ const PROVIDERS = {
     icon: "🔀",
     color: "#f43f5e",
     models: [
-      { id: "anthropic/claude-sonnet-4-20250514", name: "Claude Sonnet 4 (OR)" },
-      { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
-      { id: "openai/gpt-4o", name: "GPT-4o" },
-      { id: "meta-llama/llama-3.3-70b-instruct", name: "Llama 3.3 70B" },
+      { id: "anthropic/claude-sonnet-5", name: "Claude Sonnet 5 (OR)" },
+      { id: "google/gemini-3.7-flash", name: "Gemini 3.7 Flash (OR)" },
+      { id: "openai/gpt-5.6-terra", name: "GPT-5.6 Terra (OR)" },
+      { id: "x-ai/grok-4.6", name: "Grok 4.6 (OR)" },
       { id: "x-ai/grok-4.3", name: "Grok 4.3 (OR)" },
     ],
   },
@@ -92,12 +90,10 @@ const PROVIDERS = {
     icon: "🧠",
     color: "#10a37f",
     models: [
-      { id: "gpt-4o", name: "GPT-4o" },
-      { id: "gpt-4o-mini", name: "GPT-4o Mini" },
-      { id: "gpt-5", name: "GPT-5" },
-      { id: "o1", name: "o1 (Reasoning)" },
-      { id: "o1-mini", name: "o1 Mini" },
-      { id: "o3-mini", name: "o3 Mini" },
+      { id: "gpt-5.6-terra", name: "GPT-5.6 Terra ✦" },
+      { id: "gpt-5.6-sol", name: "GPT-5.6 Sol" },
+      { id: "gpt-5.6-luna", name: "GPT-5.6 Luna ⚡" },
+      { id: "gpt-4o", name: "GPT-4o (Legacy compatibility)" },
     ],
   },
   gemini: {
@@ -105,9 +101,12 @@ const PROVIDERS = {
     icon: "💎",
     color: "#4285f4",
     models: [
-      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash ⚡" },
-      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
-      { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash" },
+      { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash ✦" },
+      { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash" },
+      { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash" },
+      { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite ⚡" },
+      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (Legacy stable)" },
+      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Legacy stable)" },
     ],
   },
   xai: {
@@ -115,9 +114,9 @@ const PROVIDERS = {
     icon: "🚀",
     color: "#1d9bf0",
     models: [
-      { id: "grok-4.3", name: "Grok 4.3 (Latest)" },
-      { id: "grok-4.20", name: "Grok 4.20 (Unfiltered)" },
-      { id: "grok-build-0.1", name: "Grok Build (Code)" },
+      { id: "grok-4.6", name: "Grok 4.6 ✦" },
+      { id: "grok-4.5", name: "Grok 4.5" },
+      { id: "grok-4.3", name: "Grok 4.3 — accuracy + voice" },
     ],
   },
 };
@@ -126,28 +125,78 @@ const DEFAULT_PROVIDER = "perplexity";
 const DEFAULT_MODEL = "sonar";
 
 // ─── SMART SECTION DEFAULTS ───
-// Venice routes to Commander's favorites; Perplexity for factual research
+// Perplexity establishes facts; Grok 4.3 writes the physically specific and character-rich layers.
 const SECTION_DEFAULTS = {
   intel:     { provider: "perplexity", model: "sonar" },
-  physical:  { provider: "xai",       model: "grok-4.20" },
+  physical:  { provider: "xai",        model: "grok-4.3" },
   comm:      { provider: "venice",     model: "openai-gpt-4o-2024-11-20" },
   convo:     { provider: "venice",     model: "venice-uncensored-role-play" },
   psych:     { provider: "venice",     model: "deepseek-v4-pro" },
-  strategic: { provider: "xai",       model: "grok-4.3" },
-  add1:      { provider: "gemini",     model: "gemini-2.5-flash" },
-  add2:      { provider: "venice",     model: "claude-sonnet-4-5" },
+  strategic: { provider: "xai",        model: "grok-4.3" },
+  add1:      { provider: "gemini",     model: "gemini-3.6-flash" },
+  add2:      { provider: "venice",     model: "grok-4-5" },
 };
 
 // ─── ROLE-PLAY MODEL DEFAULTS ───
-// "Recommended for role-play" ordering. Default = strongest believable-persona
-// model in the existing catalog. Priority: Anthropic Claude (top Sonnet/Opus) >
-// OpenAI GPT-5.x > xAI Grok. All IDs map to real entries already in PROVIDERS.
-const ROLEPLAY_DEFAULT_PROVIDER = "anthropic";
-const ROLEPLAY_DEFAULT_MODEL = "claude-sonnet-4-5-20250929"; // Claude Sonnet 4.5
+// Direct Grok 4.3 is intentionally the first voice: grounded detail, flexible acting, and creative range.
+const ROLEPLAY_DEFAULT_PROVIDER = "xai";
+const ROLEPLAY_DEFAULT_MODEL = "grok-4.3";
 const ROLEPLAY_ALTERNATES = [
-  { provider: "anthropic", model: "claude-opus-4-20250514", label: "Claude Opus 4 — emotional nuance" },
-  { provider: "openai", model: "gpt-5", label: "GPT-5 — honors detailed character briefs" },
-  { provider: "xai", model: "grok-4.20", label: "Grok 4.20 — unfiltered personality" },
+  { provider: "xai", model: "grok-4.5", label: "Grok 4.5 — expansive scenes" },
+  { provider: "anthropic", model: "claude-sonnet-5", label: "Claude Sonnet 5 — intimate nuance" },
+  { provider: "venice", model: "venice-uncensored-role-play", label: "Venice RP — open-ended character play" },
+];
+
+const ROLEPLAY_SCENARIOS = [
+  {
+    id: "open-room",
+    label: "Open Room",
+    note: "No imposed premise — begin wherever the conversation naturally wants to go.",
+    direction: "There is no forced plot. Let the other person establish the immediate topic, while you answer with natural attention, boundaries, and voice.",
+  },
+  {
+    id: "first-meeting",
+    label: "First Meeting",
+    note: "Curiosity, friction, and the first impression that sticks.",
+    direction: "You have just met the other person in a plausible setting. Let first impressions, guardedness, curiosity, and social instincts shape the exchange.",
+  },
+  {
+    id: "after-fallout",
+    label: "After the Fallout",
+    note: "A private conversation after the thing neither side can pretend did not happen.",
+    direction: "The conversation happens after a consequential disagreement, public embarrassment, loss, or failure. Do not melodramatize; let avoidance, honesty, and what remains unsaid create the pressure.",
+  },
+  {
+    id: "mission-problem",
+    label: "Mission / Problem",
+    note: "Two people have to face a hard problem together — character first, procedures second.",
+    direction: "A time-sensitive but non-tactical problem needs attention. Center the character's judgment, values, friction, and improvisation; never turn the exchange into real-world operational guidance.",
+  },
+  {
+    id: "off-duty",
+    label: "Off-Duty",
+    note: "Coffee, a walk, a ride home, rehearsal break, hotel lobby — life between the plot beats.",
+    direction: "The scene is an ordinary, low-pressure moment between obligations. Let small behavior, humor, habits, and a lived-in setting reveal character instead of forcing a dramatic confession.",
+  },
+  {
+    id: "rival-spark",
+    label: "Rival Spark",
+    note: "Teasing, competition, and chemistry with an actual point of view behind it.",
+    direction: "The other person is a capable equal, rival, or thorn in your side. Let the dialogue carry playful challenge, ego, respect, and tension without flattening either person into generic flirting.",
+  },
+  {
+    id: "confessional",
+    label: "Confessional",
+    note: "A quiet question that makes it harder to hide behind the usual mask.",
+    direction: "The environment is private enough for a difficult question or admission. Keep the response human-sized, voice-accurate, and emotionally earned; nobody owes instant vulnerability.",
+  },
+  {
+    id: "after-hours",
+    label: "After Hours — Raven only",
+    note: "Mature fictional chemistry, nightlife, and private atmosphere without reducing the character to a prop.",
+    ravenOnly: true,
+    direction: "This is an after-hours fictional scene between consenting adults. Allow mature flirtation, glamour, tension, and personal boundaries, but keep the character's agency, personality, and dialogue in charge. Do not describe explicit sexual acts or use a real person as the subject of this premise.",
+  },
 ];
 
 // ─── API HELPER ───
@@ -384,17 +433,18 @@ function getPrompts(subject, details, mode) {
     }),
     physical: (tone, researchContext) => {
       const tones = {
-        blue: "Write a clinical, anatomically-precise physical description",
+        blue: "Write a clinical, anatomically precise physical description",
         green: "Write a glamorous, admiring magazine-feature physical description",
-        yellow: "Write a candid, appreciative bar-talk physical description — how a friend would describe them to someone who's never seen them",
-        red: "Write a raw, unfiltered, locker-room physical description — hold nothing back, describe exactly what people notice and think but don't say out loud",
+        yellow: "Write a candid, appreciative bar-talk physical description — how a friend would describe them to someone who has never seen them",
+        red: "Write a raw, unfiltered locker-room physical description — direct and honest about what people notice, but never cruel or dehumanizing",
+        purple: "Write a cinematic presence portrait — the way a sharp casting director, photographer, or observant stranger would explain why this person changes the energy of a room",
       };
       const ragContext = researchContext
-        ? `\n\n=== MANDATORY RESEARCH DATA (OVERRIDE YOUR ASSUMPTIONS WITH THESE FACTS) ===\n${researchContext}\n=== END RESEARCH DATA ===\n\nYou MUST describe the person as the research shows them, NOT as you assume they should look based on their job/role. If the research says they're curvy and thick, describe them as curvy and thick — do NOT convert that into 'athletic' or 'toned' or 'lean'. Trust the research over your instincts.\n\n`
+        ? `\n\n=== MANDATORY RESEARCH DATA (OVERRIDE YOUR ASSUMPTIONS WITH THESE FACTS) ===\n${researchContext}\n=== END RESEARCH DATA ===\n\nYou MUST describe the person as the research shows them, NOT as you assume they should look based on their job or role. If the research says they are curvy, say curvy; do not translate it into a generic 'athletic' or 'toned' archetype. Trust the research over your instincts.\n\n`
         : "";
       return {
-        system: `You write vivid, specific physical descriptions that focus on what humans actually notice about a person — their body shape, proportions, the way they carry themselves, what makes them physically distinctive compared to others around them. ${fictional ? "This is a fictional character — be creative, detailed, and specific about their physical form." : "This is a real person. You MUST describe their ACTUAL appearance based on the research provided, NOT a generic archetype based on their job or background. If they're curvy, say so. If they're thin, say so. If they have a notably large or small feature, describe it honestly. Do NOT default to 'athletic build' unless that is genuinely accurate. Describe what makes THIS person's body different from others in similar roles."}`,
-        user: `${tones[tone]} of ${entity}.${ragContext}Focus on: overall body type and proportions (be SPECIFIC — pear-shaped? hourglass? slim? thick? where do they carry weight?), height and frame, face (bone structure, eyes, lips, skin), hair, distinguishing features, and physical presence/energy. Describe what someone would actually notice first, second, and third when seeing them. Do NOT sanitize or genericize — be honest and specific. 200-300 words.`,
+        system: `You write vivid, specific physical descriptions that follow how human attention actually works: the instant read, the concrete details, then the individual quality that lingers. You are accurate without becoming sterile and honest without turning a person into a list of parts. ${fictional ? "This is a fictional character — make their physical form, movement, wardrobe logic, and visual identity specific to their world." : "This is a real person. You MUST describe their actual appearance based on the research provided, not a generic archetype based on their job or background. Do not invent measurements, surgical claims, medical facts, or private body details. Describe what visibly distinguishes this individual from peers in their context."}`,
+        user: `${tones[tone]} of ${entity}.${ragContext}Write in three flowing movements, not labeled bullets: (1) INSTANT READ — silhouette, scale, posture, movement, and first impression; (2) SPECIFIC ARCHITECTURE — overall body type and proportions (be specific where evidence supports it), height and frame, face, hair, styling, distinguishing features, and how clothing sits or moves; (3) CONTEXTUAL CONTRAST — what makes this person visually distinctive compared with people in their cast, field, world, or public image. Start with what someone notices first, then what becomes clear on a second look, then what stays with them. Do not sanitize, genericize, or drift into a generic 'fit professional' description. 250-350 words.`,
       };
     },
     comm: (researchContext) => {
@@ -502,28 +552,37 @@ function Lightbox({ src, onClose }) {
 }
 
 // ─── PROVIDER SELECTOR COMPONENT ───
-function ProviderSelector({ provider, model, onProviderChange, onModelChange, theme, compact = false }) {
+function ProviderSelector({ provider, model, onProviderChange, onModelChange, theme, compact = false, menuDirection = "down" }) {
   const t = themes[theme];
   const providerDef = PROVIDERS[provider];
   const [open, setOpen] = useState(false);
+  const opensUpward = menuDirection === "up";
 
   return (
     <div className="relative inline-flex items-center gap-1" style={{ fontSize: compact ? "0.7rem" : "0.75rem" }}>
-      <div className="flex items-center gap-1 rounded-md px-2 py-1 cursor-pointer select-none"
+      <button
+        type="button"
+        className="flex items-center gap-1 rounded-md px-2 py-1 cursor-pointer select-none"
         style={{ backgroundColor: providerDef.color + "22", border: `1px solid ${providerDef.color}44`, color: providerDef.color }}
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(current => !current)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
       >
         <Radio size={compact ? 10 : 12} />
         <span className="font-bold">{providerDef.name}</span>
-        <ChevronDown size={10} />
-      </div>
+        <ChevronDown size={10} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
+      </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 rounded-md shadow-xl z-50 min-w-[220px]"
-          style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}` }}
+        <div
+          className={`absolute left-0 rounded-md shadow-xl z-50 min-w-[240px] overflow-y-auto ${opensUpward ? "bottom-full mb-1" : "top-full mt-1"}`}
+          style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}`, maxHeight: "min(60vh, 420px)" }}
+          role="listbox"
         >
           {Object.entries(PROVIDERS).map(([pid, pdef]) => (
             <div key={pid}>
-              <div className="px-3 py-1.5 font-bold text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1"
+              <button
+                type="button"
+                className="w-full px-3 py-1.5 font-bold text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1 text-left"
                 style={{
                   color: pid === provider ? pdef.color : t.textSecondary,
                   backgroundColor: pid === provider ? pdef.color + "11" : "transparent",
@@ -534,28 +593,34 @@ function ProviderSelector({ provider, model, onProviderChange, onModelChange, th
                 }}
               >
                 <span>{pdef.icon}</span> {pdef.name}
-              </div>
+              </button>
               {pid === provider && pdef.models.map(m => (
-                <div key={m.id}
-                  className="pl-8 pr-3 py-1 cursor-pointer text-xs"
+                <button
+                  type="button"
+                  key={m.id}
+                  className="w-full pl-8 pr-3 py-1 cursor-pointer text-xs text-left"
                   style={{
                     color: m.id === model ? pdef.color : t.textSecondary,
                     backgroundColor: m.id === model ? pdef.color + "11" : "transparent",
                     fontWeight: m.id === model ? 700 : 400,
                   }}
                   onClick={() => { onModelChange(m.id); setOpen(false); }}
+                  role="option"
+                  aria-selected={m.id === model}
                 >
                   {m.name}
-                </div>
+                </button>
               ))}
             </div>
           ))}
-          <div className="border-t px-3 py-1.5 text-xs cursor-pointer"
+          <button
+            type="button"
+            className="w-full border-t px-3 py-1.5 text-xs cursor-pointer text-left"
             style={{ borderColor: t.border, color: t.textSecondary }}
             onClick={() => setOpen(false)}
           >
             Close
-          </div>
+          </button>
         </div>
       )}
     </div>
@@ -807,14 +872,78 @@ const VISUAL_SCENE_RECIPES = [
       { label: "Final Story Beat", direction: "a memorable, emotionally resonant closing beat with cinematic visual clarity" },
     ],
   },
+  {
+    id: "activity",
+    label: "Activity Continuity",
+    description: "Follow one clear activity through visibly different, identity-consistent angles and beats.",
+    aspectRatio: "16:9",
+    artDirection: "a coherent photorealistic activity story with a single location, continuous wardrobe, believable body mechanics, and clean directional light",
+    shots: [
+      { label: "Before the Move", direction: "a focused pre-activity portrait; the subject is preparing, stretching, checking equipment, or gathering themselves, never already mid-stride" },
+      { label: "Front Momentum", direction: "a full-body front three-quarter frame in unmistakable motion toward the camera, with natural limbs, clear activity mechanics, and a readable face" },
+      { label: "Profile Drive", direction: "a side-profile action frame, body traveling left or right across the image, posture and weight transfer clearly believable" },
+      { label: "Follow Frame", direction: "a rear three-quarter follow shot with the subject moving away through the location; styling, silhouette, and environment must remain clear" },
+      { label: "Recovery Beat", direction: "a calmer post-activity frame, subject catching breath, adjusting clothing, or resting naturally in the same world; never repeat the running/action pose" },
+    ],
+  },
+  {
+    id: "campaign",
+    label: "Campaign / Product Story",
+    description: "A polished sequence for lifestyle marketing, a character campaign, or a story-first product shoot.",
+    aspectRatio: "3:2",
+    artDirection: "a high-end visual campaign with a cohesive color story, editorial polish, authentic lifestyle behavior, and the subject as the unmistakable center of attention",
+    shots: [
+      { label: "Key Art", direction: "a confident full or three-quarter key-art frame, clean visual hierarchy, subject and setting immediately legible" },
+      { label: "In Use", direction: "a candid but intentional interaction with an object, service, garment, or environment that supports the campaign without looking like an advertisement mockup" },
+      { label: "Environmental Hook", direction: "an environmental composition where the subject is smaller in frame but visually dominant through color, silhouette, and placement" },
+      { label: "Human Detail", direction: "a medium detail frame centered on expression, hands, styling, or a meaningful interaction; no generic headshot" },
+      { label: "Closing Poster", direction: "a final, poster-worthy image with clean negative space, powerful pose, and a satisfying story conclusion; no text or logo" },
+    ],
+  },
+  {
+    id: "duo",
+    label: "Duo Chemistry",
+    description: "Two adult characters sharing a scene: friendship, rivalry, teamwork, romantic tension, or a complicated history.",
+    aspectRatio: "16:9",
+    requiresCoStar: true,
+    artDirection: "a cinematic two-person scene with distinct adult faces, natural physical spacing, readable relationship energy, and no duplicate bodies or mirrored copies",
+    shots: [
+      { label: "First Read", direction: "a two-shot that establishes who has the social upper hand, who is watching whom, and the emotional distance between them" },
+      { label: "Shared Action", direction: "both adults engaged in a simple shared activity or problem, body language doing as much work as dialogue would" },
+      { label: "Side by Side", direction: "a composed side-by-side frame with contrasting posture, styling, or expression that makes their relationship legible" },
+      { label: "Private Reaction", direction: "a closer emotional frame with one person in focus and the other still visibly present, capturing an unspoken reaction" },
+      { label: "Relationship Beat", direction: "a closing image that lands the relationship: alliance, tension, affection, rivalry, or unfinished business" },
+    ],
+  },
+  {
+    id: "after-dark",
+    label: "After Dark Editorial — Raven only",
+    description: "Adult fictional nightlife, glamour, and private atmosphere without losing character or agency.",
+    aspectRatio: "16:9",
+    ravenOnly: true,
+    artDirection: "an adult fictional after-hours editorial with cinematic nightlife, confident styling, mature atmosphere, a clear sense of agency, and non-explicit sensuality",
+    shots: [
+      { label: "Night Arrival", direction: "a dramatic full-body arrival beneath practical night lighting, confident styling, and a destination that feels intentional" },
+      { label: "Room Read", direction: "a three-quarter interior frame with a poised, self-directed posture and visual clues about the private atmosphere" },
+      { label: "Close Tension", direction: "a close cinematic character frame with a charged but non-explicit expression, accurate personality, and rich practical light" },
+      { label: "Reflective Pause", direction: "a quieter seated or leaning moment that lets mood, wardrobe texture, and inner life carry the image" },
+      { label: "Last Call", direction: "a striking final image as the character leaves, turns back, or takes possession of the space; glamorous, adult, and non-explicit" },
+    ],
+  },
 ];
 
-function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief) {
+function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief, coStar = "") {
   const optionalBrief = userBrief.trim()
     ? `Director's brief: ${userBrief.trim()}.`
     : "Director's brief: make choices that feel natural and true to the subject's established personality and world.";
+  const duoDirection = recipe.requiresCoStar
+    ? ` Co-star direction: ${coStar.trim() || "an unnamed adult counterpart appropriate to the director's brief"}. Show exactly two distinct adult people in one continuous moment; never duplicate, mirror, fuse, or confuse their faces or bodies.`
+    : "";
+  const matureConstraint = recipe.ravenOnly
+    ? " All depicted characters are fictional adults. Keep the atmosphere mature and character-forward, with no explicit sexual activity, nudity, coercion, or underage coding."
+    : "";
 
-  return `${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. Shot direction: ${shot.direction}. ${optionalBrief} Keep the person/character recognizably consistent with the identity anchor. Use a single coherent wardrobe and setting appropriate to this shot. Natural anatomy, clear hands, believable proportions, grounded lighting, and one readable subject. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.`;
+  return `${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. Shot direction: ${shot.direction}. ${optionalBrief}${duoDirection}${matureConstraint} Keep the person/character recognizably consistent with the identity anchor. Use a single coherent wardrobe and setting appropriate to this shot. Natural anatomy, clear hands, believable proportions, grounded lighting, and one clear visual focal point. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.`;
 }
 
 // ─── MAIN COMPONENT ───
@@ -859,6 +988,7 @@ export default function Hulukipedia() {
   const [imageSearchEnabled, setImageSearchEnabled] = useState(false); // web search for prompt gen
   const [visualRecipeId, setVisualRecipeId] = useState("editorial");
   const [visualBrief, setVisualBrief] = useState("");
+  const [visualCoStar, setVisualCoStar] = useState("");
   const [visualBatchSize, setVisualBatchSize] = useState(3);
   const [visualSet, setVisualSet] = useState([]);
   const [visualSetError, setVisualSetError] = useState(null);
@@ -879,6 +1009,8 @@ export default function Hulukipedia() {
   // Role-play (Part C) — session-only, cleared on reload + new search
   const [rpProvider, setRpProvider] = useState(ROLEPLAY_DEFAULT_PROVIDER);
   const [rpModel, setRpModel] = useState(ROLEPLAY_DEFAULT_MODEL);
+  const [rpScenarioId, setRpScenarioId] = useState("open-room");
+  const [rpScenarioBrief, setRpScenarioBrief] = useState("");
   const [rpMessages, setRpMessages] = useState([]); // { role: "user"|"character", content, image? }
   const [rpInput, setRpInput] = useState("");
   const [rpLoading, setRpLoading] = useState(false);
@@ -892,7 +1024,10 @@ export default function Hulukipedia() {
 
   const t = themes[theme];
   const selectedImageModel = IMAGE_MODELS.find(item => item.id === imageModel) || IMAGE_MODELS[0];
-  const selectedVisualRecipe = VISUAL_SCENE_RECIPES.find(item => item.id === visualRecipeId) || VISUAL_SCENE_RECIPES[0];
+  const availableVisualRecipes = VISUAL_SCENE_RECIPES.filter(recipe => !recipe.ravenOnly || mode === "raven");
+  const selectedVisualRecipe = availableVisualRecipes.find(item => item.id === visualRecipeId) || availableVisualRecipes[0];
+  const availableRolePlayScenarios = ROLEPLAY_SCENARIOS.filter(scenario => !scenario.ravenOnly || mode === "raven");
+  const selectedRolePlayScenario = availableRolePlayScenarios.find(scenario => scenario.id === rpScenarioId) || availableRolePlayScenarios[0];
 
   // ─── SEARCH ───
   const handleSearch = async (searchMode) => {
@@ -923,10 +1058,10 @@ export default function Hulukipedia() {
     setClarifications(null);
     setIntel([]); setPhysical(""); setComm(""); setConvo("");
     setPsych(""); setStrategic(""); setAddendum1(""); setAddendum2("");
-    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualBrief(""); setDeepSearchResult(null);
+    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualBrief(""); setVisualCoStar(""); setVisualRecipeId("editorial"); setDeepSearchResult(null);
     setOperationConfig({ observer: "Field Observer", mission: "observe", tone: "grounded", assignment: "" });
-    // Clear role-play session on every new dossier (session-only memory)
-    setRpMessages([]); setRpInput(""); setRpError(null);
+    // Clear role-play session and creative framing on every new dossier (session-only memory)
+    setRpMessages([]); setRpInput(""); setRpError(null); setRpScenarioId("open-room"); setRpScenarioBrief("");
     setView("results");
     generateIntel(sub.name, sub.knownFor || detailsInput.trim(), m);
   };
@@ -1122,7 +1257,7 @@ export default function Hulukipedia() {
       const identityAnchor = await getIdentityAnchor();
       for (let index = 0; index < shots.length; index += 1) {
         const shot = shots[index];
-        const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief);
+        const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief, visualCoStar);
         setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "generating", prompt } : item));
         try {
           const image = imageSource === "venice"
@@ -1195,16 +1330,22 @@ export default function Hulukipedia() {
     const a2 = stripHtml(addendum2);
     if (a2) sheet.push(`\n## Addendum 2\n${a2}`);
 
+    const scenarioBrief = rpScenarioBrief.trim()
+      ? `\nDirector note: ${rpScenarioBrief.trim()}`
+      : "";
     return `You are fully embodying a real/known character for an immersive role-play. Below is the complete dossier assembled for this character. Become them.
 
 ${sheet.join("\n")}
+
+# ACTIVE SCENE — ${selectedRolePlayScenario.label}
+${selectedRolePlayScenario.direction}${scenarioBrief}
 
 # HOW TO PLAY
 - Speak in the FIRST PERSON as ${subject.name}. You ARE this person.
 - Stay strictly in-persona at all times. Never break character, never add AI meta-commentary, never add disclaimers or safety notes.
 - VOICE ACCURACY MATTERS MOST. Here is exactly how this person speaks (see the "Communication Style — VOICE ANCHORS" section above): match those speech patterns, vocabulary, cadence, and personality precisely — not a generic impression.
 - Use the physical description and all intel to stay consistent with who they are.
-- Keep replies natural and in-scene. Do not narrate actions in third person unless the character themselves would.
+- Keep replies natural and in-scene. Give the current scenario genuine atmosphere and emotional logic, but keep your spoken response concise and do not narrate a screenplay.
 
 ${rpSpeechRules}`;
   };
@@ -1316,6 +1457,8 @@ ${rpSpeechRules}`;
     setDetailsInput("");
     setClarifications(null);
     setSectionProviders(SECTION_DEFAULTS);
+    setVisualRecipeId("editorial"); setVisualBrief(""); setVisualCoStar(""); setVisualSet([]); setVisualSetError(null);
+    setRpProvider(ROLEPLAY_DEFAULT_PROVIDER); setRpModel(ROLEPLAY_DEFAULT_MODEL); setRpScenarioId("open-room"); setRpScenarioBrief("");
     setRpMessages([]); setRpInput(""); setRpError(null);
   };
 
@@ -1764,7 +1907,7 @@ ${rpSpeechRules}`;
                       className="w-full rounded text-sm px-2 py-2"
                       style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
                     >
-                      {VISUAL_SCENE_RECIPES.map(recipe => <option key={recipe.id} value={recipe.id}>{recipe.label}</option>)}
+                      {availableVisualRecipes.map(recipe => <option key={recipe.id} value={recipe.id}>{recipe.label}</option>)}
                     </select>
                     <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{selectedVisualRecipe.description}</div>
                   </div>
@@ -1797,6 +1940,20 @@ ${rpSpeechRules}`;
                     />
                   </div>
                 </div>
+
+                {selectedVisualRecipe.requiresCoStar && (
+                  <div className="mt-3">
+                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>CO-STAR / SECOND ADULT <span className="font-normal">(optional)</span></label>
+                    <input
+                      value={visualCoStar}
+                      onChange={e => setVisualCoStar(e.target.value)}
+                      placeholder="e.g., a rival archaeologist, their longtime partner, another adult character by name"
+                      className="w-full rounded text-sm px-2 py-2"
+                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                    />
+                    <div className="text-[10px] mt-1" style={{ color: t.textSecondary }}>Leave blank for an unnamed adult counterpart. The studio will direct two distinct people in one shared moment.</div>
+                  </div>
+                )}
 
                 <div className="mt-3 flex flex-col sm:flex-row gap-2">
                   <GenBtn onClick={generateVisualSet} loading={loading.visualSet} style={{ backgroundColor: t.accentGold, color: "#111", flex: 1 }}>
@@ -1880,7 +2037,7 @@ ${rpSpeechRules}`;
                     <span style={{ color: t.textSecondary }}>Not yet generated.</span>
                   )}
                 </div>
-                <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
                   <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "blue")} loading={loading.physical} style={{ backgroundColor: "#2563eb", color: "white" }}>
                     <FileText size={14} className="mr-1" /> Clinical
                   </GenBtn>
@@ -1889,6 +2046,9 @@ ${rpSpeechRules}`;
                   </GenBtn>
                   <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "yellow")} loading={loading.physical} style={{ backgroundColor: "#eab308", color: "#111" }}>
                     <Beer size={14} className="mr-1" /> Bar Talk
+                  </GenBtn>
+                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "purple")} loading={loading.physical} style={{ backgroundColor: "#7c3aed", color: "white" }}>
+                    <Eye size={14} className="mr-1" /> Presence
                   </GenBtn>
                   <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "red")} loading={loading.physical} style={{ backgroundColor: "#dc2626", color: "white" }}>
                     <Flame size={14} className="mr-1" /> Locker Room
@@ -2098,6 +2258,7 @@ ${rpSpeechRules}`;
                       onModelChange={setRpModel}
                       theme={theme}
                       compact
+                      menuDirection="up"
                     />
                     <span className="text-xs" style={{ color: t.textSecondary }}>
                       Recommended: {ROLEPLAY_ALTERNATES.map(a => a.label.split(" — ")[0]).join(" · ")}
@@ -2119,6 +2280,33 @@ ${rpSpeechRules}`;
                     >
                       <FileText size={12} /> Save as Markdown
                     </button>
+                  </div>
+                </div>
+
+                {/* Scenario deck — an active scene makes the first reply character-driven instead of generic. */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 rounded-md p-3" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}` }}>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold mb-1 uppercase" style={{ color: t.textSecondary, letterSpacing: "0.05em" }}>Scenario Deck</label>
+                    <select
+                      value={selectedRolePlayScenario.id}
+                      onChange={e => setRpScenarioId(e.target.value)}
+                      className="w-full rounded text-sm px-2 py-2"
+                      style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                    >
+                      {availableRolePlayScenarios.map(scenario => <option key={scenario.id} value={scenario.id}>{scenario.label}</option>)}
+                    </select>
+                    <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{selectedRolePlayScenario.note}</div>
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className="block text-xs font-bold mb-1 uppercase" style={{ color: t.textSecondary, letterSpacing: "0.05em" }}>Director Note <span className="normal-case font-normal">(optional)</span></label>
+                    <textarea
+                      value={rpScenarioBrief}
+                      onChange={e => setRpScenarioBrief(e.target.value)}
+                      placeholder="e.g., Rain has stopped outside the café. We have been avoiding one question all evening."
+                      rows={3}
+                      className="w-full rounded text-sm p-2"
+                      style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}`, color: t.textPrimary, resize: "vertical" }}
+                    />
                   </div>
                 </div>
 
