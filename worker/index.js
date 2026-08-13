@@ -101,7 +101,7 @@ export default {
             id: "openai",
             name: "OpenAI",
             capabilities: ["text"],
-            models: ["gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.6-luna", "gpt-4o"],
+            models: ["gpt-4o"],
           },
           {
             id: "gemini",
