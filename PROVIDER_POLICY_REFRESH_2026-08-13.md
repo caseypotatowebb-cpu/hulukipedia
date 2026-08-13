@@ -63,3 +63,8 @@ The deployed home screen and canonical Lara Croft Raven dossier were inspected i
 
 
 The live 3.2.0 Lara Croft dossier loaded and displayed the refreshed app surface correctly. Browser-visible catalog checks confirmed legacy Gemini 2.5 and retired `sonar-reasoning` are absent, while the current Sonar Research options, all current Venice image selections, updated visual recipes, and Scenario Deck are present. The new palette is legible in both the initial page and Raven dossier: emerald identifies Raven/research controls and aged gold identifies primary actions/Starling state.
+
+
+### Final live generation test
+
+In the deployed 3.2.0 Raven dossier for Lara Croft, the **Presence** physical-description voice completed through the default direct xAI path. The returned text used the requested scene-centered physical language—presence, posture, frame, movement, wardrobe, and contextual contrast—rather than a sterile attribute list. This verifies both the Grok 4.20 non-reasoning default and the upgraded Presence prompt end to end. During the same browser pass, the role-play help label was found to list only alternates; it was corrected, rebuilt, and redeployed to state `Default: Grok 4.20` before the release was finalized.
