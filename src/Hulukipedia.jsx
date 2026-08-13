@@ -1083,16 +1083,35 @@ export default function Hulukipedia() {
     setL("image", false);
   };
 
+  const describeImageError = (error, attemptedModel) => {
+    const raw = error?.message || String(error || "Image generation failed.");
+    if (/venice image error:\s*403|\b403\b/i.test(raw)) {
+      const modelName = IMAGE_MODELS.find(item => item.id === attemptedModel)?.name || attemptedModel;
+      return `${modelName} is listed by Venice but is not currently enabled for the Team Tomorrow Venice account. Try Nano Banana Pro, Nano Banana 2, Qwen Image 3, or Qwen Image 3 Pro.`;
+    }
+    return raw;
+  };
+
   const generateVisualSet = async () => {
     if (loading.visualSet) return;
     setL("visualSet", true);
     setVisualSetError(null);
     const recipe = selectedVisualRecipe;
     const shots = recipe.shots.slice(0, Number(visualBatchSize));
+    const dimensions = ASPECT_DIMENSIONS[recipe.aspectRatio] || ASPECT_DIMENSIONS["1:1"];
     const pendingSet = shots.map((shot, index) => ({
       id: `${Date.now()}-${index}`,
       label: shot.label,
       direction: shot.direction,
+      recipeId: recipe.id,
+      aspectRatio: recipe.aspectRatio,
+      width: dimensions.width,
+      height: dimensions.height,
+      model: imageModel,
+      source: imageSource,
+      resolution: "2K",
+      prompt: null,
+      rerollCount: 0,
       status: "queued",
       image: null,
       error: null,
@@ -1104,16 +1123,15 @@ export default function Hulukipedia() {
       for (let index = 0; index < shots.length; index += 1) {
         const shot = shots[index];
         const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief);
-        setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "generating" } : item));
+        setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "generating", prompt } : item));
         try {
-          const dimensions = ASPECT_DIMENSIONS[recipe.aspectRatio] || ASPECT_DIMENSIONS["1:1"];
           const image = imageSource === "venice"
             ? await callImageGen(prompt, "", imageModel, recipe.aspectRatio, "2K", dimensions.width, dimensions.height)
             : makePollinationsUrl(prompt, recipe.aspectRatio);
-          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "ready", image, prompt } : item));
+          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "ready", image, prompt, error: null } : item));
           if (index === 0 && image) setImageUrl(image);
         } catch (e) {
-          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "error", error: e.message } : item));
+          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "error", error: describeImageError(e, imageModel) } : item));
         }
       }
     } catch (e) {
@@ -1121,6 +1139,28 @@ export default function Hulukipedia() {
       setVisualSetError(e.message);
     }
     setL("visualSet", false);
+  };
+
+  const rerollVisualFrame = async (frameId) => {
+    const frame = visualSet.find(item => item.id === frameId);
+    if (!frame?.prompt || frame.status === "generating" || frame.status === "rerolling") return;
+
+    setVisualSet(current => current.map(item => item.id === frameId
+      ? { ...item, status: "rerolling", error: null }
+      : item));
+
+    try {
+      const image = frame.source === "venice"
+        ? await callImageGen(frame.prompt, "", frame.model, frame.aspectRatio, frame.resolution, frame.width, frame.height)
+        : makePollinationsUrl(frame.prompt, frame.aspectRatio);
+      setVisualSet(current => current.map(item => item.id === frameId
+        ? { ...item, status: "ready", image, error: null, rerollCount: (item.rerollCount || 0) + 1 }
+        : item));
+    } catch (e) {
+      setVisualSet(current => current.map(item => item.id === frameId
+        ? { ...item, status: item.image ? "ready" : "error", error: describeImageError(e, frame.model) }
+        : item));
+    }
   };
 
   // ─── ROLE-PLAY (Part C) ───
@@ -1778,15 +1818,23 @@ ${rpSpeechRules}`;
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {visualSet.map((item, index) => (
                       <div key={item.id} className="overflow-hidden rounded-md" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}` }}>
-                        <div className="flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.16)", aspectRatio: selectedVisualRecipe.aspectRatio.replace(":", " / ") }}>
-                          {item.status === "ready" && item.image ? (
-                            <img
-                              src={item.image}
-                              alt={`${selectedVisualRecipe.label}: ${item.label}`}
-                              onClick={() => setLightboxSrc(item.image)}
-                              className="w-full h-full object-cover cursor-pointer"
-                              title="Click to enlarge"
-                            />
+                        <div className="relative flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.16)", aspectRatio: item.aspectRatio?.replace(":", " / ") || selectedVisualRecipe.aspectRatio.replace(":", " / ") }}>
+                          {item.image ? (
+                            <>
+                              <img
+                                src={item.image}
+                                alt={`${selectedVisualRecipe.label}: ${item.label}`}
+                                onClick={() => setLightboxSrc(item.image)}
+                                className="w-full h-full object-cover cursor-pointer"
+                                title="Click to enlarge"
+                              />
+                              {item.status === "rerolling" && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-xs" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "white" }}>
+                                  <Spinner size={22} />
+                                  <span>Re-rendering this frame…</span>
+                                </div>
+                              )}
+                            </>
                           ) : item.status === "error" ? (
                             <span className="text-xs px-3 text-center" style={{ color: "#ef4444" }}>{item.error || "Image generation failed."}</span>
                           ) : (
@@ -1797,8 +1845,22 @@ ${rpSpeechRules}`;
                           )}
                         </div>
                         <div className="px-3 py-2">
-                          <div className="text-xs font-bold" style={{ color: t.accentGold }}>{String(index + 1).padStart(2, "0")} · {item.label}</div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-xs font-bold" style={{ color: t.accentGold }}>{String(index + 1).padStart(2, "0")} · {item.label}</div>
+                            {item.rerollCount > 0 && <span className="text-[9px] whitespace-nowrap" style={{ color: t.textSecondary }}>Take {item.rerollCount + 1}</span>}
+                          </div>
                           <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{item.direction}</div>
+                          {item.error && <div className="text-[10px] mt-2 leading-snug" style={{ color: "#ef4444" }}>{item.error}</div>}
+                          <button
+                            onClick={() => rerollVisualFrame(item.id)}
+                            disabled={!item.prompt || item.status === "generating" || item.status === "rerolling" || item.status === "queued"}
+                            className="w-full mt-2 flex items-center justify-center gap-1 rounded px-2 py-1.5 text-[10px] font-bold disabled:opacity-50"
+                            style={{ backgroundColor: t.highlight, color: t.accentGold, border: `1px solid ${t.border}` }}
+                            title="Generate a new take using this exact scene direction"
+                          >
+                            {item.status === "rerolling" ? <Spinner size={12} /> : <RefreshCw size={12} />}
+                            {item.status === "rerolling" ? "Re-rendering…" : item.status === "error" && !item.image ? "Try Frame Again" : "Re-roll Frame"}
+                          </button>
                         </div>
                       </div>
                     ))}
