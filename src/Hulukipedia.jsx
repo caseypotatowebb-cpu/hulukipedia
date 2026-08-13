@@ -33,10 +33,11 @@ const PROVIDERS = {
     name: "Claude (Anthropic)",
     icon: "🎭",
     color: "#d97706",
+    // User policy: Claude 4.5 and earlier only. 4.8+ is intentionally excluded.
     models: [
-      { id: "claude-sonnet-5", name: "Claude Sonnet 5 ✦" },
-      { id: "claude-opus-5", name: "Claude Opus 5" },
-      { id: "claude-opus-4-8", name: "Claude Opus 4.8" },
+      { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5 — preferred" },
+      { id: "claude-opus-4-5-20251101", name: "Claude Opus 4.5" },
+      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5 ⚡" },
     ],
   },
   venice: {
@@ -44,19 +45,21 @@ const PROVIDERS = {
     icon: "🔮",
     color: "#8b5cf6",
     models: [
-      { id: "zai-org-glm-5-2", name: "GLM 5.2 ✦" },
-      { id: "olafangensan-glm-4.7-flash-heretic", name: "GLM 4.7 Flash Heretic 🔥" },
-      { id: "venice-uncensored-role-play", name: "Venice Role Play Uncensored" },
-      { id: "venice-uncensored-1-2", name: "Venice Uncensored 1.2" },
-      { id: "qwen-3-7-plus", name: "Qwen 3.7 Plus" },
-      { id: "qwen-3-6-plus", name: "Qwen 3.6 Plus Uncensored" },
-      { id: "grok-4-5", name: "Grok 4.5" },
-      { id: "grok-4-3", name: "Grok 4.3" },
-      { id: "gemini-3-6-flash", name: "Gemini 3.6 Flash" },
-      { id: "mistral-small-2603", name: "Mistral Small 4" },
+      { id: "zai-org-glm-5-2", name: "GLM 5.2 🧠👁" },
+      { id: "olafangensan-glm-4.7-flash-heretic", name: "GLM 4.7 Flash Heretic 🔥🧠⚡" },
+      { id: "venice-uncensored-role-play", name: "Venice Role Play 🔥👁" },
+      { id: "venice-uncensored-1-2", name: "Venice Uncensored 1.2 🔥👁" },
+      { id: "qwen-3-7-plus", name: "Qwen 3.7 Plus 🧠👁" },
+      { id: "qwen-3-6-plus", name: "Qwen 3.6 Plus Uncensored 🔥🧠👁" },
+      { id: "kimi-k2-6", name: "Kimi K2.6 🧠👁" },
+      { id: "grok-4-5", name: "Grok 4.5 🧠👁" },
+      { id: "grok-4-3", name: "Grok 4.3 🧠👁" },
+      { id: "gemini-3-6-flash", name: "Gemini 3.6 Flash ⚡" },
+      { id: "mistral-small-2603", name: "Mistral Small 4 🧠👁" },
       { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro 🧠" },
-      { id: "openai-gpt-4o-2024-11-20", name: "GPT-4o (Compatibility)" },
-      { id: "aion-labs-aion-2-0", name: "Aion 2.0" },
+      { id: "openai-gpt-4o-2024-11-20", name: "GPT-4o (Compatibility) 👁" },
+      { id: "aion-labs-aion-3-0", name: "Aion 3.0 🧠" },
+      { id: "aion-labs-aion-3-0-mini", name: "Aion 3.0 Mini 🧠⚡" },
       { id: "qwen3-vl-235b-a22b", name: "Qwen3 VL 235B 👁" },
     ],
   },
@@ -65,10 +68,20 @@ const PROVIDERS = {
     icon: "🔍",
     color: "#0ea5e9",
     models: [
-      { id: "sonar", name: "Sonar — factual default" },
-      { id: "sonar-pro", name: "Sonar Pro — richer sourcing" },
-      { id: "sonar-reasoning-pro", name: "Sonar Reasoning Pro" },
-      { id: "sonar-deep-research", name: "Sonar Deep Research" },
+      { id: "sonar", name: "Sonar — factual default 🔎" },
+      { id: "sonar-pro", name: "Sonar Pro — richer sourcing 🔎" },
+      { id: "sonar-reasoning-pro", name: "Sonar Reasoning Pro 🧠🔎" },
+      { id: "sonar-deep-research", name: "Sonar Deep Research 🧠🔎" },
+    ],
+  },
+  mistral: {
+    name: "Mistral Studio",
+    icon: "🌬️",
+    color: "#fb923c",
+    models: [
+      { id: "mistral-medium-2604", name: "Mistral Medium 3.5 🧠👁" },
+      { id: "mistral-small-2603", name: "Mistral Small 4 🧠👁⚡" },
+      { id: "mistral-large-2512", name: "Mistral Large 3 👁" },
     ],
   },
   openrouter: {
@@ -76,9 +89,10 @@ const PROVIDERS = {
     icon: "🔀",
     color: "#f43f5e",
     models: [
-      { id: "anthropic/claude-sonnet-5", name: "Claude Sonnet 5 (OR)" },
-      { id: "anthropic/claude-opus-4-8", name: "Claude Opus 4.8 (OR)" },
-      { id: "google/gemini-3.7-flash", name: "Gemini 3.7 Flash (OR)" },
+      { id: "anthropic/claude-sonnet-4.5", name: "Claude Sonnet 4.5 (OR)" },
+      { id: "anthropic/claude-opus-4.5", name: "Claude Opus 4.5 (OR)" },
+      { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro (OR)" },
+      { id: "google/gemini-3.7-flash", name: "Gemini 3.7 Flash (OR) ⚡" },
       { id: "x-ai/grok-4.6", name: "Grok 4.6 (OR)" },
       { id: "x-ai/grok-4.3", name: "Grok 4.3 (OR)" },
     ],
@@ -89,7 +103,7 @@ const PROVIDERS = {
     color: "#10a37f",
     // Live account inventory checked 2026-08-13: GPT-4o is the currently accessible production text model.
     models: [
-      { id: "gpt-4o", name: "GPT-4o — account available" },
+      { id: "gpt-4o", name: "GPT-4o — account available 👁" },
     ],
   },
   gemini: {
@@ -97,7 +111,8 @@ const PROVIDERS = {
     icon: "💎",
     color: "#4285f4",
     models: [
-      { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash ✦" },
+      { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro — Monday's choice" },
+      { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash ⚡" },
       { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash" },
       { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash" },
       { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite ⚡" },
@@ -108,9 +123,9 @@ const PROVIDERS = {
     icon: "🚀",
     color: "#1d9bf0",
     models: [
-      { id: "grok-4.20-0309-non-reasoning", name: "Grok 4.20 — direct default ✦" },
-      { id: "grok-4.20-0309-reasoning", name: "Grok 4.20 — reasoning" },
-      { id: "grok-4.20-multi-agent-0309", name: "Grok 4.20 — multi-agent" },
+      { id: "grok-4.20-0309-non-reasoning", name: "Grok 4.20 — direct default" },
+      { id: "grok-4.20-0309-reasoning", name: "Grok 4.20 — reasoning 🧠" },
+      { id: "grok-4.20-multi-agent-0309", name: "Grok 4.20 — multi-agent 🧠" },
       { id: "grok-4.6", name: "Grok 4.6" },
       { id: "grok-4.5", name: "Grok 4.5" },
       { id: "grok-4.3", name: "Grok 4.3 — accuracy + voice" },
@@ -139,10 +154,11 @@ const SECTION_DEFAULTS = {
 const ROLEPLAY_DEFAULT_PROVIDER = "xai";
 const ROLEPLAY_DEFAULT_MODEL = "grok-4.20-0309-non-reasoning";
 const ROLEPLAY_ALTERNATES = [
+  { provider: "xai", model: "grok-4.20-0309-reasoning", label: "Grok 4.20 Reasoning 🧠 — deliberate character analysis" },
   { provider: "xai", model: "grok-4.3", label: "Grok 4.3 — accuracy + voice" },
-  { provider: "xai", model: "grok-4.5", label: "Grok 4.5 — expansive scenes" },
-  { provider: "anthropic", model: "claude-sonnet-5", label: "Claude Sonnet 5 — intimate nuance" },
-  { provider: "venice", model: "venice-uncensored-role-play", label: "Venice RP — open-ended character play" },
+  { provider: "anthropic", model: "claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5 — intimate nuance" },
+  { provider: "mistral", model: "mistral-medium-2604", label: "Mistral Medium 3.5 🧠 — textured scenes" },
+  { provider: "venice", model: "venice-uncensored-role-play", label: "Venice RP 🔥 — open-ended character play" },
 ];
 
 const ROLEPLAY_SCENARIOS = [
@@ -611,6 +627,9 @@ function ProviderSelector({ provider, model, onProviderChange, onModelChange, th
               ))}
             </div>
           ))}
+          <div className="border-t px-3 py-2 text-[10px] leading-snug" style={{ borderColor: t.border, color: t.textSecondary }}>
+            <strong style={{ color: t.accentGold }}>MODEL KEY</strong> · 🧠 reasoning · 🔥 uncensored / open creative · 👁 vision · ⚡ faster route · 🔎 live web research
+          </div>
           <button
             type="button"
             className="w-full border-t px-3 py-1.5 text-xs cursor-pointer text-left"
@@ -984,6 +1003,9 @@ export default function Hulukipedia() {
   const [imageModel, setImageModel] = useState("nano-banana-pro");
   const [imageSource, setImageSource] = useState("venice"); // "venice" or "pollinations"
   const [imageSearchEnabled, setImageSearchEnabled] = useState(false); // web search for prompt gen
+  // The Visual Scene Studio is intentionally independent from Portrait: a lookbook may use a different backend/model without changing the portrait choice.
+  const [visualImageSource, setVisualImageSource] = useState("venice");
+  const [visualImageModel, setVisualImageModel] = useState("nano-banana-pro");
   const [visualRecipeId, setVisualRecipeId] = useState("editorial");
   const [visualBrief, setVisualBrief] = useState("");
   const [visualCoStar, setVisualCoStar] = useState("");
@@ -1022,6 +1044,7 @@ export default function Hulukipedia() {
 
   const t = themes[theme];
   const selectedImageModel = IMAGE_MODELS.find(item => item.id === imageModel) || IMAGE_MODELS[0];
+  const selectedVisualImageModel = IMAGE_MODELS.find(item => item.id === visualImageModel) || IMAGE_MODELS[0];
   const availableVisualRecipes = VISUAL_SCENE_RECIPES.filter(recipe => !recipe.ravenOnly || mode === "raven");
   const selectedVisualRecipe = availableVisualRecipes.find(item => item.id === visualRecipeId) || availableVisualRecipes[0];
   const availableRolePlayScenarios = ROLEPLAY_SCENARIOS.filter(scenario => !scenario.ravenOnly || mode === "raven");
@@ -1056,7 +1079,7 @@ export default function Hulukipedia() {
     setClarifications(null);
     setIntel([]); setPhysical(""); setComm(""); setConvo("");
     setPsych(""); setStrategic(""); setAddendum1(""); setAddendum2("");
-    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualBrief(""); setVisualCoStar(""); setVisualRecipeId("editorial"); setDeepSearchResult(null);
+    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualImageSource("venice"); setVisualImageModel("nano-banana-pro"); setVisualBrief(""); setVisualCoStar(""); setVisualRecipeId("editorial"); setDeepSearchResult(null);
     setOperationConfig({ observer: "Field Observer", mission: "observe", tone: "grounded", assignment: "" });
     // Clear role-play session and creative framing on every new dossier (session-only memory)
     setRpMessages([]); setRpInput(""); setRpError(null); setRpScenarioId("open-room"); setRpScenarioBrief("");
@@ -1240,8 +1263,8 @@ export default function Hulukipedia() {
       aspectRatio: recipe.aspectRatio,
       width: dimensions.width,
       height: dimensions.height,
-      model: imageModel,
-      source: imageSource,
+      model: visualImageModel,
+      source: visualImageSource,
       resolution: "2K",
       prompt: null,
       rerollCount: 0,
@@ -1258,13 +1281,13 @@ export default function Hulukipedia() {
         const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief, visualCoStar);
         setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "generating", prompt } : item));
         try {
-          const image = imageSource === "venice"
-            ? await callImageGen(prompt, "", imageModel, recipe.aspectRatio, "2K", dimensions.width, dimensions.height)
+          const image = visualImageSource === "venice"
+            ? await callImageGen(prompt, "", visualImageModel, recipe.aspectRatio, "2K", dimensions.width, dimensions.height)
             : makePollinationsUrl(prompt, recipe.aspectRatio);
           setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "ready", image, prompt, error: null } : item));
           if (index === 0 && image) setImageUrl(image);
         } catch (e) {
-          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "error", error: describeImageError(e, imageModel) } : item));
+          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "error", error: describeImageError(e, visualImageModel) } : item));
         }
       }
     } catch (e) {
@@ -1930,11 +1953,57 @@ ${rpSpeechRules}`;
                       <option value={5}>5-image lookbook</option>
                     </select>
                     <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>
-                      {selectedVisualRecipe.aspectRatio} framing · {selectedImageModel.name}
+                      {selectedVisualRecipe.aspectRatio} framing · {visualImageSource === "venice" ? selectedVisualImageModel.name : "Pollinations"}
                     </div>
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
+                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>IMAGE SOURCE</label>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setVisualImageSource("venice")}
+                        className="flex-1 text-xs py-2 rounded font-bold"
+                        style={{ backgroundColor: visualImageSource === "venice" ? "#167247" : t.bgMain, color: visualImageSource === "venice" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
+                      >
+                        Venice AI
+                      </button>
+                      <button
+                        onClick={() => setVisualImageSource("pollinations")}
+                        className="flex-1 text-xs py-2 rounded font-bold"
+                        style={{ backgroundColor: visualImageSource === "pollinations" ? "#8a6a18" : t.bgMain, color: visualImageSource === "pollinations" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
+                      >
+                        Pollinations
+                      </button>
+                    </div>
+                    <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>Set-level choice; every frame keeps the source it was made with.</div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>IMAGE GENERATOR</label>
+                    {visualImageSource === "venice" ? (
+                      <>
+                        <select
+                          value={visualImageModel}
+                          onChange={e => setVisualImageModel(e.target.value)}
+                          className="w-full rounded text-sm px-2 py-2"
+                          style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                        >
+                          {[...new Set(IMAGE_MODELS.map(m => m.group))].map(group => (
+                            <optgroup key={group} label={group}>
+                              {IMAGE_MODELS.filter(m => m.group === group).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                            </optgroup>
+                          ))}
+                        </select>
+                        <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{selectedVisualImageModel.note}</div>
+                      </>
+                    ) : (
+                      <div className="rounded px-2 py-2 text-[10px] leading-snug" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                        Pollinations derives each frame from its scene prompt. Switch to Venice AI to choose a specific image model.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-4">
                     <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>DIRECTOR'S BRIEF <span className="font-normal">(optional)</span></label>
                     <textarea
                       value={visualBrief}
@@ -2013,6 +2082,9 @@ ${rpSpeechRules}`;
                             {item.rerollCount > 0 && <span className="text-[9px] whitespace-nowrap" style={{ color: t.textSecondary }}>Take {item.rerollCount + 1}</span>}
                           </div>
                           <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{item.direction}</div>
+                          <div className="text-[9px] mt-1 uppercase tracking-wide" style={{ color: t.textSecondary }}>
+                            {item.source === "venice" ? `Venice · ${IMAGE_MODELS.find(model => model.id === item.model)?.name || item.model}` : "Pollinations"}
+                          </div>
                           {item.error && <div className="text-[10px] mt-2 leading-snug" style={{ color: "#ef4444" }}>{item.error}</div>}
                           <button
                             onClick={() => rerollVisualFrame(item.id)}

@@ -11,6 +11,7 @@
  *   - openai     (GPT-4o — direct from OpenAI)
  *   - gemini     (Google Gemini 3.x — fast + multimodal)
  *   - xai        (Grok 4.20, Grok 4.3+ — direct character and analysis voices)
+ *   - mistral    (Mistral Studio — direct text, reasoning, and vision-capable models)
  *
  * Venice integration notes:
  *   - Web search: enabled via venice_parameters.enable_web_search
@@ -73,16 +74,16 @@ export default {
             models: [
               "zai-org-glm-5-2", "olafangensan-glm-4.7-flash-heretic",
               "venice-uncensored-role-play", "venice-uncensored-1-2",
-              "qwen-3-7-plus", "qwen-3-6-plus", "grok-4-5", "grok-4-3",
+              "qwen-3-7-plus", "qwen-3-6-plus", "kimi-k2-6", "grok-4-5", "grok-4-3",
               "gemini-3-6-flash", "mistral-small-2603", "deepseek-v4-pro",
-              "openai-gpt-4o-2024-11-20", "aion-labs-aion-2-0", "qwen3-vl-235b-a22b",
+              "openai-gpt-4o-2024-11-20", "aion-labs-aion-3-0", "aion-labs-aion-3-0-mini", "qwen3-vl-235b-a22b",
             ],
           },
           {
             id: "anthropic",
             name: "Anthropic Claude",
             capabilities: ["text"],
-            models: ["claude-sonnet-5", "claude-opus-5", "claude-opus-4-8"],
+            models: ["claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101", "claude-haiku-4-5-20251001"],
           },
           {
             id: "perplexity",
@@ -91,10 +92,16 @@ export default {
             models: ["sonar", "sonar-pro", "sonar-reasoning-pro", "sonar-deep-research"],
           },
           {
+            id: "mistral",
+            name: "Mistral Studio",
+            capabilities: ["text", "reasoning", "vision"],
+            models: ["mistral-medium-2604", "mistral-small-2603", "mistral-large-2512"],
+          },
+          {
             id: "openrouter",
             name: "OpenRouter",
             capabilities: ["text"],
-            models: ["anthropic/claude-sonnet-5", "anthropic/claude-opus-4-8", "google/gemini-3.7-flash", "x-ai/grok-4.6", "x-ai/grok-4.3"],
+            models: ["anthropic/claude-sonnet-4.5", "anthropic/claude-opus-4.5", "google/gemini-3.1-pro-preview", "google/gemini-3.7-flash", "x-ai/grok-4.6", "x-ai/grok-4.3"],
           },
           {
             id: "openai",
@@ -106,7 +113,7 @@ export default {
             id: "gemini",
             name: "Google Gemini",
             capabilities: ["text"],
-            models: ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"],
+            models: ["gemini-3.1-pro-preview", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"],
           },
           {
             id: "xai",
@@ -119,7 +126,7 @@ export default {
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.2.0" }, 200, reqOrigin);
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.3.0" }, 200, reqOrigin);
     }
 
     // ─── Static assets ───
@@ -169,6 +176,8 @@ async function handleAIProxy(request, env, origin) {
         return await callGemini(env, systemPrompt, userPrompt, maxTokens, model, origin);
       case "xai":
         return await callXAI(env, systemPrompt, userPrompt, maxTokens, model, useSearch, origin);
+      case "mistral":
+        return await callMistral(env, systemPrompt, userPrompt, maxTokens, model, origin);
       default:
         return jsonResponse({ error: `Unknown provider: ${provider}` }, 400, origin);
     }
@@ -232,7 +241,7 @@ async function callAnthropic(env, systemPrompt, userPrompt, maxTokens, useSearch
   if (!apiKey) return jsonResponse({ error: "Anthropic API key not configured" }, 500, origin);
 
   const anthropicBody = {
-    model: model || "claude-sonnet-5",
+    model: model || "claude-sonnet-4-5-20250929",
     max_tokens: maxTokens,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
@@ -312,7 +321,7 @@ async function callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, o
   if (!apiKey) return jsonResponse({ error: "OpenRouter API key not configured" }, 500, origin);
 
   const orBody = {
-    model: model || "anthropic/claude-sonnet-5",
+    model: model || "anthropic/claude-sonnet-4.5",
     max_tokens: maxTokens,
     messages: [
       { role: "system", content: systemPrompt },
@@ -342,6 +351,53 @@ async function callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, o
 
   const text = data.choices?.[0]?.message?.content || "";
   return jsonResponse({ text, provider: "openrouter", model: orBody.model }, 200, origin);
+}
+
+
+// ─── Mistral Studio (direct chat, reasoning, and vision-capable text models) ───
+async function callMistral(env, systemPrompt, userPrompt, maxTokens, model, origin) {
+  const apiKey = env.MISTRAL_API_KEY;
+  if (!apiKey) return jsonResponse({ error: "Mistral API key not configured" }, 500, origin);
+
+  const selectedModel = model || "mistral-medium-2604";
+  const mistralBody = {
+    model: selectedModel,
+    max_tokens: maxTokens,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+  };
+
+  const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(mistralBody),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `Mistral returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
+  if (!res.ok) {
+    const errMsg = data?.message || data?.error?.message || data?.error || `Mistral error: ${res.status}`;
+    return jsonResponse({ error: errMsg }, res.status, origin);
+  }
+
+  const content = data.choices?.[0]?.message?.content;
+  const text = typeof content === "string"
+    ? content
+    : Array.isArray(content)
+      ? content.map(item => item?.text || item?.content || "").join("")
+      : "";
+  return jsonResponse({ text, provider: "mistral", model: selectedModel }, 200, origin);
 }
 
 
