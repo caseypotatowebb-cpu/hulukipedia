@@ -1,7 +1,7 @@
 # Hulukipedia — Team Handoff and Deployment Notes
 
 **Maintained by:** Team Tomorrow Labs  
-**Latest deployed source:** [`e4dfb1f`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/e4dfb1f) — August 13, 2026  
+**Latest deployed source:** [`4c24525`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/4c24525) — August 13, 2026  
 **Live application:** <https://hulukipedia.teamtomorrowlabs.workers.dev>
 
 ---
@@ -51,7 +51,7 @@ Each completed card now retains its exact identity anchor, model/source selectio
 
 The model dropdown remains a current upstream Venice catalog, but a listed model may not yet be enabled for the Team Tomorrow Venice credential. Qwen Image 3 is confirmed through the live 2K scene-set flow. Luma Uni-1 (aspect-ratio route) and Z-Image Turbo (pixel route) both passed through the Worker but received Venice HTTP 403 responses, demonstrating a provider entitlement limitation rather than a bad prompt or bad frontend route.
 
-The visual studio now translates this specific error into clear guidance and recommends confirmed choices: **Nano Banana Pro, Nano Banana 2, Qwen Image 3, and Qwen Image 3 Pro**. The detailed results are in `VISUAL_STUDIO_COMPATIBILITY_AUDIT.md`.
+The visual studio and the standard one-image Portrait path now translate this specific error into clear guidance and recommend confirmed choices: **Nano Banana Pro, Nano Banana 2, Qwen Image 3, and Qwen Image 3 Pro**. The detailed results are in `VISUAL_STUDIO_COMPATIBILITY_AUDIT.md`.
 
 ## New: Raven Fictional Operation Controls
 
@@ -163,7 +163,7 @@ Before handing Hulukipedia to another teammate, confirm all of the following.
 | Check | Expected state |
 |---|---|
 | `git status` | Clean working tree after push. |
-| `git log -1` | `e4dfb1f` or a later documented commit. |
+| `git log -1` | `4c24525` or a later documented commit. |
 | Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200. |
 | Live frontend asset | Contains **Visual Scene Studio**, `unmistakably seated`, and **Re-roll Frame** after this feature release. |
 | Raven UI | Shows **Fictional Operation Parameters** in Addendums only, plus the Visual Scene Studio gallery. |
