@@ -8,9 +8,9 @@
  *   - anthropic  (Claude — reliable structured output)
  *   - perplexity (Deep search / RAG with citations)
  *   - openrouter (Model routing — access to 200+ models)
- *   - openai     (GPT-4o, GPT-5, o1 — direct from OpenAI)
- *   - gemini     (Google Gemini 2.5 Flash/Pro — fast + multimodal)
- *   - xai        (Grok 4.3, Grok 4.20 — uncensored + X search)
+ *   - openai     (GPT-4o — direct from OpenAI)
+ *   - gemini     (Google Gemini 3.x — fast + multimodal)
+ *   - xai        (Grok 4.20, Grok 4.3+ — direct character and analysis voices)
  *
  * Venice integration notes:
  *   - Web search: enabled via venice_parameters.enable_web_search
@@ -75,27 +75,26 @@ export default {
               "venice-uncensored-role-play", "venice-uncensored-1-2",
               "qwen-3-7-plus", "qwen-3-6-plus", "grok-4-5", "grok-4-3",
               "gemini-3-6-flash", "mistral-small-2603", "deepseek-v4-pro",
-              "openai-gpt-4o-2024-11-20", "claude-sonnet-4-5",
-              "aion-labs-aion-2-0", "qwen3-vl-235b-a22b",
+              "openai-gpt-4o-2024-11-20", "aion-labs-aion-2-0", "qwen3-vl-235b-a22b",
             ],
           },
           {
             id: "anthropic",
             name: "Anthropic Claude",
             capabilities: ["text"],
-            models: ["claude-sonnet-5", "claude-opus-5", "claude-sonnet-4-6", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001"],
+            models: ["claude-sonnet-5", "claude-opus-5", "claude-opus-4-8"],
           },
           {
             id: "perplexity",
             name: "Perplexity Sonar",
             capabilities: ["text", "search"],
-            models: ["sonar-pro", "sonar", "sonar-reasoning-pro", "sonar-reasoning"],
+            models: ["sonar", "sonar-pro", "sonar-reasoning-pro", "sonar-deep-research"],
           },
           {
             id: "openrouter",
             name: "OpenRouter",
             capabilities: ["text"],
-            models: ["anthropic/claude-sonnet-5", "google/gemini-3.7-flash", "openai/gpt-5.6-terra", "x-ai/grok-4.6", "x-ai/grok-4.3"],
+            models: ["anthropic/claude-sonnet-5", "anthropic/claude-opus-4-8", "google/gemini-3.7-flash", "x-ai/grok-4.6", "x-ai/grok-4.3"],
           },
           {
             id: "openai",
@@ -107,20 +106,20 @@ export default {
             id: "gemini",
             name: "Google Gemini",
             capabilities: ["text"],
-            models: ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-pro", "gemini-2.5-flash"],
+            models: ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"],
           },
           {
             id: "xai",
             name: "Grok (xAI)",
             capabilities: ["text", "search"],
-            models: ["grok-4.6", "grok-4.5", "grok-4.3"],
+            models: ["grok-4.20-0309-non-reasoning", "grok-4.20-0309-reasoning", "grok-4.20-multi-agent-0309", "grok-4.6", "grok-4.5", "grok-4.3"],
           },
         ],
       }, 200, reqOrigin);
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.1.0" }, 200, reqOrigin);
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.2.0" }, 200, reqOrigin);
     }
 
     // ─── Static assets ───
@@ -273,7 +272,7 @@ async function callPerplexity(env, systemPrompt, userPrompt, maxTokens, model, o
   if (!apiKey) return jsonResponse({ error: "Perplexity API key not configured" }, 500, origin);
 
   const pplxBody = {
-    model: model || "sonar-pro",
+    model: model || "sonar",
     max_tokens: maxTokens,
     messages: [
       { role: "system", content: systemPrompt },
@@ -346,7 +345,7 @@ async function callOpenRouter(env, systemPrompt, userPrompt, maxTokens, model, o
 }
 
 
-// ─── OpenAI (GPT-4o, GPT-5, o1) ───
+// ─── OpenAI (account-available GPT-4o) ───
 async function callOpenAI(env, systemPrompt, userPrompt, maxTokens, model, origin) {
   const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) return jsonResponse({ error: "OpenAI API key not configured" }, 500, origin);
@@ -447,7 +446,7 @@ async function callXAI(env, systemPrompt, userPrompt, maxTokens, model, useSearc
   const apiKey = env.XAI_API_KEY;
   if (!apiKey) return jsonResponse({ error: "xAI API key not configured" }, 500, origin);
 
-  const selectedModel = model || "grok-4.3";
+  const selectedModel = model || "grok-4.20-0309-non-reasoning";
 
   // xAI's built-in web/X search lives on the agentic /v1/responses endpoint,
   // not chat completions. Without search we keep the standard chat call.

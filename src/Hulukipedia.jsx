@@ -5,23 +5,24 @@ import remarkGfm from "remark-gfm";
 
 // ─── THEME DEFINITIONS ───
 const themes = {
+  // One shared visual family: obsidian dossier paper, antique gold hierarchy, emerald intelligence.
   hulu: {
-    bgMain: "#f0fdf4", bgContainer: "#ffffff", bgSection: "rgba(240,253,244,0.8)",
-    textPrimary: "#14532d", textSecondary: "#064e3b", accentGold: "#ca8a04",
-    accentHover: "#a16207", border: "#d1d5db", editHover: "rgba(0,0,0,0.03)",
-    highlight: "rgba(202,138,4,0.1)", sectionTitle: "#ca8a04",
+    bgMain: "#070907", bgContainer: "#0d120e", bgSection: "rgba(14,34,24,0.84)",
+    textPrimary: "#f5eed5", textSecondary: "#b9c8a8", accentGold: "#d4af37",
+    accentHover: "#f1d273", border: "#28563e", editHover: "rgba(212,175,55,0.08)",
+    highlight: "rgba(22,114,71,0.20)", sectionTitle: "#d4af37",
   },
   raven: {
-    bgMain: "#0a0a0a", bgContainer: "#111827", bgSection: "rgba(31,41,55,0.5)",
-    textPrimary: "#d8b4fe", textSecondary: "#a78bfa", accentGold: "#f59e0b",
-    accentHover: "#d97706", border: "#4b5563", editHover: "rgba(255,255,255,0.05)",
-    highlight: "rgba(245,158,11,0.1)", sectionTitle: "#f59e0b",
+    bgMain: "#050705", bgContainer: "#0b130e", bgSection: "rgba(11,38,25,0.82)",
+    textPrimary: "#f5eed5", textSecondary: "#a9c8ae", accentGold: "#d4af37",
+    accentHover: "#f1d273", border: "#1f6742", editHover: "rgba(22,114,71,0.16)",
+    highlight: "rgba(22,114,71,0.24)", sectionTitle: "#e4c35c",
   },
   starling: {
-    bgMain: "#f1f5f9", bgContainer: "#ffffff", bgSection: "rgba(248,250,252,0.8)",
-    textPrimary: "#1e293b", textSecondary: "#475569", accentGold: "#f59e0b",
-    accentHover: "#d97706", border: "#cbd5e1", editHover: "rgba(0,0,0,0.03)",
-    highlight: "rgba(220,38,38,0.05)", sectionTitle: "#dc2626",
+    bgMain: "#0d0e09", bgContainer: "#14140d", bgSection: "rgba(32,38,22,0.78)",
+    textPrimary: "#f7efd5", textSecondary: "#c3c99e", accentGold: "#e0bd4d",
+    accentHover: "#f7da78", border: "#566637", editHover: "rgba(224,189,77,0.10)",
+    highlight: "rgba(224,189,77,0.13)", sectionTitle: "#e9c85e",
   },
 };
 
@@ -35,9 +36,7 @@ const PROVIDERS = {
     models: [
       { id: "claude-sonnet-5", name: "Claude Sonnet 5 ✦" },
       { id: "claude-opus-5", name: "Claude Opus 5" },
-      { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
-      { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5" },
-      { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5 ⚡" },
+      { id: "claude-opus-4-8", name: "Claude Opus 4.8" },
     ],
   },
   venice: {
@@ -57,7 +56,6 @@ const PROVIDERS = {
       { id: "mistral-small-2603", name: "Mistral Small 4" },
       { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro 🧠" },
       { id: "openai-gpt-4o-2024-11-20", name: "GPT-4o (Compatibility)" },
-      { id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" },
       { id: "aion-labs-aion-2-0", name: "Aion 2.0" },
       { id: "qwen3-vl-235b-a22b", name: "Qwen3 VL 235B 👁" },
     ],
@@ -68,9 +66,9 @@ const PROVIDERS = {
     color: "#0ea5e9",
     models: [
       { id: "sonar", name: "Sonar — factual default" },
-      { id: "sonar-pro", name: "Sonar Pro" },
-      { id: "sonar-reasoning", name: "Sonar Reasoning" },
+      { id: "sonar-pro", name: "Sonar Pro — richer sourcing" },
       { id: "sonar-reasoning-pro", name: "Sonar Reasoning Pro" },
+      { id: "sonar-deep-research", name: "Sonar Deep Research" },
     ],
   },
   openrouter: {
@@ -79,8 +77,8 @@ const PROVIDERS = {
     color: "#f43f5e",
     models: [
       { id: "anthropic/claude-sonnet-5", name: "Claude Sonnet 5 (OR)" },
+      { id: "anthropic/claude-opus-4-8", name: "Claude Opus 4.8 (OR)" },
       { id: "google/gemini-3.7-flash", name: "Gemini 3.7 Flash (OR)" },
-      { id: "openai/gpt-5.6-terra", name: "GPT-5.6 Terra (OR)" },
       { id: "x-ai/grok-4.6", name: "Grok 4.6 (OR)" },
       { id: "x-ai/grok-4.3", name: "Grok 4.3 (OR)" },
     ],
@@ -103,8 +101,6 @@ const PROVIDERS = {
       { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash" },
       { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash" },
       { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite ⚡" },
-      { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (Legacy stable)" },
-      { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Legacy stable)" },
     ],
   },
   xai: {
@@ -112,7 +108,10 @@ const PROVIDERS = {
     icon: "🚀",
     color: "#1d9bf0",
     models: [
-      { id: "grok-4.6", name: "Grok 4.6 ✦" },
+      { id: "grok-4.20-0309-non-reasoning", name: "Grok 4.20 — direct default ✦" },
+      { id: "grok-4.20-0309-reasoning", name: "Grok 4.20 — reasoning" },
+      { id: "grok-4.20-multi-agent-0309", name: "Grok 4.20 — multi-agent" },
+      { id: "grok-4.6", name: "Grok 4.6" },
       { id: "grok-4.5", name: "Grok 4.5" },
       { id: "grok-4.3", name: "Grok 4.3 — accuracy + voice" },
     ],
@@ -123,23 +122,24 @@ const DEFAULT_PROVIDER = "perplexity";
 const DEFAULT_MODEL = "sonar";
 
 // ─── SMART SECTION DEFAULTS ───
-// Perplexity establishes facts; Grok 4.3 writes the physically specific and character-rich layers.
+// Perplexity establishes facts; Grok 4.20 writes the physically specific and character-rich layers.
 const SECTION_DEFAULTS = {
   intel:     { provider: "perplexity", model: "sonar" },
-  physical:  { provider: "xai",        model: "grok-4.3" },
+  physical:  { provider: "xai",        model: "grok-4.20-0309-non-reasoning" },
   comm:      { provider: "venice",     model: "openai-gpt-4o-2024-11-20" },
   convo:     { provider: "venice",     model: "venice-uncensored-role-play" },
   psych:     { provider: "venice",     model: "deepseek-v4-pro" },
-  strategic: { provider: "xai",        model: "grok-4.3" },
+  strategic: { provider: "xai",        model: "grok-4.20-0309-non-reasoning" },
   add1:      { provider: "gemini",     model: "gemini-3.6-flash" },
   add2:      { provider: "venice",     model: "grok-4-5" },
 };
 
 // ─── ROLE-PLAY MODEL DEFAULTS ───
-// Direct Grok 4.3 is intentionally the first voice: grounded detail, flexible acting, and creative range.
+// Direct Grok 4.20 (non-reasoning) is intentionally the first voice: blunt, vivid, and immediate.
 const ROLEPLAY_DEFAULT_PROVIDER = "xai";
-const ROLEPLAY_DEFAULT_MODEL = "grok-4.3";
+const ROLEPLAY_DEFAULT_MODEL = "grok-4.20-0309-non-reasoning";
 const ROLEPLAY_ALTERNATES = [
+  { provider: "xai", model: "grok-4.3", label: "Grok 4.3 — accuracy + voice" },
   { provider: "xai", model: "grok-4.5", label: "Grok 4.5 — expansive scenes" },
   { provider: "anthropic", model: "claude-sonnet-5", label: "Claude Sonnet 5 — intimate nuance" },
   { provider: "venice", model: "venice-uncensored-role-play", label: "Venice RP — open-ended character play" },
@@ -1513,17 +1513,21 @@ ${rpSpeechRules}`;
   // ─── RENDER ───
   const containerStyle = {
     backgroundColor: t.bgMain,
+    backgroundImage: "radial-gradient(circle at 50% -18%, rgba(22,114,71,0.24), transparent 42%), radial-gradient(circle at 0% 48%, rgba(212,175,55,0.06), transparent 35%)",
     color: t.textPrimary,
     minHeight: "100vh",
     fontFamily: "'Cinzel', 'Georgia', serif",
-    transition: "background-color 0.4s",
+    transition: "background-color 0.4s, background-image 0.4s",
   };
 
   const cardStyle = {
     backgroundColor: t.bgContainer,
+    backgroundImage: "linear-gradient(145deg, rgba(255,255,255,0.025), transparent 38%)",
     border: `1px solid ${t.border}`,
+    borderTop: `1px solid ${t.accentGold}80`,
     borderRadius: "0.5rem",
     backdropFilter: "blur(8px)",
+    boxShadow: "0 20px 55px rgba(0,0,0,0.34), inset 0 1px 0 rgba(245,238,213,0.035)",
   };
 
   const sectionStyle = {
@@ -1531,6 +1535,7 @@ ${rpSpeechRules}`;
     border: `1px solid ${t.border}`,
     borderRadius: "0.375rem",
     padding: "1rem",
+    boxShadow: "inset 0 1px 0 rgba(245,238,213,0.025)",
   };
 
   const sectionTitleStyle = {
@@ -1557,6 +1562,8 @@ ${rpSpeechRules}`;
         .animate-spin { animation: spin 1s linear infinite; }
         .md-content p { margin: 0.4em 0; }
         .md-content li { margin: 0.2em 0; }
+        ::selection { background: rgba(212,175,55,0.34); color: #fff8df; }
+        select option { background: #0d120e; color: #f5eed5; }
       `}</style>
 
       <div className="max-w-5xl mx-auto p-4" style={{ position: "relative", zIndex: 10 }}>
@@ -1567,6 +1574,7 @@ ${rpSpeechRules}`;
               fontFamily: "'Satisfy', cursive",
               fontSize: "3.5rem",
               color: t.accentGold,
+              textShadow: "0 0 30px rgba(212,175,55,0.18)",
               position: "relative",
               display: "inline-block",
             }}
@@ -1646,7 +1654,7 @@ ${rpSpeechRules}`;
                 onClick={() => handleSearch("raven")}
                 disabled={!!searchLoading}
                 className="flex items-center justify-center font-bold py-3 px-6 rounded-md transition-all shadow-lg"
-                style={{ backgroundColor: "#581c87", color: "#fbbf24" }}
+                style={{ backgroundColor: "#0f5132", color: "#f5d56b", border: "1px solid #2b7a4b" }}
               >
                 {searchLoading === "raven" ? <Spinner size={20} /> : <><Feather size={18} className="mr-2" /> Raven Search (Fictional)</>}
               </button>
@@ -1654,7 +1662,7 @@ ${rpSpeechRules}`;
                 onClick={() => handleSearch("starling")}
                 disabled={!!searchLoading}
                 className="flex items-center justify-center font-bold py-3 px-6 rounded-md transition-all shadow-lg"
-                style={{ backgroundColor: "#dc2626", color: "#fde047" }}
+                style={{ backgroundColor: "#7b5d13", color: "#fff2bd", border: "1px solid #c79a28" }}
               >
                 {searchLoading === "starling" ? <Spinner size={20} /> : <><Star size={18} className="mr-2" /> Starling Search (Real)</>}
               </button>
@@ -1776,14 +1784,14 @@ ${rpSpeechRules}`;
                       <button
                         onClick={() => setImageSource("venice")}
                         className="flex-1 text-xs py-1 rounded font-bold"
-                        style={{ backgroundColor: imageSource === "venice" ? "#8b5cf6" : t.bgMain, color: imageSource === "venice" ? "white" : t.textSecondary, border: `1px solid ${t.border}` }}
+                        style={{ backgroundColor: imageSource === "venice" ? "#167247" : t.bgMain, color: imageSource === "venice" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
                       >
                         Venice AI
                       </button>
                       <button
                         onClick={() => setImageSource("pollinations")}
                         className="flex-1 text-xs py-1 rounded font-bold"
-                        style={{ backgroundColor: imageSource === "pollinations" ? "#0ea5e9" : t.bgMain, color: imageSource === "pollinations" ? "white" : t.textSecondary, border: `1px solid ${t.border}` }}
+                        style={{ backgroundColor: imageSource === "pollinations" ? "#8a6a18" : t.bgMain, color: imageSource === "pollinations" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
                       >
                         Pollinations
                       </button>
@@ -1791,7 +1799,7 @@ ${rpSpeechRules}`;
                     <button
                       onClick={() => setImageSearchEnabled(!imageSearchEnabled)}
                       className="w-full text-xs py-1 rounded font-bold flex items-center justify-center gap-1"
-                      style={{ backgroundColor: imageSearchEnabled ? "#0ea5e9" : t.bgMain, color: imageSearchEnabled ? "white" : t.textSecondary, border: `1px solid ${t.border}` }}
+                      style={{ backgroundColor: imageSearchEnabled ? "#167247" : t.bgMain, color: imageSearchEnabled ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
                       title="When enabled, the AI will search the web for what this person/character looks like before generating the image prompt"
                     >
                       <Globe size={12} /> Web Search {imageSearchEnabled ? "ON" : "OFF"}
@@ -1852,17 +1860,17 @@ ${rpSpeechRules}`;
                     <GenBtn onClick={() => generateIntel()} loading={loading.intel} style={{ backgroundColor: t.accentGold, color: "#111", flex: 1 }}>
                       <Sparkles size={14} className="mr-1" /> Re-Generate
                     </GenBtn>
-                    <GenBtn onClick={enhanceIntel} loading={loading.enhance} style={{ backgroundColor: "#0284c7", color: "white", flex: 1 }}>
+                    <GenBtn onClick={enhanceIntel} loading={loading.enhance} style={{ backgroundColor: "#167247", color: "#fff8df", flex: 1 }}>
                       <SearchCode size={14} className="mr-1" /> Enhance (Web)
                     </GenBtn>
-                    <GenBtn onClick={deepSearchIntel} loading={loading.deepSearch} style={{ backgroundColor: "#0ea5e9", color: "white", flex: 1 }}>
+                    <GenBtn onClick={deepSearchIntel} loading={loading.deepSearch} style={{ backgroundColor: "#8a6a18", color: "#fff8df", flex: 1 }}>
                       <Globe size={14} className="mr-1" /> Deep Search (Perplexity)
                     </GenBtn>
                   </div>
                   {/* Deep Search Results */}
                   {deepSearchResult && (
-                    <div className="mt-3 p-3 rounded-md" style={{ backgroundColor: t.bgMain, border: `1px solid #0ea5e9` }}>
-                      <div className="text-xs font-bold uppercase mb-1" style={{ color: "#0ea5e9" }}>
+                    <div className="mt-3 p-3 rounded-md" style={{ backgroundColor: t.bgMain, border: "1px solid #167247" }}>
+                      <div className="text-xs font-bold uppercase mb-1" style={{ color: "#8fbd74" }}>
                         Perplexity Deep Search Results
                       </div>
                       <div className="text-sm" style={{ color: t.textPrimary }}>
@@ -1873,7 +1881,7 @@ ${rpSpeechRules}`;
                           <div className="text-xs font-bold mb-1" style={{ color: t.textSecondary }}>Sources:</div>
                           {deepSearchResult.citations.map((c, i) => (
                             <a key={i} href={c} target="_blank" rel="noopener noreferrer"
-                              className="block text-xs truncate hover:underline" style={{ color: "#0ea5e9" }}>
+                              className="block text-xs truncate hover:underline" style={{ color: "#8fbd74" }}>
                               [{i + 1}] {c}
                             </a>
                           ))}
@@ -2206,7 +2214,7 @@ ${rpSpeechRules}`;
                     <span style={{ color: t.textSecondary }}>Not yet generated.</span>
                   )}
                 </div>
-                <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: "#0d9488", color: "white" }}>
+                <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: "#167247", color: "#fff8df" }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Report" : "Generate Timeline"}
                 </GenBtn>
               </div>
@@ -2227,7 +2235,7 @@ ${rpSpeechRules}`;
                     <span style={{ color: t.textSecondary }}>Not yet generated.</span>
                   )}
                 </div>
-                <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: "#4f46e5", color: "white" }}>
+                <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: "#8a6a18", color: "#fff8df" }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Simulation" : "Generate Analysis"}
                 </GenBtn>
               </div>
@@ -2377,7 +2385,7 @@ ${rpSpeechRules}`;
                   <GenBtn onClick={sendRolePlayMessage} loading={rpLoading} style={{ backgroundColor: t.accentGold, color: "#111" }}>
                     <MessageCircle size={14} className="mr-1" /> Send
                   </GenBtn>
-                  <GenBtn onClick={generateRolePlayImage} loading={rpImgLoading} style={{ backgroundColor: "#8b5cf6", color: "white" }}>
+                  <GenBtn onClick={generateRolePlayImage} loading={rpImgLoading} style={{ backgroundColor: "#167247", color: "#fff8df" }}>
                     <Image size={14} className="mr-1" /> Image
                   </GenBtn>
                 </div>
