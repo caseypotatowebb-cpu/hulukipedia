@@ -2267,7 +2267,7 @@ ${rpSpeechRules}`;
                       menuDirection="up"
                     />
                     <span className="text-xs" style={{ color: t.textSecondary }}>
-                      Recommended: {ROLEPLAY_ALTERNATES.map(a => a.label.split(" — ")[0]).join(" · ")}
+                      Default: Grok 4.20 · Alternates: {ROLEPLAY_ALTERNATES.map(a => a.label.split(" — ")[0]).join(" · ")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

@@ -55,3 +55,11 @@ Mistral remains the clearest missing direct model family for Hulukipedia. It wou
 An authenticated xAI `GET https://api.x.ai/v1/models` call on August 13, 2026 returned `grok-4.20-0309-non-reasoning`, `grok-4.20-0309-reasoning`, and `grok-4.20-multi-agent-0309`, along with Grok 4.3, 4.5, and 4.6. It did **not** return a `grok-4.2` identifier. A direct chat-completions smoke test of `grok-4.20-0309-non-reasoning` returned the requested test text successfully. The release therefore treats the user’s “4.2” direction as the current 4.20 family while preserving the exact provider identifier in code and documentation.
 
 The xAI official model documentation was checked at https://docs.x.ai/developers/models and https://docs.x.ai/developers/models/grok-4-20 (both last updated August 12, 2026). It confirms the Grok 4.20 family is in the current model generation, though its short catalog page emphasizes Grok 4.6 as the broad official flagship.
+
+
+## Live 3.2.0 browser verification
+
+The deployed home screen and canonical Lara Croft Raven dossier were inspected in the browser after the 3.2.0 deployment. The black/obsidian canvas, emerald dossier surfaces, gold hierarchy, and mode buttons render correctly without a layout regression. The live dossier exposes the current Sonar family, 2026 Venice image catalog, current Visual Scene Studio recipe deck, Presence physical-description voice, and Scenario Deck. The lower Role-Play panel reflects the new theme and retains its upward-opening model-selector behavior from 3.1.0. A final browser generation check of the physical-description default remains part of release verification.
+
+
+The live 3.2.0 Lara Croft dossier loaded and displayed the refreshed app surface correctly. Browser-visible catalog checks confirmed legacy Gemini 2.5 and retired `sonar-reasoning` are absent, while the current Sonar Research options, all current Venice image selections, updated visual recipes, and Scenario Deck are present. The new palette is legible in both the initial page and Raven dossier: emerald identifies Raven/research controls and aged gold identifies primary actions/Starling state.
