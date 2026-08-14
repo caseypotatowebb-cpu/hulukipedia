@@ -613,6 +613,7 @@ function ProviderSelector({ provider, model, onProviderChange, onModelChange, th
                 onClick={() => {
                   onProviderChange(pid);
                   onModelChange(pdef.models[0].id);
+                  setOpen(false);
                 }}
               >
                 <span>{pdef.icon}</span> {pdef.name}
