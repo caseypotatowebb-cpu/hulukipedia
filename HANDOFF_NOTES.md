@@ -1,9 +1,9 @@
 # Hulukipedia — Team Handoff and Deployment Notes
 
 **Maintained by:** Team Tomorrow Labs  
-**Latest deployed source:** [`815d168`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/815d168) — August 13, 2026
+**Latest deployed source:** [`b940de6`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/b940de6) — August 14, 2026
 
-**Release:** `3.3.0` (the live `/api/health` response reports this version)
+**Release:** `3.4.0` (the live `/api/health` response reports this version)
 **Live application:** <https://hulukipedia.teamtomorrowlabs.workers.dev>
 
 ---
@@ -12,7 +12,7 @@
 
 Hulukipedia is a React/Vite dossier generator served through a Cloudflare Worker. The frontend is a static asset bundle and the Worker is the secure proxy for text generation, research, web search, and image generation. Provider credentials are stored as Cloudflare Worker secrets rather than in the browser bundle.
 
-The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, a current Venice image-model catalog, the image-prompt web-search toggle, and the Visual Scene Studio. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes. Release 3.3.0 retains the black-gold-emerald visual system and Grok 4.20-led Physical Description / Role-Play path while adding direct Mistral Studio routing, current Venice Aion 3 choices, capability badges, the corrected Claude 4.5-and-earlier policy, Gemini 3.1 Pro, and an image-generator choice specific to the Visual Scene Studio.
+The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, a current Venice image-model catalog, the image-prompt web-search toggle, the Visual Scene Studio, and the dedicated Investigative Console. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes. Release 3.4.0 retains the black-gold-emerald visual system and Grok 4.20-led Physical Description / Role-Play path while adding direct Mistral Studio routing, current Venice Aion 3 choices, capability badges, a corrected Claude policy that includes verified Opus 4.6 while excluding 4.8-and-later, Gemini 3.1 Pro, and image-generator choice specific to the Visual Scene Studio.
 
 | Area | Current behavior |
 |---|---|
@@ -22,9 +22,18 @@ The current production state includes Perplexity Sonar as the initial research d
 | Image grounding | Portrait-panel **Web Search ON/OFF** toggle; defaults to OFF. |
 | Image sources | Venice AI primary; Pollinations fallback. |
 | External image links | Raven exposes Rule34; Starling exposes CelebJihad; both are visually labeled NSFW. |
-| Role-play | Session-only character conversation with a dedicated provider/model picker, an active Scenario Deck, and a freeform Director Note. |
-| Visual Scene Studio | Generates three or five standalone scene images with shared identity grounding, varied poses, and a director's brief. |
+| Role-play | Session-only character conversation with a dedicated provider/model picker, an active Scenario Deck—including shared **After Hours**—and a freeform Director Note. |
+| Visual Scene Studio | Generates three or five standalone scene images with shared identity grounding, varied poses, a director's brief, and shared **After Dark Editorial**. |
+| Investigative Console | Home-page direct-question lane with an independent provider/model picker, web-grounding toggle, provenance label, Markdown results, returned source links, copy, and clear controls. |
 | Physical Description | Defaulted to direct xAI Grok 4.20 (the current live family corresponding to the requested “4.2”), with research-first grounding and Clinical, Magazine, Bar Talk, Presence, and Locker Room presentation voices. |
+
+## New: Investigative Console and Virtual Try-On Assessment
+
+**Ask the Archive** sits below the normal dossier intake. It gives Hulukipedia a direct investigative use case without forcing the user to frame every thought as a target entity. The provider/model selector is independent from dossier defaults; a Perplexity question with Web-grounded enabled uses the dedicated research endpoint, while supported providers can use their own direct or web-enabled route. Each result shows actual model provenance, is rendered as Markdown, and preserves source links when returned.
+
+**Live verification:** Perplexity Sonar returned a sourced answer on Lara Croft's archaeological credentials; Claude Opus 4.6 appeared in the selector and returned a direct creative-analysis response through the production Worker. See `INVESTIGATIVE_CONSOLE_TEST_NOTES.md`.
+
+Google `virtual-try-on-001` is a credible future **Wardrobe / Try-On** extension for Visual Scene Studio, accepting a person image and product/garment image and returning one to four transformed candidates. It is not covered by the ordinary Gemini API key: implementation needs a billing-enabled Google Cloud project, Agent Platform API, service-account/OAuth authentication, supported region, and Cloud Storage output path. Do not expose it in the UI until those inputs exist. See `INVESTIGATIVE_CONSOLE_PROVIDER_AUDIT.md`.
 
 ## New: Visual Scene Studio & Current Venice Catalog
 
@@ -34,7 +43,7 @@ The Portrait panel now contains an audited, grouped catalog of Venice image mode
 
 | Control | Behavior |
 |---|---|
-| **Scene Recipe** | Editorial Lookbook, Character Turnaround, Motion & Presence, Candid Day Out, Cinematic Evening, Signature World, Activity Continuity, Campaign / Product Story, Duo Chemistry, and Raven-only After Dark Editorial. |
+| **Scene Recipe** | Editorial Lookbook, Character Turnaround, Motion & Presence, Candid Day Out, Cinematic Evening, Signature World, Activity Continuity, Campaign / Product Story, Duo Chemistry, and shared After Dark Editorial. |
 | **Set Size** | Three standalone images or a five-image lookbook. |
 | **Director's Brief** | Optional creative direction for setting, wardrobe, mood, visual-marketing intent, or narrative context. |
 | **Image Source** | Independent Venice AI / Pollinations selection. This does not change the Portrait panel's source. |
@@ -142,17 +151,17 @@ It also exposes the Worker module-upload endpoint, so it is now a capable fallba
 | Mistral Studio | `MISTRAL_API_KEY` | Direct Mistral Medium 3.5, Mistral Small 4, and Mistral Large 3. |
 | OpenRouter | `OPENROUTER_API_KEY` | Additional multi-model routing. |
 
-The Worker health response reports `version: "3.3.0"`. Use GitHub commit IDs and the static asset name on the deployed page as the exact release tracker.
+The Worker health response reports `version: "3.4.0"`. Use GitHub commit IDs and the static asset name on the deployed page as the exact release tracker.
 
-## Model and Provider Status — 3.3.0
+## Model and Provider Status — 3.4.0
 
 The selector is curated against actual provider/account tests rather than treated as a marketing-name dump. The production validation record is in `PROVIDER_CAPABILITY_AND_VISUAL_SOURCE_DESIGN.md` and `PROVIDER_CAPABILITY_VISUAL_SOURCE_TEST_NOTES.md`.
 
 | Provider | Current practical state | Team policy |
 |---|---|---|
 | xAI | Grok 4.20 non-reasoning, reasoning, and multi-agent routes are live; direct reasoning and non-reasoning tests passed. | **Grok 4.20** is the preferred default for Physical Description, Strategic Analysis, and Role-Play. `🧠` identifies reasoning variants. |
-| Anthropic | Direct **Claude Sonnet 4.5**, Opus 4.5, and Haiku 4.5 were restored; Sonnet 4.5 passed the live Worker smoke test. | Expose **Claude 4.5 and earlier only**. Do not add Claude 4.8 or any later Claude release. |
-| Gemini | Gemini **3.1 Pro** was restored and passed a production route test at a realistic output budget; 3.5–3.7 Flash options remain available. | Gemini 2.x remains absent. Keep 3.1 Pro available for Monday-style work. |
+| Anthropic | Direct **Claude Opus 4.6**, Sonnet 4.5, Opus 4.5, and Haiku 4.5 are live; Opus 4.6 passed direct and production-console tests. | Expose only the user-approved pre-4.8 Claude family. Do not add Claude 4.8 or any later Claude release. |
+| Gemini | Gemini **3.1 Pro** was restored and passed a production route test at a realistic output budget; 3.5–3.7 Flash options remain available. | The account still lists Gemini 2.5 Pro, but direct invocation returns Google HTTP 404 stating it is unavailable to new users. Do not add it as a dead production selector item without a working account route. |
 | Perplexity | The current Sonar set is `sonar`, `sonar-pro`, `sonar-reasoning-pro`, and `sonar-deep-research`. | Keep Sonar as initial research default. Do not adopt Agent presets that force disallowed GPT 5.4–5.6 routes. |
 | Mistral Studio | Mistral Medium 3.5, Mistral Small 4, and Mistral Large 3 were read from the authenticated account; Medium 3.5 passed direct and production Worker tests. | Mistral is now a first-class direct provider, not a future recommendation. |
 | Venice | The text list includes the current Aion 3.0 and Aion 3.0 Mini choices, Kimi K2.6, GLM 5.2, and curated uncensored/vision/reasoning-capable routes based on live catalog metadata. | Badges are explanatory: `🔥` uncensored/open creative, `👁` vision, `🧠` reasoning, `⚡` speed. Keep catalog presence separate from account entitlement. |
@@ -188,12 +197,12 @@ Before handing Hulukipedia to another teammate, confirm all of the following.
 | Check | Expected state |
 |---|---|
 | `git status` | Clean working tree after push. |
-| `git log -1` | `815d168` or a later documented commit. |
-| Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200 with `version: "3.3.0"`. |
-| Live frontend asset | Contains **Visual Scene Studio**, `unmistakably seated`, **Re-roll Frame**, **Duo Chemistry**, **After Dark Editorial**, `Mistral Studio`, and `Default: Grok 4.20`. |
+| `git log -1` | `b940de6` or a later documented commit. |
+| Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200 with `version: "3.4.0"`. |
+| Live frontend asset | Contains **Ask the Archive**, `claude-opus-4-6`, **Visual Scene Studio**, `unmistakably seated`, **Re-roll Frame**, **Duo Chemistry**, **After Dark Editorial**, `Mistral Studio`, and `Default: Grok 4.20`. |
 | Raven UI | Shows **Fictional Operation Parameters** in Addendums, expanded Visual Scene Studio categories, the full Raven Scenario Deck, black-gold-emerald styling, and independent Studio **Image Source** / **Image Generator** controls. |
 | Role-Play selector | Opens upward near the bottom of the page, remains scrollable, and identifies Grok 4.20 as the default without clipping. |
 | Starling UI | Keeps its existing Historical Timeline and Public Persona Analysis behavior. |
 | Deployment strategy | `deploy.py`, not Wrangler OAuth, unless the team deliberately changes the authentication setup. |
 
-Hulukipedia is now in a stable, documented state with configurable fictional operations, a current and entitlement-aware Venice catalog, direct Mistral Studio support, restored Claude 4.5 and Gemini 3.1 Pro paths, capability-marked model menus, a production-tested Visual Scene Studio with independent image-source/model control and per-frame re-rolls, a Grok 4.20 default, and a black-gold-emerald visual identity. Source is pushed to `main`.
+Hulukipedia is now in a stable, documented state with configurable fictional operations, a direct model-selectable Investigative Console, a current and entitlement-aware Venice catalog, direct Mistral Studio support, verified Claude Opus 4.6 / Claude 4.5 and Gemini 3.1 Pro paths, capability-marked model menus, shared mature creative scenarios across both modes, a production-tested Visual Scene Studio with independent image-source/model control and per-frame re-rolls, a Grok 4.20 default, and a black-gold-emerald visual identity. Source is pushed to `main`.
