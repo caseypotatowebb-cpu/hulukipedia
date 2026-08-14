@@ -154,8 +154,9 @@ const SECTION_DEFAULTS = {
   convo:     { provider: "venice",     model: "venice-uncensored-role-play" },
   psych:     { provider: "venice",     model: "deepseek-v4-pro" },
   strategic: { provider: "xai",        model: "grok-4.20-0309-non-reasoning" },
-  add1:      { provider: "gemini",     model: "gemini-3.6-flash" },
-  add2:      { provider: "venice",     model: "grok-4-5" },
+  // Scene Lab needs a decisive creative voice that follows the declared cast and setting contract.
+  add1:      { provider: "xai",        model: "grok-4.20-0309-non-reasoning" },
+  add2:      { provider: "xai",        model: "grok-4.20-0309-non-reasoning" },
 };
 
 // ─── ROLE-PLAY MODEL DEFAULTS ───
@@ -797,7 +798,7 @@ function buildSceneLabContext(scene, subjectName, mode, outputType) {
     ? "This is explicitly imaginative character fiction inspired by a public-facing person, not a claim about their private life, motives, or conduct."
     : "This is imaginative character fiction grounded in the subject's established world and voice.";
 
-  return `\n\nSCENE LAB CONTRACT — NON-NEGOTIABLE:\n- Output type: ${outputType}.\n- Primary subject: ${subjectName}.\n- Named adult counterpart: ${counterpart}. Do not omit or replace this person with a generic bystander.\n- Relationship / history: ${relationship}.\n- Scene lens: ${lens.label} — ${lens.note}\n- Setting / occasion: ${setting}.\n- Emotional voltage: ${voltage.label} — ${voltage.note}\n- What ${subjectName} wants: ${subjectWant}.\n- What ${counterpart} wants: ${counterpartWant}.\n- Pressure point, boundary, secret, or temptation: ${pressure}.\n- Desired result: ${outcome}.\n- Director note: ${note}.\n\n${realPersonNote}\n\nWrite the scene as adult, emotionally intelligent character fiction. Both people have agency, interiority, boundaries, and leverage. Use concrete body language and at least two short pieces of dialogue. Let desire, humor, resentment, vulnerability, temptation, status, or restraint appear through choices—not sterile analyst language. Do not turn the scene into real-world surveillance, coercion, instructional tactics, or a procedural report.`;
+  return `\n\nSCENE LAB CONTRACT — NON-NEGOTIABLE:\n- Output type: ${outputType}.\n- Primary subject: ${subjectName}.\n- Named adult counterpart: ${counterpart}. Do not omit, replace, rename, or reduce this person to a generic bystander.\n- Relationship / history: ${relationship}.\n- Scene lens: ${lens.label} — ${lens.note}\n- EXACT setting / occasion: ${setting}. The narrative must open inside this declared place and retain its defining physical details; never relocate the scene to a generic substitute.\n- Emotional voltage: ${voltage.label} — ${voltage.note}\n- What ${subjectName} wants: ${subjectWant}.\n- What ${counterpart} wants: ${counterpartWant}.\n- Pressure point, boundary, secret, or temptation: ${pressure}. It must materially appear in the scene, not merely be implied.\n- Required emotional turn / desired result: ${outcome}. The final movement of the scene must earn this turn.\n- Director note: ${note}.\n\nCONTRACT ACCEPTANCE CRITERIA — SILENTLY CHECK BEFORE RESPONDING:\n1. The first two paragraphs make the exact setting unmistakable with at least two concrete setting details.\n2. ${subjectName} and ${counterpart} both speak, choose, and affect the scene; neither can be scenery.\n3. Their stated wants conflict or interlock through the named pressure point.\n4. Their relationship and ${voltage.label.toLowerCase()} voltage are visible through proximity, silence, body language, and dialogue—not labels.\n5. The final beat delivers the requested outcome or an honest, consequential version of it.\n6. Do not invent a different location, counterpart, conflict, or outcome because it seems easier.\n\n${realPersonNote}\n\nWrite adult, emotionally intelligent character fiction. Both people have agency, interiority, boundaries, and leverage. Use concrete body language and at least two short pieces of dialogue. Let desire, humor, resentment, vulnerability, temptation, status, or restraint appear through choices—not sterile analyst language. Do not turn the scene into real-world surveillance, coercion, instructional tactics, or a procedural report.`;
 }
 
 function buildSceneLabPrompt(scene, subjectName, mode, kind) {
@@ -808,8 +809,8 @@ function buildSceneLabPrompt(scene, subjectName, mode, kind) {
       ? "You write vivid, adult character fiction with the observational precision of a great novelist and the emotional courage of a scene that knows what it wants."
       : "You write charged, character-accurate encounter scenes. You prioritize voice, agency, chemistry, tension, and an emotionally consequential turn over exposition.",
     user: `${isObservation
-      ? `Write a 500-700 word SCENE OBSERVATION about ${subjectName}. Begin inside the declared setting, establish both adults immediately, and let the reader feel what changes in the room when they notice each other. Include sensory atmosphere, specific physical behavior, dialogue, the selected pressure point, and a final analyst-style read on what the scene exposed. Do not summarize the contract—dramatize it.`
-      : `Write a 600-850 word ENCOUNTER SIMULATION about ${subjectName}. Begin at the moment both adults are already in the room. Make their relationship, competing wants, and selected voltage legible through dialogue, proximity, silence, and choice. Build to a reversal, revelation, refused offer, or altered arrangement that honors the desired outcome. Keep every named participant distinct and active; do not reduce either to scenery.`}${context}`,
+      ? `Write a 500-700 word SCENE OBSERVATION about ${subjectName}. Begin inside the exact declared setting and anchor it in the first two paragraphs with its named physical details. Establish both adults immediately. Let the reader feel what changes in the room when they notice each other. Include sensory atmosphere, specific physical behavior, dialogue from both people, the selected pressure point as a real object, fact, boundary, or proposition, and a final analyst-style read on what the scene exposed. The final movement must visibly earn the stated desired result. Do not summarize the contract—dramatize every part of it.`
+      : `Write a 600-850 word ENCOUNTER SIMULATION about ${subjectName}. Begin at the moment both adults are already inside the exact declared setting; do not relocate, rename, or generalize it. Make their relationship, competing wants, and selected voltage legible through dialogue, proximity, silence, and choice. Put the stated pressure point directly between them. Build to a reversal, revelation, refused offer, or altered arrangement that visibly honors the desired outcome. Keep every named participant distinct and active; do not reduce either to scenery. Before responding, silently check all six contract acceptance criteria.`}${context}`,
   };
 }
 
@@ -1165,6 +1166,22 @@ export default function Hulukipedia() {
     note: "",
   });
   const setSceneField = (field, value) => setSceneConfig(current => ({ ...current, [field]: value }));
+
+  // Early Scene Lab releases defaulted to Gemini/Venice. Preserve any deliberate user override,
+  // but normalize those legacy defaults whenever the shared imaginative scene engine is active.
+  useEffect(() => {
+    if (addendumMode !== "scene") return;
+    setSectionProviders(previous => {
+      const isLegacyObservation = previous.add1?.provider === "gemini" && previous.add1?.model === "gemini-3.6-flash";
+      const isLegacyEncounter = previous.add2?.provider === "venice" && previous.add2?.model === "grok-4-5";
+      if (!isLegacyObservation && !isLegacyEncounter) return previous;
+      return {
+        ...previous,
+        add1: isLegacyObservation ? SECTION_DEFAULTS.add1 : previous.add1,
+        add2: isLegacyEncounter ? SECTION_DEFAULTS.add2 : previous.add2,
+      };
+    });
+  }, [addendumMode]);
 
   // Lightbox (Part B) — shared by portrait + role-play chat images
   const [lightboxSrc, setLightboxSrc] = useState(null);
