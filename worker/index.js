@@ -12,6 +12,7 @@
  *   - gemini     (Google Gemini 3.x — fast + multimodal)
  *   - xai        (Grok 4.20, Grok 4.3+ — direct character and analysis voices)
  *   - mistral    (Mistral Studio — direct text, reasoning, and vision-capable models)
+ *   - omni       (Google Omni Flash Preview — direct multimodal text/video-capable model)
  *
  * Venice integration notes:
  *   - Web search: enabled via venice_parameters.enable_web_search
@@ -116,6 +117,12 @@ export default {
             models: ["gemini-3.1-pro-preview", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"],
           },
           {
+            id: "omni",
+            name: "Google Omni Flash",
+            capabilities: ["text", "video-preview", "audio-preview"],
+            models: ["gemini-omni-flash-preview"],
+          },
+          {
             id: "xai",
             name: "Grok (xAI)",
             capabilities: ["text", "search"],
@@ -126,7 +133,7 @@ export default {
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.4.0" }, 200, reqOrigin);
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.5.0" }, 200, reqOrigin);
     }
 
     // ─── Static assets ───
@@ -174,6 +181,8 @@ async function handleAIProxy(request, env, origin) {
         return await callOpenAI(env, systemPrompt, userPrompt, maxTokens, model, origin);
       case "gemini":
         return await callGemini(env, systemPrompt, userPrompt, maxTokens, model, origin);
+      case "omni":
+        return await callOmniFlash(env, systemPrompt, userPrompt, model, origin);
       case "xai":
         return await callXAI(env, systemPrompt, userPrompt, maxTokens, model, useSearch, origin);
       case "mistral":
@@ -494,6 +503,50 @@ async function callGemini(env, systemPrompt, userPrompt, maxTokens, model, origi
 
   const text = data.choices?.[0]?.message?.content || "";
   return jsonResponse({ text, provider: "gemini", model: selectedModel }, 200, origin);
+}
+
+
+// ─── Google Omni Flash Preview (Gemini Interactions API) ───
+// Omni does not accept system instructions as a distinct field, so the Worker composes
+// a single explicit task input. This keeps the familiar Hulukipedia provider contract.
+async function callOmniFlash(env, systemPrompt, userPrompt, model, origin) {
+  const apiKey = env.GOOGLE_OMNI_API_KEY;
+  if (!apiKey) return jsonResponse({ error: "Google Omni Flash API key not configured" }, 500, origin);
+
+  const selectedModel = model || "gemini-omni-flash-preview";
+  const omniBody = {
+    model: selectedModel,
+    input: `${systemPrompt}\n\nUser request:\n${userPrompt}`,
+  };
+
+  const res = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
+    body: JSON.stringify(omniBody),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    return jsonResponse({ error: `Google Omni Flash returned non-JSON response (HTTP ${res.status})` }, 502, origin);
+  }
+
+  if (!res.ok) {
+    const errMsg = data?.error?.message || data?.error?.status || `Google Omni Flash error: ${res.status}`;
+    return jsonResponse({ error: errMsg }, res.status, origin);
+  }
+
+  const text = (data.steps || [])
+    .filter(step => step?.type === "model_output")
+    .flatMap(step => step.content || [])
+    .map(part => part?.text || "")
+    .filter(Boolean)
+    .join("\n");
+  return jsonResponse({ text, provider: "omni", model: selectedModel }, 200, origin);
 }
 
 

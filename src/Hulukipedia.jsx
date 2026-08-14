@@ -5,24 +5,24 @@ import remarkGfm from "remark-gfm";
 
 // ─── THEME DEFINITIONS ───
 const themes = {
-  // One shared visual family: obsidian dossier paper, antique gold hierarchy, emerald intelligence.
+  // Pearl Peregrine: warm porcelain paper, antique gold hierarchy, and restrained mode accents.
   hulu: {
-    bgMain: "#070907", bgContainer: "#0d120e", bgSection: "rgba(14,34,24,0.84)",
-    textPrimary: "#f5eed5", textSecondary: "#b9c8a8", accentGold: "#d4af37",
-    accentHover: "#f1d273", border: "#28563e", editHover: "rgba(212,175,55,0.08)",
-    highlight: "rgba(22,114,71,0.20)", sectionTitle: "#d4af37",
+    bgMain: "#fffdf7", bgContainer: "#fff8e7", bgSection: "rgba(255,250,237,0.96)",
+    textPrimary: "#302415", textSecondary: "#705b34", accentGold: "#b8860b",
+    accentHover: "#8a6200", border: "#dec477", editHover: "rgba(184,134,11,0.10)",
+    highlight: "rgba(248,225,156,0.42)", sectionTitle: "#8a6200",
   },
   raven: {
-    bgMain: "#050705", bgContainer: "#0b130e", bgSection: "rgba(11,38,25,0.82)",
-    textPrimary: "#f5eed5", textSecondary: "#a9c8ae", accentGold: "#d4af37",
-    accentHover: "#f1d273", border: "#1f6742", editHover: "rgba(22,114,71,0.16)",
-    highlight: "rgba(22,114,71,0.24)", sectionTitle: "#e4c35c",
+    bgMain: "#fffaf0", bgContainer: "#fff3d7", bgSection: "rgba(255,249,232,0.97)",
+    textPrimary: "#352513", textSecondary: "#755b30", accentGold: "#9c6f06",
+    accentHover: "#765000", border: "#d9b65b", editHover: "rgba(156,111,6,0.11)",
+    highlight: "rgba(244,215,132,0.40)", sectionTitle: "#805a00",
   },
   starling: {
-    bgMain: "#0d0e09", bgContainer: "#14140d", bgSection: "rgba(32,38,22,0.78)",
-    textPrimary: "#f7efd5", textSecondary: "#c3c99e", accentGold: "#e0bd4d",
-    accentHover: "#f7da78", border: "#566637", editHover: "rgba(224,189,77,0.10)",
-    highlight: "rgba(224,189,77,0.13)", sectionTitle: "#e9c85e",
+    bgMain: "#fffef9", bgContainer: "#fff9ea", bgSection: "rgba(255,252,241,0.97)",
+    textPrimary: "#302719", textSecondary: "#705f40", accentGold: "#b88915",
+    accentHover: "#8a6508", border: "#e1cb87", editHover: "rgba(184,137,21,0.10)",
+    highlight: "rgba(249,229,167,0.38)", sectionTitle: "#8c6608",
   },
 };
 
@@ -117,6 +117,14 @@ const PROVIDERS = {
       { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash" },
       { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash" },
       { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash-Lite ⚡" },
+    ],
+  },
+  omni: {
+    name: "Google Omni Flash",
+    icon: "🎬",
+    color: "#b8860b",
+    models: [
+      { id: "gemini-omni-flash-preview", name: "Gemini Omni Flash Preview 🧠🎬" },
     ],
   },
   xai: {
@@ -629,7 +637,7 @@ function ProviderSelector({ provider, model, onProviderChange, onModelChange, th
             </div>
           ))}
           <div className="border-t px-3 py-2 text-[10px] leading-snug" style={{ borderColor: t.border, color: t.textSecondary }}>
-            <strong style={{ color: t.accentGold }}>MODEL KEY</strong> · 🧠 reasoning · 🔥 uncensored / open creative · 👁 vision · ⚡ faster route · 🔎 live web research
+            <strong style={{ color: t.accentGold }}>MODEL KEY</strong> · 🧠 reasoning · 🔥 uncensored / open creative · 👁 vision · ⚡ faster route · 🔎 live web research · 🎬 video / media preview
           </div>
           <button
             type="button"
@@ -805,6 +813,24 @@ const ASPECT_DIMENSIONS = {
   "9:16": { width: 768, height: 1344 },
 };
 
+const WARDROBE_SYSTEMS = [
+  { id: "continuity", label: "Signature Continuity", note: "One coherent signature look across every selected frame." },
+  { id: "two-look", label: "Two-Look Arc", note: "Opening look transitions once into a deliberate second look." },
+  { id: "variations", label: "Editorial Variations", note: "Distinct but coherent variations within one style family." },
+  { id: "custom", label: "Custom Wardrobe Brief", note: "You decide the wardrobe logic in your own words before launch." },
+];
+
+function getWardrobeDirection(systemId, customBrief, index, count) {
+  if (systemId === "two-look") {
+    return index < Math.ceil(count / 2)
+      ? "Wardrobe plan: opening look — keep the first half of this set in one polished, coherent outfit."
+      : "Wardrobe plan: second look — shift into a clearly different but story-consistent outfit for the back half of this set.";
+  }
+  if (systemId === "variations") return "Wardrobe plan: use a deliberate variation of the same style family for this frame; change a layer, accessory, silhouette, or styling detail without losing continuity.";
+  if (systemId === "custom") return `Wardrobe plan: ${customBrief.trim()}.`;
+  return "Wardrobe plan: maintain one signature outfit and coherent styling across this whole set.";
+}
+
 const VISUAL_SCENE_RECIPES = [
   {
     id: "editorial",
@@ -949,7 +975,7 @@ const VISUAL_SCENE_RECIPES = [
   },
 ];
 
-function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief, coStar = "") {
+function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief, coStar = "", wardrobeDirection = "") {
   const optionalBrief = userBrief.trim()
     ? `Director's brief: ${userBrief.trim()}.`
     : "Director's brief: make choices that feel natural and true to the subject's established personality and world.";
@@ -960,7 +986,7 @@ function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief, coStar 
     ? " All depicted people are adults. Keep the atmosphere mature and character-forward, with no explicit sexual activity, nudity, coercion, or underage coding."
     : "";
 
-  return `${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. Shot direction: ${shot.direction}. ${optionalBrief}${duoDirection}${matureConstraint} Keep the person/character recognizably consistent with the identity anchor. Use a single coherent wardrobe and setting appropriate to this shot. Natural anatomy, clear hands, believable proportions, grounded lighting, and one clear visual focal point. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.`;
+  return `${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. Shot direction: ${shot.direction}. ${wardrobeDirection} ${optionalBrief}${duoDirection}${matureConstraint} Keep the person/character recognizably consistent with the identity anchor. Natural anatomy, clear hands, believable proportions, grounded lighting, and one clear visual focal point. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.`;
 }
 
 // ─── MAIN COMPONENT ───
@@ -1018,7 +1044,11 @@ export default function Hulukipedia() {
   const [visualRecipeId, setVisualRecipeId] = useState("editorial");
   const [visualBrief, setVisualBrief] = useState("");
   const [visualCoStar, setVisualCoStar] = useState("");
+  // A set never begins from a hidden recipe slice: the user explicitly chooses count, coverage, and wardrobe logic first.
   const [visualBatchSize, setVisualBatchSize] = useState(3);
+  const [visualSelectedShotIndices, setVisualSelectedShotIndices] = useState([0, 1, 2]);
+  const [visualWardrobeSystem, setVisualWardrobeSystem] = useState("continuity");
+  const [visualWardrobeBrief, setVisualWardrobeBrief] = useState("");
   const [visualSet, setVisualSet] = useState([]);
   const [visualSetError, setVisualSetError] = useState(null);
   const [deepSearchResult, setDeepSearchResult] = useState(null);
@@ -1056,6 +1086,12 @@ export default function Hulukipedia() {
   const selectedVisualImageModel = IMAGE_MODELS.find(item => item.id === visualImageModel) || IMAGE_MODELS[0];
   const availableVisualRecipes = VISUAL_SCENE_RECIPES;
   const selectedVisualRecipe = availableVisualRecipes.find(item => item.id === visualRecipeId) || availableVisualRecipes[0];
+  const selectedVisualShots = visualSelectedShotIndices
+    .map(index => selectedVisualRecipe.shots[index])
+    .filter(Boolean);
+  const selectedWardrobeSystem = WARDROBE_SYSTEMS.find(system => system.id === visualWardrobeSystem) || WARDROBE_SYSTEMS[0];
+  const visualPlanReady = selectedVisualShots.length === Number(visualBatchSize) &&
+    (visualWardrobeSystem !== "custom" || Boolean(visualWardrobeBrief.trim()));
   const availableRolePlayScenarios = ROLEPLAY_SCENARIOS;
   const selectedRolePlayScenario = availableRolePlayScenarios.find(scenario => scenario.id === rpScenarioId) || availableRolePlayScenarios[0];
 
@@ -1117,7 +1153,7 @@ export default function Hulukipedia() {
     setClarifications(null);
     setIntel([]); setPhysical(""); setComm(""); setConvo("");
     setPsych(""); setStrategic(""); setAddendum1(""); setAddendum2("");
-    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualImageSource("venice"); setVisualImageModel("nano-banana-pro"); setVisualBrief(""); setVisualCoStar(""); setVisualRecipeId("editorial"); setDeepSearchResult(null);
+    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualImageSource("venice"); setVisualImageModel("nano-banana-pro"); setVisualBrief(""); setVisualCoStar(""); setVisualRecipeId("editorial"); setVisualBatchSize(3); setVisualSelectedShotIndices([0, 1, 2]); setVisualWardrobeSystem("continuity"); setVisualWardrobeBrief(""); setDeepSearchResult(null);
     setOperationConfig({ observer: "Field Observer", mission: "observe", tone: "grounded", assignment: "" });
     // Clear role-play session and creative framing on every new dossier (session-only memory)
     setRpMessages([]); setRpInput(""); setRpError(null); setRpScenarioId("open-room"); setRpScenarioBrief("");
@@ -1286,17 +1322,46 @@ export default function Hulukipedia() {
     return raw;
   }
 
+  const chooseVisualRecipe = (recipeId) => {
+    const recipe = availableVisualRecipes.find(item => item.id === recipeId) || availableVisualRecipes[0];
+    setVisualRecipeId(recipe.id);
+    // Loading a recipe proposes its own first frames; the user can still remove, add, or reorder coverage before launch.
+    setVisualSelectedShotIndices(recipe.shots.slice(0, Number(visualBatchSize)).map((_, index) => index));
+  };
+
+  const chooseVisualPlanSize = (size) => {
+    const nextSize = Number(size);
+    setVisualBatchSize(nextSize);
+    setVisualSelectedShotIndices(current => current.slice(0, nextSize));
+  };
+
+  const toggleVisualShot = (index) => {
+    setVisualSelectedShotIndices(current => {
+      if (current.includes(index)) return current.filter(item => item !== index);
+      if (current.length >= Number(visualBatchSize)) return current;
+      return [...current, index].sort((a, b) => a - b);
+    });
+  };
+
   const generateVisualSet = async () => {
     if (loading.visualSet) return;
+    if (!visualPlanReady) {
+      const wardrobeMissing = visualWardrobeSystem === "custom" && !visualWardrobeBrief.trim();
+      setVisualSetError(wardrobeMissing
+        ? "Add your custom wardrobe direction before launching this planned set."
+        : `Select exactly ${visualBatchSize} planned angle${visualBatchSize === 1 ? "" : "s"} before generation.`);
+      return;
+    }
     setL("visualSet", true);
     setVisualSetError(null);
     const recipe = selectedVisualRecipe;
-    const shots = recipe.shots.slice(0, Number(visualBatchSize));
+    const shots = selectedVisualShots;
     const dimensions = ASPECT_DIMENSIONS[recipe.aspectRatio] || ASPECT_DIMENSIONS["1:1"];
     const pendingSet = shots.map((shot, index) => ({
       id: `${Date.now()}-${index}`,
       label: shot.label,
       direction: shot.direction,
+      wardrobeDirection: getWardrobeDirection(visualWardrobeSystem, visualWardrobeBrief, index, shots.length),
       recipeId: recipe.id,
       aspectRatio: recipe.aspectRatio,
       width: dimensions.width,
@@ -1316,7 +1381,8 @@ export default function Hulukipedia() {
       const identityAnchor = await getIdentityAnchor();
       for (let index = 0; index < shots.length; index += 1) {
         const shot = shots[index];
-        const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief, visualCoStar);
+        const wardrobeDirection = getWardrobeDirection(visualWardrobeSystem, visualWardrobeBrief, index, shots.length);
+        const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief, visualCoStar, wardrobeDirection);
         setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "generating", prompt } : item));
         try {
           const image = visualImageSource === "venice"
@@ -1516,7 +1582,7 @@ ${rpSpeechRules}`;
     setDetailsInput("");
     setClarifications(null);
     setSectionProviders(SECTION_DEFAULTS);
-    setVisualRecipeId("editorial"); setVisualBrief(""); setVisualCoStar(""); setVisualSet([]); setVisualSetError(null);
+    setVisualRecipeId("editorial"); setVisualBrief(""); setVisualCoStar(""); setVisualBatchSize(3); setVisualSelectedShotIndices([0, 1, 2]); setVisualWardrobeSystem("continuity"); setVisualWardrobeBrief(""); setVisualSet([]); setVisualSetError(null);
     setRpProvider(ROLEPLAY_DEFAULT_PROVIDER); setRpModel(ROLEPLAY_DEFAULT_MODEL); setRpScenarioId("open-room"); setRpScenarioBrief("");
     setRpMessages([]); setRpInput(""); setRpError(null);
   };
@@ -1540,12 +1606,12 @@ ${rpSpeechRules}`;
   };
 
   // ─── BUTTON COMPONENT ───
-  const GenBtn = ({ onClick, loading: isLoading, children, className = "", style = {} }) => (
+  const GenBtn = ({ onClick, loading: isLoading, disabled = false, children, className = "", style = {} }) => (
     <button
       onClick={onClick}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       className={`flex items-center justify-center font-bold py-2 px-4 rounded-md transition-all text-sm ${className}`}
-      style={{ opacity: isLoading ? 0.7 : 1, ...style }}
+      style={{ opacity: isLoading || disabled ? 0.55 : 1, ...style }}
     >
       {isLoading ? <Spinner size={16} /> : children}
     </button>
@@ -1623,8 +1689,8 @@ ${rpSpeechRules}`;
         .animate-spin { animation: spin 1s linear infinite; }
         .md-content p { margin: 0.4em 0; }
         .md-content li { margin: 0.2em 0; }
-        ::selection { background: rgba(212,175,55,0.34); color: #fff8df; }
-        select option { background: #0d120e; color: #f5eed5; }
+        ::selection { background: rgba(184,134,11,0.32); color: #302415; }
+        select option { background: #fffdf7; color: #302415; }
       `}</style>
 
       <div className="max-w-5xl mx-auto p-4" style={{ position: "relative", zIndex: 10 }}>
@@ -1716,7 +1782,7 @@ ${rpSpeechRules}`;
                 onClick={() => handleSearch("raven")}
                 disabled={!!searchLoading}
                 className="flex items-center justify-center font-bold py-3 px-6 rounded-md transition-all shadow-lg"
-                style={{ backgroundColor: "#0f5132", color: "#f5d56b", border: "1px solid #2b7a4b" }}
+                style={{ backgroundColor: "#9c6f06", color: "#fffdf7", border: "1px solid #7a5600" }}
               >
                 {searchLoading === "raven" ? <Spinner size={20} /> : <><Feather size={18} className="mr-2" /> Raven Search (Fictional)</>}
               </button>
@@ -1724,7 +1790,7 @@ ${rpSpeechRules}`;
                 onClick={() => handleSearch("starling")}
                 disabled={!!searchLoading}
                 className="flex items-center justify-center font-bold py-3 px-6 rounded-md transition-all shadow-lg"
-                style={{ backgroundColor: "#7b5d13", color: "#fff2bd", border: "1px solid #c79a28" }}
+                style={{ backgroundColor: "#c79827", color: "#3a2807", border: "1px solid #a97b13" }}
               >
                 {searchLoading === "starling" ? <Spinner size={20} /> : <><Star size={18} className="mr-2" /> Starling Search (Real)</>}
               </button>
@@ -1766,7 +1832,7 @@ ${rpSpeechRules}`;
                 type="button"
                 onClick={() => setInvestigatorWeb(value => !value)}
                 className="text-xs font-bold px-3 py-2 rounded-md transition-all"
-                style={{ backgroundColor: investigatorWeb ? "#0f5132" : t.bgMain, border: `1px solid ${investigatorWeb ? "#2b7a4b" : t.border}`, color: investigatorWeb ? "#f5d56b" : t.textSecondary }}
+                style={{ backgroundColor: investigatorWeb ? t.highlight : t.bgMain, border: `1px solid ${investigatorWeb ? t.accentGold : t.border}`, color: investigatorWeb ? t.accentHover : t.textSecondary }}
               >
                 <Globe size={13} className="inline mr-1" /> Web-grounded {investigatorWeb ? "ON" : "OFF"}
               </button>
@@ -1933,14 +1999,14 @@ ${rpSpeechRules}`;
                       <button
                         onClick={() => setImageSource("venice")}
                         className="flex-1 text-xs py-1 rounded font-bold"
-                        style={{ backgroundColor: imageSource === "venice" ? "#167247" : t.bgMain, color: imageSource === "venice" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
+                        style={{ backgroundColor: imageSource === "venice" ? t.accentGold : t.bgMain, color: imageSource === "venice" ? "#fffdf7" : t.textSecondary, border: `1px solid ${t.border}` }}
                       >
                         Venice AI
                       </button>
                       <button
                         onClick={() => setImageSource("pollinations")}
                         className="flex-1 text-xs py-1 rounded font-bold"
-                        style={{ backgroundColor: imageSource === "pollinations" ? "#8a6a18" : t.bgMain, color: imageSource === "pollinations" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
+                        style={{ backgroundColor: imageSource === "pollinations" ? t.highlight : t.bgMain, color: imageSource === "pollinations" ? t.accentHover : t.textSecondary, border: `1px solid ${t.border}` }}
                       >
                         Pollinations
                       </button>
@@ -1948,7 +2014,7 @@ ${rpSpeechRules}`;
                     <button
                       onClick={() => setImageSearchEnabled(!imageSearchEnabled)}
                       className="w-full text-xs py-1 rounded font-bold flex items-center justify-center gap-1"
-                      style={{ backgroundColor: imageSearchEnabled ? "#167247" : t.bgMain, color: imageSearchEnabled ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
+                      style={{ backgroundColor: imageSearchEnabled ? t.highlight : t.bgMain, color: imageSearchEnabled ? t.accentHover : t.textSecondary, border: `1px solid ${t.border}` }}
                       title="When enabled, the AI will search the web for what this person/character looks like before generating the image prompt"
                     >
                       <Globe size={12} /> Web Search {imageSearchEnabled ? "ON" : "OFF"}
@@ -2058,7 +2124,7 @@ ${rpSpeechRules}`;
                     <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>SCENE RECIPE</label>
                     <select
                       value={visualRecipeId}
-                      onChange={e => setVisualRecipeId(e.target.value)}
+                      onChange={e => chooseVisualRecipe(e.target.value)}
                       className="w-full rounded text-sm px-2 py-2"
                       style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
                     >
@@ -2068,18 +2134,22 @@ ${rpSpeechRules}`;
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>SET SIZE</label>
-                    <select
-                      value={visualBatchSize}
-                      onChange={e => setVisualBatchSize(Number(e.target.value))}
-                      className="w-full rounded text-sm px-2 py-2"
-                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
-                    >
-                      <option value={3}>3 standalone images</option>
-                      <option value={5}>5-image lookbook</option>
-                    </select>
+                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>PLANNED FRAME COUNT</label>
+                    <div className="grid grid-cols-5 gap-1">
+                      {[1, 2, 3, 4, 5].map(size => (
+                        <button
+                          key={size}
+                          onClick={() => chooseVisualPlanSize(size)}
+                          className="rounded py-2 text-xs font-bold"
+                          style={{ backgroundColor: visualBatchSize === size ? t.accentGold : t.bgMain, color: visualBatchSize === size ? "#fffdf7" : t.textSecondary, border: `1px solid ${t.border}` }}
+                          title={`Plan exactly ${size} frame${size === 1 ? "" : "s"}`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
                     <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>
-                      {selectedVisualRecipe.aspectRatio} framing · {visualImageSource === "venice" ? selectedVisualImageModel.name : "Pollinations"}
+                      Select how many images you want before choosing the exact coverage below.
                     </div>
                   </div>
 
@@ -2089,14 +2159,14 @@ ${rpSpeechRules}`;
                       <button
                         onClick={() => setVisualImageSource("venice")}
                         className="flex-1 text-xs py-2 rounded font-bold"
-                        style={{ backgroundColor: visualImageSource === "venice" ? "#167247" : t.bgMain, color: visualImageSource === "venice" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
+                        style={{ backgroundColor: visualImageSource === "venice" ? t.accentGold : t.bgMain, color: visualImageSource === "venice" ? "#fffdf7" : t.textSecondary, border: `1px solid ${t.border}` }}
                       >
                         Venice AI
                       </button>
                       <button
                         onClick={() => setVisualImageSource("pollinations")}
                         className="flex-1 text-xs py-2 rounded font-bold"
-                        style={{ backgroundColor: visualImageSource === "pollinations" ? "#8a6a18" : t.bgMain, color: visualImageSource === "pollinations" ? "#fff8df" : t.textSecondary, border: `1px solid ${t.border}` }}
+                        style={{ backgroundColor: visualImageSource === "pollinations" ? t.highlight : t.bgMain, color: visualImageSource === "pollinations" ? t.accentHover : t.textSecondary, border: `1px solid ${t.border}` }}
                       >
                         Pollinations
                       </button>
@@ -2142,6 +2212,71 @@ ${rpSpeechRules}`;
                   </div>
                 </div>
 
+                <div className="mt-3 rounded-md p-3 space-y-3" style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}` }}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-widest" style={{ color: t.accentGold }}>01 · Choose exact angles & positions</div>
+                      <div className="text-[10px] mt-1" style={{ color: t.textSecondary }}>Choose {visualBatchSize} frame{visualBatchSize === 1 ? "" : "s"}. The set cannot launch until the plan is complete.</div>
+                    </div>
+                    <span className="text-xs font-bold rounded px-2 py-1" style={{ backgroundColor: visualPlanReady ? t.highlight : t.bgMain, color: visualPlanReady ? t.accentGold : t.textSecondary, border: `1px solid ${t.border}` }}>
+                      {selectedVisualShots.length} / {visualBatchSize} planned
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {selectedVisualRecipe.shots.map((shot, index) => {
+                      const selected = visualSelectedShotIndices.includes(index);
+                      const locked = !selected && visualSelectedShotIndices.length >= Number(visualBatchSize);
+                      return (
+                        <button
+                          key={shot.label}
+                          onClick={() => toggleVisualShot(index)}
+                          disabled={locked}
+                          className="text-left rounded px-3 py-2 transition-all disabled:opacity-40"
+                          style={{ backgroundColor: selected ? t.highlight : t.bgMain, border: `1px solid ${selected ? t.accentGold : t.border}`, color: t.textPrimary }}
+                        >
+                          <div className="flex items-center gap-2"><span className="text-xs font-bold" style={{ color: selected ? t.accentGold : t.textSecondary }}>{selected ? "✓" : String(index + 1).padStart(2, "0")}</span><span className="text-xs font-bold">{shot.label}</span></div>
+                          <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{shot.direction}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 rounded-md p-3" style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}` }}>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-widest" style={{ color: t.accentGold }}>02 · Outfit system</label>
+                    <select
+                      value={visualWardrobeSystem}
+                      onChange={e => setVisualWardrobeSystem(e.target.value)}
+                      className="w-full rounded text-sm px-2 py-2"
+                      style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                    >
+                      {WARDROBE_SYSTEMS.map(system => <option key={system.id} value={system.id}>{system.label}</option>)}
+                    </select>
+                    <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{selectedWardrobeSystem.note}</div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1 uppercase tracking-widest" style={{ color: t.accentGold }}>03 · Planned output</label>
+                    {selectedVisualShots.length > 0 ? (
+                      <div className="space-y-1 rounded px-2 py-2 text-[10px]" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                        {selectedVisualShots.map((shot, index) => <div key={shot.label}><span style={{ color: t.accentGold }}>{String(index + 1).padStart(2, "0")}</span> · {shot.label} · {getWardrobeDirection(visualWardrobeSystem, visualWardrobeBrief, index, selectedVisualShots.length).replace("Wardrobe plan: ", "")}</div>)}
+                      </div>
+                    ) : <div className="text-[10px] rounded px-2 py-2" style={{ backgroundColor: t.bgMain, color: t.textSecondary, border: `1px solid ${t.border}` }}>No frames selected yet.</div>}
+                  </div>
+                  {visualWardrobeSystem === "custom" && (
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>CUSTOM WARDROBE DIRECTION <span className="font-normal">(required for this mode)</span></label>
+                      <input
+                        value={visualWardrobeBrief}
+                        onChange={e => setVisualWardrobeBrief(e.target.value)}
+                        placeholder="e.g., cream linen opening look; later change into a dark green rain jacket and worn boots"
+                        className="w-full rounded text-sm px-2 py-2"
+                        style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {selectedVisualRecipe.requiresCoStar && (
                   <div className="mt-3">
                     <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>CO-STAR / SECOND ADULT <span className="font-normal">(optional)</span></label>
@@ -2157,8 +2292,8 @@ ${rpSpeechRules}`;
                 )}
 
                 <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                  <GenBtn onClick={generateVisualSet} loading={loading.visualSet} style={{ backgroundColor: t.accentGold, color: "#111", flex: 1 }}>
-                    <Sparkles size={14} className="mr-1" /> Generate {visualBatchSize}-Image Visual Set
+                  <GenBtn onClick={generateVisualSet} loading={loading.visualSet} disabled={!visualPlanReady} style={{ backgroundColor: t.accentGold, color: "#fffdf7", flex: 1 }}>
+                    <Sparkles size={14} className="mr-1" /> {visualPlanReady ? `Generate planned ${visualBatchSize}-frame set` : `Finish ${visualBatchSize}-frame plan to generate`}
                   </GenBtn>
                   {visualSet.length > 0 && (
                     <button
@@ -2242,19 +2377,19 @@ ${rpSpeechRules}`;
                   )}
                 </div>
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
-                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "blue")} loading={loading.physical} style={{ backgroundColor: "#2563eb", color: "white" }}>
+                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "blue")} loading={loading.physical} style={{ backgroundColor: "#8f6a12", color: "#fffdf7" }}>
                     <FileText size={14} className="mr-1" /> Clinical
                   </GenBtn>
-                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "green")} loading={loading.physical} style={{ backgroundColor: "#16a34a", color: "white" }}>
+                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "green")} loading={loading.physical} style={{ backgroundColor: "#b8860b", color: "#fffdf7" }}>
                     <Gem size={14} className="mr-1" /> Magazine
                   </GenBtn>
                   <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "yellow")} loading={loading.physical} style={{ backgroundColor: "#eab308", color: "#111" }}>
                     <Beer size={14} className="mr-1" /> Bar Talk
                   </GenBtn>
-                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "purple")} loading={loading.physical} style={{ backgroundColor: "#7c3aed", color: "white" }}>
+                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "purple")} loading={loading.physical} style={{ backgroundColor: "#a97b13", color: "#fffdf7" }}>
                     <Eye size={14} className="mr-1" /> Presence
                   </GenBtn>
-                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "red")} loading={loading.physical} style={{ backgroundColor: "#dc2626", color: "white" }}>
+                  <GenBtn onClick={() => generateSection("physical", setPhysical, "physical", "red")} loading={loading.physical} style={{ backgroundColor: "#9b4f2a", color: "#fffdf7" }}>
                     <Flame size={14} className="mr-1" /> Locker Room
                   </GenBtn>
                 </div>
@@ -2412,7 +2547,7 @@ ${rpSpeechRules}`;
                     <span style={{ color: t.textSecondary }}>Not yet generated.</span>
                   )}
                 </div>
-                <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: "#167247", color: "#fff8df" }}>
+                <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#fffdf7" }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Report" : "Generate Timeline"}
                 </GenBtn>
               </div>
@@ -2433,7 +2568,7 @@ ${rpSpeechRules}`;
                     <span style={{ color: t.textSecondary }}>Not yet generated.</span>
                   )}
                 </div>
-                <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: "#8a6a18", color: "#fff8df" }}>
+                <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: t.highlight, color: t.accentHover, border: `1px solid ${t.border}` }}>
                   <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Simulation" : "Generate Analysis"}
                 </GenBtn>
               </div>
@@ -2583,7 +2718,7 @@ ${rpSpeechRules}`;
                   <GenBtn onClick={sendRolePlayMessage} loading={rpLoading} style={{ backgroundColor: t.accentGold, color: "#111" }}>
                     <MessageCircle size={14} className="mr-1" /> Send
                   </GenBtn>
-                  <GenBtn onClick={generateRolePlayImage} loading={rpImgLoading} style={{ backgroundColor: "#167247", color: "#fff8df" }}>
+                  <GenBtn onClick={generateRolePlayImage} loading={rpImgLoading} style={{ backgroundColor: t.accentGold, color: "#fffdf7" }}>
                     <Image size={14} className="mr-1" /> Image
                   </GenBtn>
                 </div>
