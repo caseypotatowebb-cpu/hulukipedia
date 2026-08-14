@@ -1,9 +1,9 @@
 # Hulukipedia — Team Handoff and Deployment Notes
 
 **Maintained by:** Team Tomorrow Labs  
-**Latest deployed source:** [`b940de6`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/b940de6) — August 14, 2026
+**Latest deployed source:** [`40e5e72`](https://github.com/caseypotatowebb-cpu/hulukipedia/commit/40e5e72) — August 14, 2026
 
-**Release:** `3.4.0` (the live `/api/health` response reports this version)
+**Release:** `3.5.0` (the live `/api/health` response reports this version)
 **Live application:** <https://hulukipedia.teamtomorrowlabs.workers.dev>
 
 ---
@@ -12,7 +12,7 @@
 
 Hulukipedia is a React/Vite dossier generator served through a Cloudflare Worker. The frontend is a static asset bundle and the Worker is the secure proxy for text generation, research, web search, and image generation. Provider credentials are stored as Cloudflare Worker secrets rather than in the browser bundle.
 
-The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, a current Venice image-model catalog, the image-prompt web-search toggle, the Visual Scene Studio, and the dedicated Investigative Console. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes. Release 3.4.0 retains the black-gold-emerald visual system and Grok 4.20-led Physical Description / Role-Play path while adding direct Mistral Studio routing, current Venice Aion 3 choices, capability badges, a corrected Claude policy that includes verified Opus 4.6 while excluding 4.8-and-later, Gemini 3.1 Pro, and image-generator choice specific to the Visual Scene Studio.
+The current production state includes Perplexity Sonar as the initial research default, multi-provider section overrides, RAG-first physical-description and communication-profile flows, a role-play panel, portrait lightbox, a current Venice image-model catalog, the image-prompt web-search toggle, the Visual Scene Studio, and the dedicated Investigative Console. Nano Banana Pro remains the default portrait model, with the deliberately simple prompt format restored for both modes. Release 3.5.0 moves the experience into a **Pearl white-and-gold** visual identity while retaining the Grok 4.20-led Physical Description / Role-Play path. It adds direct Google Omni Flash Preview routing, a corrected Claude policy that includes verified Opus 4.6 while excluding 4.8-and-later, Gemini 3.1 Pro, direct Mistral Studio routing, current Venice Aion 3 choices, capability badges, and a deliberate Visual Set Planner that makes image count, angle coverage, outfit logic, image source, and generator an explicit user choice.
 
 | Area | Current behavior |
 |---|---|
@@ -23,7 +23,7 @@ The current production state includes Perplexity Sonar as the initial research d
 | Image sources | Venice AI primary; Pollinations fallback. |
 | External image links | Raven exposes Rule34; Starling exposes CelebJihad; both are visually labeled NSFW. |
 | Role-play | Session-only character conversation with a dedicated provider/model picker, an active Scenario Deck—including shared **After Hours**—and a freeform Director Note. |
-| Visual Scene Studio | Generates three or five standalone scene images with shared identity grounding, varied poses, a director's brief, and shared **After Dark Editorial**. |
+| Visual Scene Studio | Uses an explicit Visual Set Planner: select 1–5 frames, exact angles/positions, outfit logic, scene direction, source, and generator before any image is launched. Shared identity grounding and per-frame re-roll remain available. |
 | Investigative Console | Home-page direct-question lane with an independent provider/model picker, web-grounding toggle, provenance label, Markdown results, returned source links, copy, and clear controls. |
 | Physical Description | Defaulted to direct xAI Grok 4.20 (the current live family corresponding to the requested “4.2”), with research-first grounding and Clinical, Magazine, Bar Talk, Presence, and Locker Room presentation voices. |
 
@@ -35,7 +35,7 @@ The current production state includes Perplexity Sonar as the initial research d
 
 Google `virtual-try-on-001` is a credible future **Wardrobe / Try-On** extension for Visual Scene Studio, accepting a person image and product/garment image and returning one to four transformed candidates. It is not covered by the ordinary Gemini API key: implementation needs a billing-enabled Google Cloud project, Agent Platform API, service-account/OAuth authentication, supported region, and Cloud Storage output path. Do not expose it in the UI until those inputs exist. See `INVESTIGATIVE_CONSOLE_PROVIDER_AUDIT.md`.
 
-## New: Visual Scene Studio & Current Venice Catalog
+## New: Pearl Visual Set Planner, Omni Flash, and Current Venice Catalog
 
 The Portrait panel now contains an audited, grouped catalog of Venice image models. The list was refreshed directly from Venice's live `GET /api/v1/models?type=image` response on August 12, 2026. It adds Grok Imagine 2.0, Krea 2 Turbo, Luma Uni-1 / Max, Nano Banana 2 Lite, Seedream V5 Pro, Qwen Image 3 / Pro, and corrected model labels such as Seedream V4.5 and Anime (WAI). The image Worker now distinguishes resolution-tier, aspect-ratio, and pixel-controlled models rather than applying the same request shape to nearly everything.
 
@@ -44,8 +44,10 @@ The Portrait panel now contains an audited, grouped catalog of Venice image mode
 | Control | Behavior |
 |---|---|
 | **Scene Recipe** | Editorial Lookbook, Character Turnaround, Motion & Presence, Candid Day Out, Cinematic Evening, Signature World, Activity Continuity, Campaign / Product Story, Duo Chemistry, and shared After Dark Editorial. |
-| **Set Size** | Three standalone images or a five-image lookbook. |
-| **Director's Brief** | Optional creative direction for setting, wardrobe, mood, visual-marketing intent, or narrative context. |
+| **Planned Frame Count** | Choose **1–5** images before generation. The Studio will not launch an incomplete set. |
+| **Angles & Positions** | Select the exact shot cards to make: hero, three-quarter, seated, walking, close frame, or recipe-specific equivalents. The output preview reflects only the selected cards. |
+| **Outfit System** | Choose Signature Continuity, Two-Look Arc, Editorial Variations, or a required Custom Wardrobe Brief. |
+| **Director's Brief** | Optional creative direction for setting, mood, visual-marketing intent, or narrative context. |
 | **Image Source** | Independent Venice AI / Pollinations selection. This does not change the Portrait panel's source. |
 | **Image Generator** | When Venice is selected, exposes the full curated Venice image-model selector for the batch itself. Each completed card records its own source/model provenance. |
 | **Shared identity anchor** | A single concise identity prompt is prepared once, then applied to all cards while each card receives its own composition/pose direction. |
@@ -53,7 +55,7 @@ The Portrait panel now contains an audited, grouped catalog of Venice image mode
 
 The studio deliberately asks for **one image per prompt**, never a contact sheet or collage. Editorial Lookbook has explicit pose differentiation: standing hero, leaning three-quarter, unmistakably seated editorial, mid-stride arrival, and waist-up character framing. Other recipes use their own camera and narrative logic.
 
-**Production verification:** A live Lara Croft set used **Qwen Image 3**, Editorial Lookbook, a sea-cliff archaeological brief, and the three-image option. All three cards rendered successfully as independent full-body images. The test identified that the initial editorial pose instructions could be more forceful, so the final deployment strengthened those prompt directions before handoff. See `VISUAL_STUDIO_TEST_NOTES.md`; live catalog notes and the Qwen Image 3 request-shape smoke test are in `research_venice_catalog_2026-08-12.md`.
+**Production verification:** The final Pearl Planner test deliberately selected **Full-Length Hero**, **Three-Quarter Detail**, and **Walking Arrival** for Lara Croft, after first demonstrating that the launch button locks when only two of three planned angles are selected. The completed three-frame **Pollinations** set rendered each selected card independently and displayed its own source provenance. See `PEARL_PLANNER_TEST_NOTES.md`. Earlier Qwen Image 3 and per-frame re-roll evidence remains in `VISUAL_STUDIO_TEST_NOTES.md` and `VISUAL_STUDIO_REROLL_TEST_NOTES.md`.
 
 ### Visual Scene Studio v1.1: Per-Frame Re-Roll
 
@@ -146,14 +148,15 @@ It also exposes the Worker module-upload endpoint, so it is now a capable fallba
 | Perplexity | `PERPLEXITY_API_KEY` | Initial fact-finding, deep research, and citation-backed search. |
 | Anthropic | `ANTHROPIC_API_KEY` | Claude generation and role-play alternatives. |
 | OpenAI | `OPENAI_API_KEY` | Direct text generation. |
-| Google Gemini | `GEMINI_API_KEY` | Direct text generation and selected addendum default. |
+| Google Gemini | `GEMINI_API_KEY` | Direct Gemini text generation and selected addendum default. |
+| Google Omni Flash | `GOOGLE_OMNI_API_KEY` | Verified Gemini Interactions API route for Omni Flash Preview text/media-aware analysis. |
 | xAI / Grok | `XAI_API_KEY` | Physical descriptions, strategic analysis, and direct models. |
 | Mistral Studio | `MISTRAL_API_KEY` | Direct Mistral Medium 3.5, Mistral Small 4, and Mistral Large 3. |
 | OpenRouter | `OPENROUTER_API_KEY` | Additional multi-model routing. |
 
-The Worker health response reports `version: "3.4.0"`. Use GitHub commit IDs and the static asset name on the deployed page as the exact release tracker.
+The Worker health response reports `version: "3.5.0"`. Use GitHub commit IDs and the static asset name on the deployed page as the exact release tracker.
 
-## Model and Provider Status — 3.4.0
+## Model and Provider Status — 3.5.0
 
 The selector is curated against actual provider/account tests rather than treated as a marketing-name dump. The production validation record is in `PROVIDER_CAPABILITY_AND_VISUAL_SOURCE_DESIGN.md` and `PROVIDER_CAPABILITY_VISUAL_SOURCE_TEST_NOTES.md`.
 
@@ -167,6 +170,7 @@ The selector is curated against actual provider/account tests rather than treate
 | Venice | The text list includes the current Aion 3.0 and Aion 3.0 Mini choices, Kimi K2.6, GLM 5.2, and curated uncensored/vision/reasoning-capable routes based on live catalog metadata. | Badges are explanatory: `🔥` uncensored/open creative, `👁` vision, `🧠` reasoning, `⚡` speed. Keep catalog presence separate from account entitlement. |
 | OpenRouter | Allowed routes include Claude 4.5, Gemini 3.1 Pro/3.7 Flash, and Grok 4.3/4.6. | No GPT after 5.1 and no Claude 4.8-or-later routes. |
 | OpenAI | The Team Tomorrow account currently exposes GPT-4o as its usable direct model. | Do not add post-5.1 GPT models through direct or routed menus. |
+| Google Omni Flash | `gemini-omni-flash-preview` accepted the provided Google Studio key through the documented Gemini Interactions API and then returned `HULUKIPEDIA OMNI ONLINE` through the deployed Worker. | Marked `🧠🎬`; use it for fresh multimodal/media-aware analysis experiments, not as a replacement for the stable Gemini text lane. |
 
 ### Scope Boundary
 
@@ -181,7 +185,7 @@ The new Raven controls are a good foundation, not the final surveillance/encount
 | 1 | **Saveable scenario presets** | Lets the team keep and reuse strong observer/mission combinations across dossiers. |
 | 2 | **Narrative output variants** | Generate multiple branches of the same scenario, such as cooperation, refusal, escalation, and reconciliation. |
 | 3 | **Raven/Starling convergence** | Replace the hard mode split with contextual subject classification while retaining mode-specific presentation where useful. |
-| 4 | **Saved lookbooks** | Persist an effective recipe, director’s brief, and selected frames so the team can reopen or share it. Frame-level re-rolls are now complete. |
+| 4 | **Saved lookbooks** | Persist an effective recipe, director’s brief, explicit selected frames, outfit system, and source/model so the team can reopen or share a planned set. |
 | 5 | **Operation-to-role-play bridge** | Allow a generated fictional encounter to seed the role-play opening message and preserve its scenario context. |
 
 ## Persistent Cloud Computer
@@ -197,12 +201,12 @@ Before handing Hulukipedia to another teammate, confirm all of the following.
 | Check | Expected state |
 |---|---|
 | `git status` | Clean working tree after push. |
-| `git log -1` | `b940de6` or a later documented commit. |
-| Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200 with `version: "3.4.0"`. |
-| Live frontend asset | Contains **Ask the Archive**, `claude-opus-4-6`, **Visual Scene Studio**, `unmistakably seated`, **Re-roll Frame**, **Duo Chemistry**, **After Dark Editorial**, `Mistral Studio`, and `Default: Grok 4.20`. |
-| Raven UI | Shows **Fictional Operation Parameters** in Addendums, expanded Visual Scene Studio categories, the full Raven Scenario Deck, black-gold-emerald styling, and independent Studio **Image Source** / **Image Generator** controls. |
+| `git log -1` | `40e5e72` or a later documented commit. |
+| Live health endpoint | `https://hulukipedia.teamtomorrowlabs.workers.dev/api/health` returns HTTP 200 with `version: "3.5.0"`. |
+| Live frontend asset | Contains **Ask the Archive**, `claude-opus-4-6`, **Google Omni Flash**, **Visual Scene Studio**, **Choose exact angles & positions**, **Outfit system**, **Re-roll Frame**, **Duo Chemistry**, **After Dark Editorial**, `Mistral Studio`, and `Default: Grok 4.20`. |
+| Raven UI | Shows **Fictional Operation Parameters** in Addendums, expanded Visual Scene Studio categories, the full Raven Scenario Deck, Pearl white-and-gold styling, and independent Studio **Image Source** / **Image Generator** / **planned frame controls**. |
 | Role-Play selector | Opens upward near the bottom of the page, remains scrollable, and identifies Grok 4.20 as the default without clipping. |
 | Starling UI | Keeps its existing Historical Timeline and Public Persona Analysis behavior. |
 | Deployment strategy | `deploy.py`, not Wrangler OAuth, unless the team deliberately changes the authentication setup. |
 
-Hulukipedia is now in a stable, documented state with configurable fictional operations, a direct model-selectable Investigative Console, a current and entitlement-aware Venice catalog, direct Mistral Studio support, verified Claude Opus 4.6 / Claude 4.5 and Gemini 3.1 Pro paths, capability-marked model menus, shared mature creative scenarios across both modes, a production-tested Visual Scene Studio with independent image-source/model control and per-frame re-rolls, a Grok 4.20 default, and a black-gold-emerald visual identity. Source is pushed to `main`.
+Hulukipedia is now in a stable, documented state with configurable fictional operations, a direct model-selectable Investigative Console, direct Google Omni Flash Preview and Mistral Studio support, a current and entitlement-aware Venice catalog, verified Claude Opus 4.6 / Claude 4.5 and Gemini 3.1 Pro paths, capability-marked model menus, shared mature creative scenarios across both modes, a production-tested Visual Set Planner with explicit count/angle/outfit/source decisions and per-frame re-rolls, a Grok 4.20 default, and a Pearl white-and-gold visual identity. Source is pushed to `main`.
