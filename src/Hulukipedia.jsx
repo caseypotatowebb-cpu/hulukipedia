@@ -35,6 +35,7 @@ const PROVIDERS = {
     color: "#d97706",
     // User policy: Claude 4.5 and earlier only. 4.8+ is intentionally excluded.
     models: [
+      { id: "claude-opus-4-6", name: "Claude Opus 4.6 — flagship" },
       { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5 — preferred" },
       { id: "claude-opus-4-5-20251101", name: "Claude Opus 4.5" },
       { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5 ⚡" },
@@ -156,6 +157,7 @@ const ROLEPLAY_DEFAULT_MODEL = "grok-4.20-0309-non-reasoning";
 const ROLEPLAY_ALTERNATES = [
   { provider: "xai", model: "grok-4.20-0309-reasoning", label: "Grok 4.20 Reasoning 🧠 — deliberate character analysis" },
   { provider: "xai", model: "grok-4.3", label: "Grok 4.3 — accuracy + voice" },
+  { provider: "anthropic", model: "claude-opus-4-6", label: "Claude Opus 4.6 — flagship character depth" },
   { provider: "anthropic", model: "claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5 — intimate nuance" },
   { provider: "mistral", model: "mistral-medium-2604", label: "Mistral Medium 3.5 🧠 — textured scenes" },
   { provider: "venice", model: "venice-uncensored-role-play", label: "Venice RP 🔥 — open-ended character play" },
@@ -206,10 +208,9 @@ const ROLEPLAY_SCENARIOS = [
   },
   {
     id: "after-hours",
-    label: "After Hours — Raven only",
-    note: "Mature fictional chemistry, nightlife, and private atmosphere without reducing the character to a prop.",
-    ravenOnly: true,
-    direction: "This is an after-hours fictional scene between consenting adults. Allow mature flirtation, glamour, tension, and personal boundaries, but keep the character's agency, personality, and dialogue in charge. Do not describe explicit sexual acts or use a real person as the subject of this premise.",
+    label: "After Hours",
+    note: "Mature chemistry, nightlife, and private atmosphere without reducing the subject to a prop.",
+    direction: "This is an after-hours scene between consenting adults. Allow mature flirtation, glamour, tension, and personal boundaries, but keep the subject's agency, personality, and dialogue in charge. Do not describe explicit sexual acts.",
   },
 ];
 
@@ -934,11 +935,10 @@ const VISUAL_SCENE_RECIPES = [
   },
   {
     id: "after-dark",
-    label: "After Dark Editorial — Raven only",
-    description: "Adult fictional nightlife, glamour, and private atmosphere without losing character or agency.",
+    label: "After Dark Editorial",
+    description: "Adult nightlife, glamour, and private atmosphere without losing character or agency.",
     aspectRatio: "16:9",
-    ravenOnly: true,
-    artDirection: "an adult fictional after-hours editorial with cinematic nightlife, confident styling, mature atmosphere, a clear sense of agency, and non-explicit sensuality",
+    artDirection: "an adult after-hours editorial with cinematic nightlife, confident styling, mature atmosphere, a clear sense of agency, and non-explicit sensuality",
     shots: [
       { label: "Night Arrival", direction: "a dramatic full-body arrival beneath practical night lighting, confident styling, and a destination that feels intentional" },
       { label: "Room Read", direction: "a three-quarter interior frame with a poised, self-directed posture and visual clues about the private atmosphere" },
@@ -956,8 +956,8 @@ function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief, coStar 
   const duoDirection = recipe.requiresCoStar
     ? ` Co-star direction: ${coStar.trim() || "an unnamed adult counterpart appropriate to the director's brief"}. Show exactly two distinct adult people in one continuous moment; never duplicate, mirror, fuse, or confuse their faces or bodies.`
     : "";
-  const matureConstraint = recipe.ravenOnly
-    ? " All depicted characters are fictional adults. Keep the atmosphere mature and character-forward, with no explicit sexual activity, nudity, coercion, or underage coding."
+  const matureConstraint = recipe.id === "after-dark"
+    ? " All depicted people are adults. Keep the atmosphere mature and character-forward, with no explicit sexual activity, nudity, coercion, or underage coding."
     : "";
 
   return `${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. Shot direction: ${shot.direction}. ${optionalBrief}${duoDirection}${matureConstraint} Keep the person/character recognizably consistent with the identity anchor. Use a single coherent wardrobe and setting appropriate to this shot. Natural anatomy, clear hands, believable proportions, grounded lighting, and one clear visual focal point. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.`;
@@ -977,6 +977,15 @@ export default function Hulukipedia() {
   // Global provider/model state (used as defaults, each section can override)
   const [globalProvider, setGlobalProvider] = useState(DEFAULT_PROVIDER);
   const [globalModel, setGlobalModel] = useState(DEFAULT_MODEL);
+
+  // Investigative Console uses a deliberately independent model choice so a question never changes the next dossier's defaults.
+  const [investigatorProvider, setInvestigatorProvider] = useState(DEFAULT_PROVIDER);
+  const [investigatorModel, setInvestigatorModel] = useState(DEFAULT_MODEL);
+  const [investigatorQuestion, setInvestigatorQuestion] = useState("");
+  const [investigatorWeb, setInvestigatorWeb] = useState(true);
+  const [investigatorResult, setInvestigatorResult] = useState(null);
+  const [investigatorLoading, setInvestigatorLoading] = useState(false);
+  const [investigatorError, setInvestigatorError] = useState(null);
 
   // Per-section provider overrides — initialized with smart defaults
   const [sectionProviders, setSectionProviders] = useState(SECTION_DEFAULTS);
@@ -1045,10 +1054,39 @@ export default function Hulukipedia() {
   const t = themes[theme];
   const selectedImageModel = IMAGE_MODELS.find(item => item.id === imageModel) || IMAGE_MODELS[0];
   const selectedVisualImageModel = IMAGE_MODELS.find(item => item.id === visualImageModel) || IMAGE_MODELS[0];
-  const availableVisualRecipes = VISUAL_SCENE_RECIPES.filter(recipe => !recipe.ravenOnly || mode === "raven");
+  const availableVisualRecipes = VISUAL_SCENE_RECIPES;
   const selectedVisualRecipe = availableVisualRecipes.find(item => item.id === visualRecipeId) || availableVisualRecipes[0];
-  const availableRolePlayScenarios = ROLEPLAY_SCENARIOS.filter(scenario => !scenario.ravenOnly || mode === "raven");
+  const availableRolePlayScenarios = ROLEPLAY_SCENARIOS;
   const selectedRolePlayScenario = availableRolePlayScenarios.find(scenario => scenario.id === rpScenarioId) || availableRolePlayScenarios[0];
+
+  // ─── INVESTIGATIVE CONSOLE ───
+  const runInvestigation = async () => {
+    const question = investigatorQuestion.trim();
+    if (!question || investigatorLoading) return;
+    setInvestigatorLoading(true);
+    setInvestigatorError(null);
+    setInvestigatorResult(null);
+
+    const systemPrompt = `You are Hulukipedia's direct investigative console. Answer the user's question as a concise but substantive intelligence note. Distinguish documented fact from inference, name uncertainty where it matters, and do not pretend that a question needs a full dossier. Use clear Markdown headings only when they improve readability. When web grounding is available, cite concrete sources or describe source limitations honestly.`;
+    const userPrompt = `Investigative question:\n${question}`;
+
+    try {
+      if (investigatorWeb && investigatorProvider === "perplexity") {
+        const result = await callDeepSearch(question, systemPrompt);
+        setInvestigatorResult({ text: result.text, citations: result.citations || [], provider: investigatorProvider, model: investigatorModel, web: true });
+      } else {
+        const searchCapable = ["anthropic", "venice", "xai"].includes(investigatorProvider);
+        const text = investigatorWeb && searchCapable
+          ? await callAIWithSearch(systemPrompt, userPrompt, investigatorProvider, investigatorModel)
+          : await callAI(systemPrompt, userPrompt, investigatorProvider, investigatorModel, 2500);
+        setInvestigatorResult({ text, citations: [], provider: investigatorProvider, model: investigatorModel, web: investigatorWeb && searchCapable });
+      }
+    } catch (error) {
+      setInvestigatorError(error.message || "The investigation could not be completed.");
+    } finally {
+      setInvestigatorLoading(false);
+    }
+  };
 
   // ─── SEARCH ───
   const handleSearch = async (searchMode) => {
@@ -1618,6 +1656,7 @@ ${rpSpeechRules}`;
 
         {/* ═══ SEARCH VIEW ═══ */}
         {view === "search" && !clarifications && (
+          <>
           <div className="max-w-2xl mx-auto p-6 shadow-md" style={cardStyle}>
             {/* Global Provider Selector */}
             <div className="mb-4 flex items-center justify-between">
@@ -1691,6 +1730,93 @@ ${rpSpeechRules}`;
               </button>
             </div>
           </div>
+
+          <div className="max-w-2xl mx-auto mt-5 p-6 shadow-md" style={{ ...cardStyle, background: `linear-gradient(135deg, ${t.bgContainer}, ${t.bgSection})` }}>
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <SearchCode size={18} style={{ color: t.accentGold }} />
+                  <h2 className="font-bold" style={{ color: t.accentGold, letterSpacing: "0.08em" }}>ASK THE ARCHIVE</h2>
+                </div>
+                <p className="text-xs mt-1" style={{ color: t.textSecondary }}>A direct investigative lane for questions, leads, comparisons, and creative research—no dossier required.</p>
+              </div>
+              <ProviderSelector
+                provider={investigatorProvider}
+                model={investigatorModel}
+                onProviderChange={(provider) => { setInvestigatorProvider(provider); setInvestigatorModel(PROVIDERS[provider].models[0].id); }}
+                onModelChange={setInvestigatorModel}
+                theme={theme}
+              />
+            </div>
+
+            <textarea
+              value={investigatorQuestion}
+              onChange={event => setInvestigatorQuestion(event.target.value)}
+              rows={4}
+              placeholder="Ask anything worth investigating: a person, a claim, a story problem, a comparison, a rumor, an idea..."
+              className="w-full rounded-md px-4 py-3 transition-all outline-none resize-none"
+              style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+              onFocus={event => event.target.style.boxShadow = `0 0 0 2px ${t.accentGold}`}
+              onBlur={event => event.target.style.boxShadow = "none"}
+              onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") { event.preventDefault(); runInvestigation(); } }}
+            />
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setInvestigatorWeb(value => !value)}
+                className="text-xs font-bold px-3 py-2 rounded-md transition-all"
+                style={{ backgroundColor: investigatorWeb ? "#0f5132" : t.bgMain, border: `1px solid ${investigatorWeb ? "#2b7a4b" : t.border}`, color: investigatorWeb ? "#f5d56b" : t.textSecondary }}
+              >
+                <Globe size={13} className="inline mr-1" /> Web-grounded {investigatorWeb ? "ON" : "OFF"}
+              </button>
+              <button
+                type="button"
+                onClick={runInvestigation}
+                disabled={!investigatorQuestion.trim() || investigatorLoading}
+                className="flex items-center justify-center font-bold py-2.5 px-5 rounded-md transition-all shadow-lg disabled:opacity-50"
+                style={{ backgroundColor: t.accentGold, color: "#161309", border: `1px solid ${t.accentHover}` }}
+              >
+                {investigatorLoading ? <Spinner size={18} /> : <><Search size={17} className="mr-2" /> Investigate</>}
+              </button>
+            </div>
+            <p className="text-[11px] mt-2" style={{ color: t.textSecondary }}>Tip: ⌘/Ctrl + Enter runs the question. Perplexity uses the dedicated research route; other providers use their own analysis or search capability when selected.</p>
+
+            {investigatorError && (
+              <div className="mt-4 p-3 rounded-md text-sm" style={{ backgroundColor: "rgba(180,45,45,0.14)", border: "1px solid rgba(225,93,93,0.5)", color: "#ffc0c0" }}>
+                {investigatorError}
+              </div>
+            )}
+
+            {investigatorResult && (
+              <div className="mt-5 p-4 rounded-md" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}` }}>
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                  <div>
+                    <div className="text-xs font-bold" style={{ color: t.accentGold, letterSpacing: "0.08em" }}>INVESTIGATIVE NOTE</div>
+                    <div className="text-[11px] mt-1" style={{ color: t.textSecondary }}>{PROVIDERS[investigatorResult.provider]?.name || investigatorResult.provider} · {PROVIDERS[investigatorResult.provider]?.models.find(item => item.id === investigatorResult.model)?.name || investigatorResult.model}{investigatorResult.web ? " · web-grounded" : ""}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => navigator.clipboard?.writeText(investigatorResult.text)} className="text-xs px-2 py-1 rounded" style={{ border: `1px solid ${t.border}`, color: t.textSecondary }}><Copy size={12} className="inline mr-1" />Copy</button>
+                    <button type="button" onClick={() => { setInvestigatorResult(null); setInvestigatorError(null); }} className="text-xs px-2 py-1 rounded" style={{ border: `1px solid ${t.border}`, color: t.textSecondary }}><X size={12} className="inline mr-1" />Clear</button>
+                  </div>
+                </div>
+                <div className="md-content"><MarkdownContent text={investigatorResult.text} theme={theme} /></div>
+                {investigatorResult.citations?.length > 0 && (
+                  <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${t.border}` }}>
+                    <div className="text-[11px] font-bold mb-2" style={{ color: t.textSecondary, letterSpacing: "0.06em" }}>SOURCES RETURNED</div>
+                    <div className="flex flex-wrap gap-2">
+                      {investigatorResult.citations.slice(0, 10).map((citation, index) => {
+                        const href = typeof citation === "string" ? citation : citation.url || citation.uri || citation.sourceUrl;
+                        const label = typeof citation === "string" ? citation : citation.title || citation.url || citation.uri || `Source ${index + 1}`;
+                        return href ? <a key={`${href}-${index}`} href={href} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 rounded max-w-56 truncate" style={{ color: t.accentHover, border: `1px solid ${t.border}` }}>{label}</a> : <span key={index} className="text-xs px-2 py-1 rounded" style={{ color: t.textSecondary, border: `1px solid ${t.border}` }}>{label}</span>;
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          </>
         )}
 
         {/* ═══ CLARIFICATION MODAL ═══ */}

@@ -83,7 +83,7 @@ export default {
             id: "anthropic",
             name: "Anthropic Claude",
             capabilities: ["text"],
-            models: ["claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101", "claude-haiku-4-5-20251001"],
+            models: ["claude-opus-4-6", "claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101", "claude-haiku-4-5-20251001"],
           },
           {
             id: "perplexity",
@@ -126,7 +126,7 @@ export default {
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.3.0" }, 200, reqOrigin);
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.4.0" }, 200, reqOrigin);
     }
 
     // ─── Static assets ───
