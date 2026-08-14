@@ -297,6 +297,25 @@ async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pr
   }
 }
 
+async function callSceneCheck(image, contract) {
+  try {
+    const res = await fetch(`${API_BASE}/api/scene-check`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image, contract }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data.check || null;
+  } catch (e) {
+    // A generated frame remains usable if optional vision review is temporarily unavailable.
+    return { status: "unavailable", note: `Requirement review unavailable: ${e.message}`, checks: {} };
+  }
+}
+
 // ─── ROLE-PLAY CHAT ───
 // The /api/ai worker endpoint takes a single system + user prompt (no messages
 // array), so we serialize the running conversation into the user prompt as a
@@ -733,32 +752,92 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model,
 
 // ─── IMAGE MODEL SELECTOR ───
 // Model IDs and capabilities were verified against Venice's live image catalog on 2026-08-12.
-// ─── FICTIONAL OPERATION PRESETS ───
-// These controls steer Raven's narrative addendums without turning them into real-world operational advice.
-const OPERATION_MISSIONS = [
-  { id: "observe", label: "Observe & Document", summary: "Build a character-rich record of habits, tells, routines, and interactions." },
-  { id: "protect", label: "Protective Detail", summary: "Keep the subject safe while revealing what they notice, trust, and resist." },
-  { id: "assess", label: "Trust & Rapport Assessment", summary: "Test whether a relationship can form and what earns or loses their confidence." },
-  { id: "negotiate", label: "Negotiation / Recruitment", summary: "Explore what leverage, values, and interpersonal dynamics might move them." },
-  { id: "recover", label: "Fictional Rescue / Recovery", summary: "Frame a high-stakes narrative situation that reveals decisions under pressure." },
-  { id: "social", label: "Undercover Social Encounter", summary: "Place the observer in the subject's orbit and stress-test the social dynamics." },
-  { id: "custom", label: "Custom Narrative Assignment", summary: "Use the freeform assignment brief below as the primary fictional setup." },
+// ─── SCENE LAB ───
+// Shared imaginative scene controls. Raven and Starling use the same creative instruments;
+// Starling labels its scenes as imaginative rather than presenting invented private life as fact.
+const SCENE_LENSES = [
+  { id: "observation", label: "Observation", note: "Read the room through behavior, glances, and what each person chooses not to say." },
+  { id: "confrontation", label: "Confrontation", note: "A disagreement with real stakes, distinct points of view, and no easy capitulation." },
+  { id: "private", label: "Private Conversation", note: "An intimate, unscripted moment where the setting gives both people room to be honest or evasive." },
+  { id: "chemistry", label: "Chemistry", note: "Adult attraction, restraint, humor, and charged attention with agency on both sides." },
+  { id: "temptation", label: "Deal / Temptation", note: "A proposition, bargain, invitation, or moral complication that tests desire and judgment." },
+  { id: "after-hours", label: "After Hours", note: "Adult nightlife, glamour, privacy, and the tension of a moment that could become something else." },
+  { id: "aftermath", label: "Aftermath", note: "The quiet after a choice, argument, public moment, or private mistake." },
+  { id: "custom", label: "Custom Scene", note: "Your direction leads; the system turns it into an emotionally complete scene." },
 ];
 
-const OPERATION_TONES = [
-  { id: "grounded", label: "Grounded Field Notes" },
-  { id: "noir", label: "Tense Noir" },
-  { id: "warm", label: "Low-Key / Character Intimate" },
-  { id: "adventure", label: "High-Stakes Adventure" },
+const SCENE_RELATIONSHIPS = [
+  "Colleagues with history", "Authority friction", "Old friends", "Rivals who respect each other",
+  "Former partners", "Unresolved attraction", "Private arrangement", "Newly met adults", "Custom",
 ];
 
-function buildOperationContext(operation) {
-  const mission = OPERATION_MISSIONS.find(item => item.id === operation.mission) || OPERATION_MISSIONS[0];
-  const tone = OPERATION_TONES.find(item => item.id === operation.tone) || OPERATION_TONES[0];
-  const observer = operation.observer.trim() || "an unnamed field observer";
-  const notes = operation.assignment.trim() || "No additional assignment notes were supplied.";
+const SCENE_VOLTAGES = [
+  { id: "grounded", label: "Grounded", note: "Naturalistic, human-sized pressure." },
+  { id: "simmering", label: "Simmering", note: "Subtext and restraint doing the work." },
+  { id: "charged", label: "Charged", note: "Attention is hard to hide and neither person is neutral." },
+  { id: "intimate", label: "Intimate", note: "Close range, private knowledge, emotional exposure." },
+  { id: "provocative", label: "Provocative", note: "Teasing, risk, invitation, and a deliberate push against the usual guardrails." },
+  { id: "volatile", label: "Volatile", note: "Desire, anger, or fear keeps changing the temperature in the room." },
+  { id: "decadent", label: "Decadent", note: "Rich atmosphere, confidence, appetite, and a setting built for temptation." },
+  { id: "custom", label: "Custom", note: "Use the director note to define the exact heat and texture." },
+];
 
-  return `\n\nFICTIONAL OPERATION PARAMETERS — use these to shape the scenario:\n- Observer / perspective: ${observer}\n- Narrative assignment: ${mission.label}\n- Assignment purpose: ${mission.summary}\n- Requested tone: ${tone.label}\n- Extra scenario context: ${notes}\n\nThis is fictional, character-centered scenario writing. Focus on atmosphere, behavior, emotional stakes, and believable character choices. Do not provide real-world surveillance tradecraft, coercion, evasion, weapons, entry, or actionable operational instructions.`;
+function buildSceneLabContext(scene, subjectName, mode, outputType) {
+  const lens = SCENE_LENSES.find(item => item.id === scene.lens) || SCENE_LENSES[0];
+  const voltage = SCENE_VOLTAGES.find(item => item.id === scene.voltage) || SCENE_VOLTAGES[0];
+  const counterpart = scene.counterpart.trim() || "an adult counterpart the user has intentionally left unnamed";
+  const relationship = scene.relationship === "Custom" ? (scene.customRelationship.trim() || "a complicated adult relationship") : scene.relationship;
+  const setting = scene.setting.trim() || "a private, story-appropriate setting chosen for emotional pressure rather than logistics";
+  const subjectWant = scene.subjectWant.trim() || "to protect their dignity while deciding how much truth to reveal";
+  const counterpartWant = scene.counterpartWant.trim() || "to get an honest answer without surrendering their own position";
+  const pressure = scene.pressure.trim() || "an unresolved thing neither person can keep pretending does not matter";
+  const outcome = scene.outcome.trim() || "an earned turn that changes what each person understands, even if it leaves the question open";
+  const note = scene.note.trim() || "No additional director note.";
+  const realPersonNote = mode === "starling"
+    ? "This is explicitly imaginative character fiction inspired by a public-facing person, not a claim about their private life, motives, or conduct."
+    : "This is imaginative character fiction grounded in the subject's established world and voice.";
+
+  return `\n\nSCENE LAB CONTRACT — NON-NEGOTIABLE:\n- Output type: ${outputType}.\n- Primary subject: ${subjectName}.\n- Named adult counterpart: ${counterpart}. Do not omit or replace this person with a generic bystander.\n- Relationship / history: ${relationship}.\n- Scene lens: ${lens.label} — ${lens.note}\n- Setting / occasion: ${setting}.\n- Emotional voltage: ${voltage.label} — ${voltage.note}\n- What ${subjectName} wants: ${subjectWant}.\n- What ${counterpart} wants: ${counterpartWant}.\n- Pressure point, boundary, secret, or temptation: ${pressure}.\n- Desired result: ${outcome}.\n- Director note: ${note}.\n\n${realPersonNote}\n\nWrite the scene as adult, emotionally intelligent character fiction. Both people have agency, interiority, boundaries, and leverage. Use concrete body language and at least two short pieces of dialogue. Let desire, humor, resentment, vulnerability, temptation, status, or restraint appear through choices—not sterile analyst language. Do not turn the scene into real-world surveillance, coercion, instructional tactics, or a procedural report.`;
+}
+
+function buildSceneLabPrompt(scene, subjectName, mode, kind) {
+  const isObservation = kind === "observation";
+  const context = buildSceneLabContext(scene, subjectName, mode, isObservation ? "Scene Observation" : "Encounter Simulation");
+  return {
+    system: isObservation
+      ? "You write vivid, adult character fiction with the observational precision of a great novelist and the emotional courage of a scene that knows what it wants."
+      : "You write charged, character-accurate encounter scenes. You prioritize voice, agency, chemistry, tension, and an emotionally consequential turn over exposition.",
+    user: `${isObservation
+      ? `Write a 500-700 word SCENE OBSERVATION about ${subjectName}. Begin inside the declared setting, establish both adults immediately, and let the reader feel what changes in the room when they notice each other. Include sensory atmosphere, specific physical behavior, dialogue, the selected pressure point, and a final analyst-style read on what the scene exposed. Do not summarize the contract—dramatize it.`
+      : `Write a 600-850 word ENCOUNTER SIMULATION about ${subjectName}. Begin at the moment both adults are already in the room. Make their relationship, competing wants, and selected voltage legible through dialogue, proximity, silence, and choice. Build to a reversal, revelation, refused offer, or altered arrangement that honors the desired outcome. Keep every named participant distinct and active; do not reduce either to scenery.`}${context}`,
+  };
+}
+
+function buildVisualContract({ subjectName, counterpart, relationship, situation, voltage, wardrobe, shot, sharedFrame }) {
+  const hasCounterpart = Boolean(counterpart.trim());
+  const castRule = hasCounterpart && sharedFrame
+    ? `Depict exactly two distinct adult people: ${subjectName} and ${counterpart.trim()}. ${counterpart.trim()} must be fully visible and recognizably distinct in this frame; never omit, crop away, replace, blur, duplicate, mirror, fuse, or turn them into a background stranger.`
+    : `Depict ${subjectName} as the required primary subject. Do not duplicate, mirror, fuse, or replace the primary subject.`;
+  const relationshipRule = hasCounterpart && sharedFrame
+    ? `Relationship / energy: ${relationship || "an adult relationship with specific history"}. Their spacing, eye line, posture, and interaction must make this dynamic legible.`
+    : "The primary subject's presence, posture, and expression must carry the selected scene energy.";
+  return {
+    hasCounterpart: hasCounterpart && sharedFrame,
+    counterpart: hasCounterpart ? counterpart.trim() : "",
+    relationship: relationship || "",
+    situation: situation || "",
+    voltage: voltage || "Grounded",
+    wardrobe,
+    shot: shot.label,
+    requiredBeat: shot.direction,
+    text: `SCENE CONTRACT — NON-NEGOTIABLE:\n- ${castRule}\n- ${relationshipRule}\n- Situation / location: ${situation || "Use the director's brief as the exact setting and make it visually unmistakable."}\n- Emotional voltage: ${voltage || "Grounded"}.\n- Wardrobe requirement: ${wardrobe}\n- Required frame and interaction: ${shot.direction}\n- This is one continuous moment, not a collage. Honor every named person, the location, wardrobe, and required visual beat.`,
+  };
+}
+
+function parseSceneCheck(raw) {
+  if (!raw) return null;
+  const block = raw.match(/\{[\s\S]*\}/)?.[0] || raw;
+  try { return JSON.parse(block); } catch { return { status: "review", note: raw.slice(0, 300), checks: {} }; }
 }
 
 const IMAGE_MODELS = [
@@ -976,18 +1055,30 @@ const VISUAL_SCENE_RECIPES = [
   },
 ];
 
-function buildVisualScenePrompt(identityAnchor, recipe, shot, userBrief, coStar = "", wardrobeDirection = "") {
-  const optionalBrief = userBrief.trim()
-    ? `Director's brief: ${userBrief.trim()}.`
+function buildVisualScenePrompt(identityAnchor, recipe, shot, visualContext, wardrobeDirection = "", frameIndex = 0) {
+  const { brief = "", counterpart = "", relationship = "", situation = "", voltage = "Grounded", counterpartCoverage = "all" } = visualContext || {};
+  const sharedFrame = Boolean(counterpart.trim()) && (counterpartCoverage === "all" || frameIndex === 0);
+  const contract = buildVisualContract({
+    subjectName: visualContext?.subjectName || "the primary subject",
+    counterpart,
+    relationship,
+    situation: situation.trim() || brief.trim(),
+    voltage,
+    wardrobe: wardrobeDirection,
+    shot,
+    sharedFrame,
+  });
+  const optionalBrief = brief.trim()
+    ? `Director's brief: ${brief.trim()}.`
     : "Director's brief: make choices that feel natural and true to the subject's established personality and world.";
-  const duoDirection = recipe.requiresCoStar
-    ? ` Co-star direction: ${coStar.trim() || "an unnamed adult counterpart appropriate to the director's brief"}. Show exactly two distinct adult people in one continuous moment; never duplicate, mirror, fuse, or confuse their faces or bodies.`
-    : "";
   const matureConstraint = recipe.id === "after-dark"
-    ? " All depicted people are adults. Keep the atmosphere mature and character-forward, with no explicit sexual activity, nudity, coercion, or underage coding."
+    ? " All depicted people are adults. Keep the atmosphere mature, consensual, character-forward, and visibly agentic; never use nudity, coercion, or underage coding."
     : "";
+  const contractClosing = contract.hasCounterpart
+    ? `FINAL CAST CHECK: ${visualContext.subjectName} and ${contract.counterpart} are both required adult people in this single frame. If either is missing, the image is wrong.`
+    : `FINAL SUBJECT CHECK: ${visualContext.subjectName} is the required primary subject. Do not substitute a generic lookalike or duplicate them.`;
 
-  return `${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. Shot direction: ${shot.direction}. ${wardrobeDirection} ${optionalBrief}${duoDirection}${matureConstraint} Keep the person/character recognizably consistent with the identity anchor. Natural anatomy, clear hands, believable proportions, grounded lighting, and one clear visual focal point. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.`;
+  return `${contract.text}\n\n${identityAnchor}\n\nVISUAL SCENE STUDIO — ${recipe.label}. Create ONE standalone image, never a collage, contact sheet, triptych, split screen, mirror, or duplicated subject. ${recipe.artDirection}. ${optionalBrief} ${matureConstraint} Keep every required person recognizably consistent with their stated identity and relationship. Natural anatomy, clear hands, believable proportions, grounded lighting, and one clear visual focal point. No visible text, captions, watermarks, UI, border, or multiple camera angles in one frame.\n\n${contractClosing}`;
 }
 
 // ─── MAIN COMPONENT ───
@@ -1045,7 +1136,11 @@ export default function Hulukipedia() {
   const [visualRecipeId, setVisualRecipeId] = useState("editorial");
   const [visualBrief, setVisualBrief] = useState("");
   const [visualCoStar, setVisualCoStar] = useState("");
-  // A set never begins from a hidden recipe slice: the user explicitly chooses count, coverage, and wardrobe logic first.
+  const [visualRelationship, setVisualRelationship] = useState("Colleagues with history");
+  const [visualSituation, setVisualSituation] = useState("");
+  const [visualVoltage, setVisualVoltage] = useState("grounded");
+  const [visualCounterpartCoverage, setVisualCounterpartCoverage] = useState("all");
+  // A set never begins from a hidden recipe slice: the user explicitly chooses count, coverage, wardrobe logic, and required cast first.
   const [visualBatchSize, setVisualBatchSize] = useState(3);
   const [visualSelectedShotIndices, setVisualSelectedShotIndices] = useState([0, 1, 2]);
   const [visualWardrobeSystem, setVisualWardrobeSystem] = useState("continuity");
@@ -1054,14 +1149,22 @@ export default function Hulukipedia() {
   const [visualSetError, setVisualSetError] = useState(null);
   const [deepSearchResult, setDeepSearchResult] = useState(null);
 
-  // Raven-only narrative controls. They affect both fictional addendums, preserving the original defaults when untouched.
-  const [operationConfig, setOperationConfig] = useState({
-    observer: "Field Observer",
-    mission: "observe",
-    tone: "grounded",
-    assignment: "",
+  // Scene Lab is deliberately shared by Raven and Starling. Starling scenes are visibly framed as imaginative.
+  const [addendumMode, setAddendumMode] = useState("scene");
+  const [sceneConfig, setSceneConfig] = useState({
+    lens: "observation",
+    counterpart: "",
+    relationship: "Colleagues with history",
+    customRelationship: "",
+    setting: "",
+    subjectWant: "",
+    counterpartWant: "",
+    voltage: "grounded",
+    pressure: "",
+    outcome: "",
+    note: "",
   });
-  const setOperationField = (field, value) => setOperationConfig(current => ({ ...current, [field]: value }));
+  const setSceneField = (field, value) => setSceneConfig(current => ({ ...current, [field]: value }));
 
   // Lightbox (Part B) — shared by portrait + role-play chat images
   const [lightboxSrc, setLightboxSrc] = useState(null);
@@ -1154,8 +1257,8 @@ export default function Hulukipedia() {
     setClarifications(null);
     setIntel([]); setPhysical(""); setComm(""); setConvo("");
     setPsych(""); setStrategic(""); setAddendum1(""); setAddendum2("");
-    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualImageSource("venice"); setVisualImageModel("nano-banana-pro"); setVisualBrief(""); setVisualCoStar(""); setVisualRecipeId("editorial"); setVisualBatchSize(3); setVisualSelectedShotIndices([0, 1, 2]); setVisualWardrobeSystem("continuity"); setVisualWardrobeBrief(""); setDeepSearchResult(null);
-    setOperationConfig({ observer: "Field Observer", mission: "observe", tone: "grounded", assignment: "" });
+    setImageUrl(null); setImageError(null); setVisualSet([]); setVisualSetError(null); setVisualImageSource("venice"); setVisualImageModel("nano-banana-pro"); setVisualBrief(""); setVisualCoStar(""); setVisualRelationship("Colleagues with history"); setVisualSituation(""); setVisualVoltage("grounded"); setVisualCounterpartCoverage("all"); setVisualRecipeId("editorial"); setVisualBatchSize(3); setVisualSelectedShotIndices([0, 1, 2]); setVisualWardrobeSystem("continuity"); setVisualWardrobeBrief(""); setDeepSearchResult(null);
+    setAddendumMode("scene"); setSceneConfig({ lens: "observation", counterpart: "", relationship: "Colleagues with history", customRelationship: "", setting: "", subjectWant: "", counterpartWant: "", voltage: "grounded", pressure: "", outcome: "", note: "" });
     // Clear role-play session and creative framing on every new dossier (session-only memory)
     setRpMessages([]); setRpInput(""); setRpError(null); setRpScenarioId("open-room"); setRpScenarioBrief("");
     setView("results");
@@ -1263,14 +1366,15 @@ export default function Hulukipedia() {
         pObj = subKey ? prompts[promptKey](subKey) : prompts[promptKey];
       }
 
-      // Raven's field log and encounter simulation become configurable narrative exercises.
-      // The original prompts remain the base; this only layers in the user's chosen setup.
-      if (mode === "raven" && (promptKey === "addendum1" || promptKey === "addendum2")) {
-        const operationContext = buildOperationContext(operationConfig);
-        pObj = {
-          system: `${pObj.system}\n\nRespect the fictional-operation boundary in the supplied scenario parameters.`,
-          user: `${pObj.user}${operationContext}`,
-        };
+      // Scene Lab is a shared imaginative layer. It replaces sterile addendum prose with a declared cast,
+      // relationship, setting, voltage, wants, pressure point, and outcome in either dossier mode.
+      if (addendumMode === "scene" && (promptKey === "addendum1" || promptKey === "addendum2")) {
+        pObj = buildSceneLabPrompt(
+          sceneConfig,
+          subject.name,
+          mode,
+          promptKey === "addendum1" ? "observation" : "encounter"
+        );
       }
       
       const text = await callAI(pObj.system, pObj.user, getSP(key), getSM(key));
@@ -1358,24 +1462,40 @@ export default function Hulukipedia() {
     const recipe = selectedVisualRecipe;
     const shots = selectedVisualShots;
     const dimensions = ASPECT_DIMENSIONS[recipe.aspectRatio] || ASPECT_DIMENSIONS["1:1"];
-    const pendingSet = shots.map((shot, index) => ({
-      id: `${Date.now()}-${index}`,
-      label: shot.label,
-      direction: shot.direction,
-      wardrobeDirection: getWardrobeDirection(visualWardrobeSystem, visualWardrobeBrief, index, shots.length),
-      recipeId: recipe.id,
-      aspectRatio: recipe.aspectRatio,
-      width: dimensions.width,
-      height: dimensions.height,
-      model: visualImageModel,
-      source: visualImageSource,
-      resolution: "2K",
-      prompt: null,
-      rerollCount: 0,
-      status: "queued",
-      image: null,
-      error: null,
-    }));
+    const selectedVoltage = SCENE_VOLTAGES.find(item => item.id === visualVoltage) || SCENE_VOLTAGES[0];
+    const visualContext = {
+      subjectName: subject.name,
+      brief: visualBrief,
+      counterpart: visualCoStar,
+      relationship: visualRelationship,
+      situation: visualSituation,
+      voltage: selectedVoltage.label,
+      counterpartCoverage: visualCounterpartCoverage,
+    };
+    const pendingSet = shots.map((shot, index) => {
+      const wardrobeDirection = getWardrobeDirection(visualWardrobeSystem, visualWardrobeBrief, index, shots.length);
+      const sharedFrame = Boolean(visualCoStar.trim()) && (visualCounterpartCoverage === "all" || index === 0);
+      return {
+        id: `${Date.now()}-${index}`,
+        label: shot.label,
+        direction: shot.direction,
+        wardrobeDirection,
+        recipeId: recipe.id,
+        aspectRatio: recipe.aspectRatio,
+        width: dimensions.width,
+        height: dimensions.height,
+        model: visualImageModel,
+        source: visualImageSource,
+        resolution: "2K",
+        prompt: null,
+        contract: buildVisualContract({ subjectName: subject.name, counterpart: visualCoStar, relationship: visualRelationship, situation: visualSituation.trim() || visualBrief.trim(), voltage: selectedVoltage.label, wardrobe: wardrobeDirection, shot, sharedFrame }),
+        validation: null,
+        rerollCount: 0,
+        status: "queued",
+        image: null,
+        error: null,
+      };
+    });
     setVisualSet(pendingSet);
 
     try {
@@ -1383,13 +1503,15 @@ export default function Hulukipedia() {
       for (let index = 0; index < shots.length; index += 1) {
         const shot = shots[index];
         const wardrobeDirection = getWardrobeDirection(visualWardrobeSystem, visualWardrobeBrief, index, shots.length);
-        const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualBrief, visualCoStar, wardrobeDirection);
+        const prompt = buildVisualScenePrompt(identityAnchor, recipe, shot, visualContext, wardrobeDirection, index);
         setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "generating", prompt } : item));
         try {
           const image = visualImageSource === "venice"
             ? await callImageGen(prompt, "", visualImageModel, recipe.aspectRatio, "2K", dimensions.width, dimensions.height)
             : makePollinationsUrl(prompt, recipe.aspectRatio);
-          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "ready", image, prompt, error: null } : item));
+          const queuedFrame = pendingSet[index];
+          const validation = image ? await callSceneCheck(image, queuedFrame.contract) : null;
+          setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "ready", image, prompt, validation, error: null } : item));
           if (index === 0 && image) setImageUrl(image);
         } catch (e) {
           setVisualSet(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, status: "error", error: describeImageError(e, visualImageModel) } : item));
@@ -1414,8 +1536,9 @@ export default function Hulukipedia() {
       const image = frame.source === "venice"
         ? await callImageGen(frame.prompt, "", frame.model, frame.aspectRatio, frame.resolution, frame.width, frame.height)
         : makePollinationsUrl(frame.prompt, frame.aspectRatio);
+      const validation = image && frame.contract ? await callSceneCheck(image, frame.contract) : null;
       setVisualSet(current => current.map(item => item.id === frameId
-        ? { ...item, status: "ready", image, error: null, rerollCount: (item.rerollCount || 0) + 1 }
+        ? { ...item, status: "ready", image, validation, error: null, rerollCount: (item.rerollCount || 0) + 1 }
         : item));
     } catch (e) {
       setVisualSet(current => current.map(item => item.id === frameId
@@ -2278,19 +2401,54 @@ ${rpSpeechRules}`;
                   )}
                 </div>
 
-                {selectedVisualRecipe.requiresCoStar && (
-                  <div className="mt-3">
-                    <label className="block text-xs font-bold mb-1" style={{ color: t.textSecondary }}>CO-STAR / SECOND ADULT <span className="font-normal">(optional)</span></label>
+                <div className="mt-3 rounded-md p-3 space-y-3" style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}` }}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-widest" style={{ color: t.accentGold }}>04 · Cast & relationship contract</div>
+                      <div className="text-[10px] mt-1" style={{ color: t.textSecondary }}>Name a second adult whenever the frame must show a real relationship. Their presence becomes a requirement, not scenery.</div>
+                    </div>
+                    {visualCoStar.trim() && <span className="text-[10px] rounded px-2 py-1 font-bold" style={{ backgroundColor: t.highlight, color: t.accentGold, border: `1px solid ${t.border}` }}>CAST LOCK ON</span>}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>SECOND ADULT / COUNTERPART <span className="font-normal">(optional for solo sets)</span>
+                      <input
+                        value={visualCoStar}
+                        onChange={e => setVisualCoStar(e.target.value)}
+                        placeholder="e.g., Terry Jeffords, her sergeant"
+                        className="mt-1 w-full rounded text-sm px-2 py-2"
+                        style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
+                      />
+                    </label>
+                    <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>RELATIONSHIP / DYNAMIC
+                      <select value={visualRelationship} onChange={e => setVisualRelationship(e.target.value)} className="mt-1 w-full rounded text-sm px-2 py-2" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}>
+                        {SCENE_RELATIONSHIPS.map(item => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                    </label>
+                    <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>COUNTERPART COVERAGE
+                      <select value={visualCounterpartCoverage} onChange={e => setVisualCounterpartCoverage(e.target.value)} disabled={!visualCoStar.trim()} className="mt-1 w-full rounded text-sm px-2 py-2 disabled:opacity-50" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}>
+                        <option value="all">Required in every selected frame</option>
+                        <option value="opening">Required in the opening shared frame only</option>
+                      </select>
+                    </label>
+                    <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>EMOTIONAL VOLTAGE
+                      <select value={visualVoltage} onChange={e => setVisualVoltage(e.target.value)} className="mt-1 w-full rounded text-sm px-2 py-2" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}>
+                        {SCENE_VOLTAGES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                  <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>SITUATION / LOCATION CONTRACT <span className="font-normal">(optional, but strongly recommended for shared scenes)</span>
                     <input
-                      value={visualCoStar}
-                      onChange={e => setVisualCoStar(e.target.value)}
-                      placeholder="e.g., a rival archaeologist, their longtime partner, another adult character by name"
-                      className="w-full rounded text-sm px-2 py-2"
+                      value={visualSituation}
+                      onChange={e => setVisualSituation(e.target.value)}
+                      placeholder="e.g., Beach house after a long shift; ocean light through open doors; they are off the clock but not off guard"
+                      className="mt-1 w-full rounded text-sm px-2 py-2"
                       style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
                     />
-                    <div className="text-[10px] mt-1" style={{ color: t.textSecondary }}>Leave blank for an unnamed adult counterpart. The studio will direct two distinct people in one shared moment.</div>
-                  </div>
-                )}
+                  </label>
+                  {visualCoStar.trim() && <div className="text-[10px] leading-snug rounded px-2 py-2" style={{ backgroundColor: t.bgMain, color: t.textSecondary, border: `1px solid ${t.border}` }}>
+                    Every required shared frame will explicitly name <strong>{visualCoStar.trim()}</strong>, require two distinct adults, state the relationship, lock the selected wardrobe, and receive a post-generation visual requirement check. A weak frame stays visible but is labelled honestly for a contract re-roll.
+                  </div>}
+                </div>
 
                 <div className="mt-3 flex flex-col sm:flex-row gap-2">
                   <GenBtn onClick={generateVisualSet} loading={loading.visualSet} disabled={!visualPlanReady} style={{ backgroundColor: t.accentGold, color: "#fffdf7", flex: 1 }}>
@@ -2347,6 +2505,13 @@ ${rpSpeechRules}`;
                           <div className="text-[9px] mt-1 uppercase tracking-wide" style={{ color: t.textSecondary }}>
                             {item.source === "venice" ? `Venice · ${IMAGE_MODELS.find(model => model.id === item.model)?.name || item.model}` : "Pollinations"}
                           </div>
+                          {item.contract && <div className="mt-2 rounded px-2 py-1.5 text-[9px] leading-snug" style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}`, color: t.textSecondary }}>
+                            <strong style={{ color: t.accentGold }}>CONTRACT</strong> · {item.contract.hasCounterpart ? `${item.contract.counterpart} required · ${item.contract.relationship || "relationship locked"}` : "Primary subject locked"}<br />
+                            {item.contract.situation || "Scene setting follows the director brief"} · {item.contract.voltage}
+                          </div>}
+                          {item.validation && <div className="mt-2 rounded px-2 py-1.5 text-[9px] leading-snug" style={{ backgroundColor: item.validation.status === "pass" ? t.highlight : t.bgContainer, border: `1px solid ${item.validation.status === "pass" ? t.accentGold : t.border}`, color: item.validation.status === "pass" ? t.accentHover : t.textSecondary }}>
+                            <strong>{item.validation.status === "pass" ? "✓ REQUIREMENTS CHECK" : item.validation.status === "unavailable" ? "? REQUIREMENTS CHECK" : "↻ REVIEW NEEDED"}</strong>{item.validation.note ? ` · ${item.validation.note}` : ""}
+                          </div>}
                           {item.error && <div className="text-[10px] mt-2 leading-snug" style={{ color: "#ef4444" }}>{item.error}</div>}
                           <button
                             onClick={() => rerollVisualFrame(item.id)}
@@ -2471,72 +2636,73 @@ ${rpSpeechRules}`;
                 ADDENDUMS
               </h3>
 
-              {mode === "raven" && (
-                <div className="rounded-lg p-3 space-y-3" style={{ backgroundColor: t.bgSection, border: `1px solid ${t.border}` }}>
+              <div className="rounded-lg p-3 space-y-3" style={{ backgroundColor: t.bgSection, border: `1px solid ${t.border}` }}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Radio size={15} style={{ color: t.accentGold }} />
-                    <h4 className="text-xs font-bold tracking-widest" style={{ color: t.accentGold, fontFamily: "'Roboto Mono', monospace" }}>FICTIONAL OPERATION PARAMETERS</h4>
+                    <h4 className="text-xs font-bold tracking-widest" style={{ color: t.accentGold, fontFamily: "'Roboto Mono', monospace" }}>SCENE LAB</h4>
                   </div>
+                  {mode === "starling" && <div className="flex gap-1 text-[10px]">
+                    <button onClick={() => setAddendumMode("scene")} className="rounded px-2 py-1 font-bold" style={{ backgroundColor: addendumMode === "scene" ? t.accentGold : t.bgMain, color: addendumMode === "scene" ? "#fffdf7" : t.textSecondary, border: `1px solid ${t.border}` }}>Imaginative Scene</button>
+                    <button onClick={() => setAddendumMode("dossier")} className="rounded px-2 py-1 font-bold" style={{ backgroundColor: addendumMode === "dossier" ? t.accentGold : t.bgMain, color: addendumMode === "dossier" ? "#fffdf7" : t.textSecondary, border: `1px solid ${t.border}` }}>Dossier Addendums</button>
+                  </div>}
+                </div>
+                {addendumMode === "scene" ? <>
                   <p className="text-xs leading-relaxed" style={{ color: t.textSecondary }}>
-                    These settings reshape both Raven addendums around a particular observer and assignment, so the dossier can reveal the character in different situations.
+                    Build the actual moment instead of asking for generic notes: decide who is there, what history they carry, what each person wants, the heat in the room, and what has to give.
+                    {mode === "starling" && " Starling scenes are explicitly imaginative character fiction, not claims about private real life."}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>
-                      Observer / perspective
-                      <input
-                        value={operationConfig.observer}
-                        onChange={event => setOperationField("observer", event.target.value)}
-                        placeholder="e.g., veteran handler, old friend, rookie detective"
-                        className="mt-1 w-full rounded px-2 py-1.5 text-xs"
-                        style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
-                      />
-                    </label>
-                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>
-                      Narrative assignment
-                      <select
-                        value={operationConfig.mission}
-                        onChange={event => setOperationField("mission", event.target.value)}
-                        className="mt-1 w-full rounded px-2 py-1.5 text-xs"
-                        style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
-                      >
-                        {OPERATION_MISSIONS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>Scene lens
+                      <select value={sceneConfig.lens} onChange={event => setSceneField("lens", event.target.value)} className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}>
+                        {SCENE_LENSES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
                       </select>
                     </label>
-                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>
-                      Story tone
-                      <select
-                        value={operationConfig.tone}
-                        onChange={event => setOperationField("tone", event.target.value)}
-                        className="mt-1 w-full rounded px-2 py-1.5 text-xs"
-                        style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
-                      >
-                        {OPERATION_TONES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>Named adult counterpart
+                      <input value={sceneConfig.counterpart} onChange={event => setSceneField("counterpart", event.target.value)} placeholder="e.g., Terry Jeffords, her sergeant" className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
+                    </label>
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>Relationship / history
+                      <select value={sceneConfig.relationship} onChange={event => setSceneField("relationship", event.target.value)} className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}>
+                        {SCENE_RELATIONSHIPS.map(item => <option key={item} value={item}>{item}</option>)}
                       </select>
                     </label>
-                    <div className="text-xs leading-relaxed rounded px-2 py-1.5 flex items-center" style={{ backgroundColor: t.highlight, color: t.textSecondary }}>
-                      <Eye size={13} className="mr-1.5 shrink-0" />
-                      Character-driven fictional scenario writing — not real-world operational guidance.
-                    </div>
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>Emotional voltage
+                      <select value={sceneConfig.voltage} onChange={event => setSceneField("voltage", event.target.value)} className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}>
+                        {SCENE_VOLTAGES.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+                      </select>
+                    </label>
                   </div>
-                  <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>
-                    Assignment / scenario context <span className="font-normal">(optional)</span>
-                    <textarea
-                      value={operationConfig.assignment}
-                      onChange={event => setOperationField("assignment", event.target.value)}
-                      placeholder="e.g., The observer is trying to determine whether the subject will accept help after a public setback."
-                      rows={2}
-                      className="mt-1 w-full rounded px-2 py-1.5 text-xs resize-y"
-                      style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }}
-                    />
+                  {sceneConfig.relationship === "Custom" && <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>Custom relationship
+                    <input value={sceneConfig.customRelationship} onChange={event => setSceneField("customRelationship", event.target.value)} placeholder="What binds them, irritates them, or keeps them circling each other?" className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
+                  </label>}
+                  <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>Setting / occasion
+                    <input value={sceneConfig.setting} onChange={event => setSceneField("setting", event.target.value)} placeholder="e.g., Beach house after a fundraiser; ocean light, closed doors, neither quite ready to leave" className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
                   </label>
-                </div>
-              )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>What {subject.name || "the subject"} wants
+                      <input value={sceneConfig.subjectWant} onChange={event => setSceneField("subjectWant", event.target.value)} placeholder="What are they trying to get, avoid, prove, or feel?" className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
+                    </label>
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>What the counterpart wants
+                      <input value={sceneConfig.counterpartWant} onChange={event => setSceneField("counterpartWant", event.target.value)} placeholder="Their distinct want, boundary, or leverage" className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
+                    </label>
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>Pressure point / temptation / secret
+                      <input value={sceneConfig.pressure} onChange={event => setSceneField("pressure", event.target.value)} placeholder="The thing that makes this moment impossible to keep superficial" className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
+                    </label>
+                    <label className="text-xs font-bold" style={{ color: t.textSecondary }}>Desired turn / outcome
+                      <input value={sceneConfig.outcome} onChange={event => setSceneField("outcome", event.target.value)} placeholder="A confession, refusal, new bargain, rupture, relief, or delicious unresolved tension" className="mt-1 w-full rounded px-2 py-1.5 text-xs" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
+                    </label>
+                  </div>
+                  <label className="block text-xs font-bold" style={{ color: t.textSecondary }}>Director note <span className="font-normal">(optional)</span>
+                    <textarea value={sceneConfig.note} onChange={event => setSceneField("note", event.target.value)} placeholder="Anything specific about mood, body language, social stakes, wardrobe, boundaries, or the kind of beautiful trouble you want the scene to explore." rows={2} className="mt-1 w-full rounded px-2 py-1.5 text-xs resize-y" style={{ backgroundColor: t.bgMain, color: t.textPrimary, border: `1px solid ${t.border}` }} />
+                  </label>
+                </> : <p className="text-xs leading-relaxed" style={{ color: t.textSecondary }}>Dossier mode retains the timeline and public-persona addendums. Switch back to Imaginative Scene when you want a character-driven moment instead of a documentary read.</p>}
+              </div>
 
               {/* Addendum 1 */}
               <div style={sectionStyle}>
                 <SectionHeader
-                  icon={mode === "raven" ? <ClipboardList size={16} /> : <Clock size={16} />}
-                  title={mode === "raven" ? "Field Observation Log" : "Historical Timeline"}
+                  icon={addendumMode === "scene" ? <ClipboardList size={16} /> : <Clock size={16} />}
+                  title={addendumMode === "scene" ? "Scene Observation" : (mode === "raven" ? "Field Observation Log" : "Historical Timeline")}
                   sectionKey="add1"
                 />
                 <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
@@ -2549,15 +2715,15 @@ ${rpSpeechRules}`;
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#fffdf7" }}>
-                  <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Report" : "Generate Timeline"}
+                  <Sparkles size={14} className="mr-1" /> {addendumMode === "scene" ? "Generate Scene" : (mode === "raven" ? "Generate Report" : "Generate Timeline")}
                 </GenBtn>
               </div>
 
               {/* Addendum 2 */}
               <div style={sectionStyle}>
                 <SectionHeader
-                  icon={mode === "raven" ? <Users size={16} /> : <UserCheck size={16} />}
-                  title={mode === "raven" ? "Encounter Simulation" : "Public Persona Analysis"}
+                  icon={addendumMode === "scene" ? <Users size={16} /> : <UserCheck size={16} />}
+                  title={addendumMode === "scene" ? "Encounter Simulation" : (mode === "raven" ? "Encounter Simulation" : "Public Persona Analysis")}
                   sectionKey="add2"
                 />
                 <div className="min-h-[50px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.85rem" }}>
@@ -2570,7 +2736,7 @@ ${rpSpeechRules}`;
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: t.highlight, color: t.accentHover, border: `1px solid ${t.border}` }}>
-                  <Sparkles size={14} className="mr-1" /> {mode === "raven" ? "Generate Simulation" : "Generate Analysis"}
+                  <Sparkles size={14} className="mr-1" /> {addendumMode === "scene" ? "Generate Encounter" : (mode === "raven" ? "Generate Simulation" : "Generate Analysis")}
                 </GenBtn>
               </div>
             </div>

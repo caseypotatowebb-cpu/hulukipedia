@@ -43,7 +43,7 @@ export default {
     // ─── Optional team token gate for the paid /api POST endpoints ───
     const protectedPost =
       request.method === "POST" &&
-      (url.pathname === "/api/ai" || url.pathname === "/api/image" || url.pathname === "/api/search");
+      (url.pathname === "/api/ai" || url.pathname === "/api/image" || url.pathname === "/api/search" || url.pathname === "/api/scene-check");
     if (protectedPost && env.APP_TOKEN) {
       const sameOrigin = reqOrigin === url.origin;
       const hasToken = request.headers.get("x-app-token") === env.APP_TOKEN;
@@ -63,6 +63,10 @@ export default {
 
     if (url.pathname === "/api/search" && request.method === "POST") {
       return handleSearchProxy(request, env, reqOrigin);
+    }
+
+    if (url.pathname === "/api/scene-check" && request.method === "POST") {
+      return handleSceneCheck(request, env, reqOrigin);
     }
 
     if (url.pathname === "/api/providers") {
@@ -133,7 +137,7 @@ export default {
     }
 
     if (url.pathname === "/api/health") {
-      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.5.0" }, 200, reqOrigin);
+      return jsonResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.6.0" }, 200, reqOrigin);
     }
 
     // ─── Static assets ───
@@ -744,6 +748,58 @@ async function handleImageProxy(request, env, origin) {
     return jsonResponse({ image: imageBase64, provider: "venice", model: selectedModel }, 200, origin);
   } catch (e) {
     return jsonResponse({ error: `Image proxy error: ${e.message}` }, 500, origin);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SCENE CONTRACT CHECK — Venice Vision
+// ═══════════════════════════════════════════════════════════════
+// The check does not gate or delete imagery. It gives the user an honest signal
+// when a required cast member, location, wardrobe, or interaction was missed.
+async function handleSceneCheck(request, env, origin) {
+  try {
+    const { image, contract } = await request.json();
+    if (!image || !contract) return jsonResponse({ error: "Missing image or scene contract" }, 400, origin);
+    if (!env.VENICE_API_KEY) return jsonResponse({ error: "Venice API key not configured for scene review" }, 500, origin);
+
+    const contractText = typeof contract === "string" ? contract : JSON.stringify(contract, null, 2);
+    const body = {
+      model: "qwen3-vl-235b-a22b",
+      max_tokens: 600,
+      temperature: 0.1,
+      messages: [
+        {
+          role: "system",
+          content: "You are a precise visual scene-contract checker. Assess what is visibly present, not what a prompt intended. Return ONLY valid JSON with status (pass or review), checks (primary_subject_present, counterpart_present, distinct_people, wardrobe_matches, location_matches, interaction_matches), and a concise note. Mark a check false when the image cannot visibly support it. A missing required counterpart is always review.",
+        },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: `Check this generated image against the following scene contract:\n${contractText}` },
+            { type: "image_url", image_url: { url: image } },
+          ],
+        },
+      ],
+      venice_parameters: { include_venice_system_prompt: false },
+    };
+
+    const res = await fetch("https://api.venice.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${env.VENICE_API_KEY}` },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) return jsonResponse({ error: data?.error?.message || data?.error || `Venice vision error: ${res.status}` }, res.status, origin);
+
+    const raw = data?.choices?.[0]?.message?.content || "";
+    const jsonBlock = raw.match(/\{[\s\S]*\}/)?.[0] || raw;
+    let check;
+    try { check = JSON.parse(jsonBlock); }
+    catch { check = { status: "review", checks: {}, note: raw.slice(0, 320) || "Vision review returned an unreadable response." }; }
+    if (check.status !== "pass") check.status = "review";
+    return jsonResponse({ check, provider: "venice", model: "qwen3-vl-235b-a22b" }, 200, origin);
+  } catch (e) {
+    return jsonResponse({ error: `Scene review error: ${e.message}` }, 500, origin);
   }
 }
 
