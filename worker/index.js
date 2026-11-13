@@ -22,13 +22,47 @@
  * Optional team token (APP_TOKEN):
  *   The /api endpoints proxy paid AI APIs. To restrict access, set a Worker
  *   secret with `wrangler secret put APP_TOKEN`. Once set, POST requests to
- *   /api/ai, /api/image, /api/search are allowed only when the request comes
- *   from the app's own frontend (Origin matches the worker origin) OR carries
- *   a matching `x-app-token` header. Teammates' agents send `x-app-token`.
- *   If APP_TOKEN is unset, the proxy stays fully open (no behavior change).
+ *   /api/ai, /api/image, /api/search, and /api/scene-check need a valid
+ *   login cookie or a matching `x-app-token` header. The site still loads;
+ *   the frontend prompts for the password and keeps a 30-day HttpOnly cookie.
+ *   Teammates' agents send `x-app-token`. Same-origin browser visits are not
+ *   enough on their own. If APP_TOKEN is unset, the proxy stays fully open.
  *
  * A Team Tomorrow Production 🦅
  */
+
+import {
+  accessIsConfigured,
+  clearAccessCookieHeader,
+  createAccessSession,
+  isProtectedPost,
+  requestIsAuthorized,
+  sessionSecretFromAppToken,
+  setAccessCookieHeader,
+  verifyAccessPassword,
+} from "./access.js";
+
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 12;
+const loginAttempts = new Map();
+
+function loginClientKey(request) {
+  return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "local";
+}
+
+function consumeLoginAttempt(key) {
+  const now = Date.now();
+  const current = loginAttempts.get(key);
+  if (!current || current.reset <= now) {
+    loginAttempts.set(key, { count: 1, reset: now + LOGIN_WINDOW_MS });
+    return 0;
+  }
+  current.count += 1;
+  if (current.count > LOGIN_MAX_ATTEMPTS) {
+    return Math.max(1, Math.ceil((current.reset - now) / 1000));
+  }
+  return 0;
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -40,15 +74,67 @@ export default {
       return new Response(null, { headers: corsHeaders(reqOrigin) });
     }
 
-    // ─── Optional team token gate for the paid /api POST endpoints ───
-    const protectedPost =
-      request.method === "POST" &&
-      (url.pathname === "/api/ai" || url.pathname === "/api/image" || url.pathname === "/api/search" || url.pathname === "/api/scene-check");
-    if (protectedPost && env.APP_TOKEN) {
-      const sameOrigin = reqOrigin === url.origin;
-      const hasToken = request.headers.get("x-app-token") === env.APP_TOKEN;
-      if (!sameOrigin && !hasToken) {
-        return jsonResponse({ error: "Missing or invalid x-app-token" }, 401, reqOrigin);
+    // ─── Auth status, login, and logout (public) ───
+    if (url.pathname === "/api/auth" && request.method === "GET") {
+      const granted = await requestIsAuthorized({
+        appToken: env.APP_TOKEN,
+        cookieHeader: request.headers.get("Cookie"),
+        appTokenHeader: request.headers.get("x-app-token"),
+      });
+      return jsonResponse({
+        configured: accessIsConfigured(env.APP_TOKEN),
+        granted,
+      }, 200, reqOrigin);
+    }
+
+    if (url.pathname === "/api/login" && request.method === "POST") {
+      if (!accessIsConfigured(env.APP_TOKEN)) {
+        return jsonResponse({ ok: true, configured: false }, 200, reqOrigin);
+      }
+      const retryAfter = consumeLoginAttempt(loginClientKey(request));
+      if (retryAfter) {
+        return jsonResponse(
+          { error: "Too many access attempts. Wait a few minutes and try again." },
+          429,
+          reqOrigin,
+          { "Retry-After": String(retryAfter) },
+        );
+      }
+      let password = "";
+      try {
+        const body = await request.json();
+        password = typeof body?.password === "string" ? body.password : "";
+      } catch {
+        return jsonResponse({ error: "Incorrect password" }, 401, reqOrigin);
+      }
+      if (!(await verifyAccessPassword(password, env.APP_TOKEN))) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        return jsonResponse({ error: "Incorrect password" }, 401, reqOrigin);
+      }
+      const sessionSecret = await sessionSecretFromAppToken(env.APP_TOKEN);
+      const token = await createAccessSession(sessionSecret);
+      return jsonResponse({ ok: true, configured: true }, 200, reqOrigin, {
+        "Set-Cookie": setAccessCookieHeader(token, { secure: url.protocol === "https:" }),
+        "Cache-Control": "no-store",
+      });
+    }
+
+    if (url.pathname === "/api/logout" && request.method === "POST") {
+      return jsonResponse({ ok: true }, 200, reqOrigin, {
+        "Set-Cookie": clearAccessCookieHeader({ secure: url.protocol === "https:" }),
+        "Cache-Control": "no-store",
+      });
+    }
+
+    // ─── Team token / session gate for the paid /api POST endpoints ───
+    if (isProtectedPost(request.method, url.pathname) && accessIsConfigured(env.APP_TOKEN)) {
+      const granted = await requestIsAuthorized({
+        appToken: env.APP_TOKEN,
+        cookieHeader: request.headers.get("Cookie"),
+        appTokenHeader: request.headers.get("x-app-token"),
+      });
+      if (!granted) {
+        return jsonResponse({ error: "Access required." }, 401, reqOrigin);
       }
     }
 
@@ -949,9 +1035,9 @@ function corsHeaders(origin) {
   };
 }
 
-function jsonResponse(data, status = 200, origin) {
+function jsonResponse(data, status = 200, origin, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(origin), ...extraHeaders },
   });
 }

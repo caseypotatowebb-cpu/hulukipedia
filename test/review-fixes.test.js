@@ -273,6 +273,6 @@ describe("worker upstream errors", { concurrency: false }, () => {
     assert.equal(called, false);
     assert.equal(res.status, 401);
     const payload = await res.json();
-    assert.equal(payload.error, "Missing or invalid x-app-token");
+    assert.equal(payload.error, "Access required.");
   });
 });
