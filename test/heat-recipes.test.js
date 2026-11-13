@@ -27,6 +27,11 @@ test("heat presets stay suggestive, not explicit", () => {
     const text = [r.label, r.description, r.artDirection, ...r.shots.flatMap(s => [s.label, s.direction])].join(" ");
     assert.doesNotMatch(text, banned, r.id);
   }
+  // The studio forbids mirrors/duplicates and locks the cast, so presets must not need either.
+  for (const r of HEAT_RECIPES) {
+    const text = [r.description, r.artDirection, ...r.shots.map(s => s.direction)].join(" ");
+    assert.doesNotMatch(text, /mirror|reflection|crowd/i, r.id);
+  }
   assert.match(HEAT_CONSTRAINT, /adults/);
   assert.match(HEAT_CONSTRAINT, /no nudity/);
   assert.match(HEAT_CONSTRAINT, /no sex acts/);

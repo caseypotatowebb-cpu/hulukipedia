@@ -59,7 +59,7 @@ export const HEAT_RECIPES = [
     shots: [
       { label: "Behind the Lattice", direction: "a SINGLE frame seen through a carved confessional lattice, eyes and lips visible, a secret clearly being savored" },
       { label: "Finger to Lips", direction: "a SINGLE close portrait with one finger pressed to the lips, a dangerous little grin" },
-      { label: "Rosary and Lipstick", direction: "a SINGLE detail-and-face frame with a rosary wrapped around a wrist while reapplying dark lipstick in a compact mirror" },
+      { label: "Rosary and Lipstick", direction: "a SINGLE detail-and-face frame with a rosary wrapped around a wrist while slowly applying dark lipstick, eyes fixed on the lens" },
       { label: "Leaning In", direction: "a SINGLE medium frame leaning toward the lens as if to whisper, red light pooling on the collarbone, fully dressed in dark satin" },
       { label: "Unrepentant", direction: "a SINGLE full-length frame walking out of the red room into darkness, chin up, absolutely unrepentant" },
     ],
@@ -73,7 +73,7 @@ export const HEAT_RECIPES = [
     shots: [
       { label: "Caught in the Flash", direction: "a SINGLE frame shielding the eyes from a wall of flashbulbs with a defiant smirk, sunglasses at night" },
       { label: "Back Seat Exit", direction: "a SINGLE frame stepping out of a vintage car, one heel or boot on the curb, looking straight into the lens like they planned it" },
-      { label: "Smoke and Mirrors", direction: "a SINGLE frame in a dressing-room mirror ringed with bulbs, reflection looking somewhere the subject is not" },
+      { label: "Dressing Room", direction: "a SINGLE frame in a vintage dressing room lit by a ring of bare bulbs, glancing sideways at the lens as if caught mid-secret" },
       { label: "No Comment", direction: "a SINGLE close portrait with a raised eyebrow and the faintest smile, the expression of someone who will never say a word" },
       { label: "Front Page", direction: "a SINGLE poster-like full-length frame under a streetlamp in the rain, trench coat, the picture everyone will talk about tomorrow; no text in frame" },
     ],
@@ -81,11 +81,11 @@ export const HEAT_RECIPES = [
   heat({
     id: "boudoir-power",
     label: "Boudoir Power Play",
-    description: "Private, sensual, and in charge — silk and mirrors, never explicit.",
+    description: "Private, sensual, and in charge — silk and candlelight, never explicit.",
     aspectRatio: "4:5",
-    artDirection: "a moody boudoir-inspired editorial with silk, mirrors and candlelight, soft shadows, sensual but fully styled wardrobe (silk robe, slip dress or tailored loungewear), power clearly with the subject",
+    artDirection: "a moody boudoir-inspired editorial with silk, velvet and candlelight, soft shadows, sensual but fully styled wardrobe (silk robe, slip dress or tailored loungewear), power clearly with the subject",
     shots: [
-      { label: "Mirror Gaze", direction: "a SINGLE frame seated at a vanity, holding the viewer's eyes through the mirror while fastening an earring" },
+      { label: "Vanity Gaze", direction: "a SINGLE frame seated at a vanity, turned toward the lens and holding the viewer's eyes while fastening an earring" },
       { label: "Silk and Shadow", direction: "a SINGLE three-quarter frame standing by a tall window, silk robe belted, moonlight and candlelight splitting the face" },
       { label: "Phone Face Down", direction: "a SINGLE medium frame on rumpled sheets, fully robed, phone face down beside them, an 'I'll call you back' look" },
       { label: "Pulling the Curtain", direction: "a SINGLE frame closing heavy curtains with one hand, glancing back as if deciding whether the viewer may stay" },
@@ -129,7 +129,7 @@ export const HEAT_RECIPES = [
     shots: [
       { label: "Feet on the Desk", direction: "a SINGLE frame leaning back with polished shoes on a glass desk, city skyline behind, a patient predator's smile" },
       { label: "Contract and Pen", direction: "a SINGLE medium frame sliding a contract and a fountain pen toward the viewer, eyebrow raised" },
-      { label: "Loosened Tie / Undone Cuff", direction: "a SINGLE three-quarter frame loosening a tie or unbuttoning a cuff at the window, reflection layered over the city" },
+      { label: "Loosened Tie / Undone Cuff", direction: "a SINGLE three-quarter frame loosening a tie or unbuttoning a cuff at the window, night skyline glittering behind" },
       { label: "Looking Down", direction: "a SINGLE low-angle frame standing over the camera, arms folded, unimpressed" },
       { label: "Lights Off", direction: "a SINGLE silhouette frame hitting the light switch on the way out, a final look over the shoulder" },
     ],
@@ -170,7 +170,7 @@ export const HEAT_RECIPES = [
     artDirection: "an opulent masquerade at a secret-society gala, gilded masks, candlelit ballroom, black and gold couture, whispered intrigue",
     shots: [
       { label: "Mask Lifted", direction: "a SINGLE close frame lifting an ornate mask just enough to reveal the eyes, a conspiratorial look" },
-      { label: "Across the Ballroom", direction: "a SINGLE wide frame across a crowded ballroom, the subject the only one looking straight into the lens" },
+      { label: "Across the Ballroom", direction: "a SINGLE wide frame across an empty candlelit ballroom after the guests have gone, the subject alone in the middle, looking straight into the lens" },
       { label: "Sealed Envelope", direction: "a SINGLE medium frame holding a wax-sealed black envelope between two fingers, offering it" },
       { label: "Behind the Curtain", direction: "a SINGLE frame half-hidden behind a heavy velvet curtain in a private alcove, beckoning with one finger" },
       { label: "Midnight Exit", direction: "a SINGLE full-length frame descending gala steps at midnight, mask in hand, cloak or gown trailing" },
@@ -181,12 +181,12 @@ export const HEAT_RECIPES = [
     label: "Interrogation, Tables Turned",
     description: "Under the lamp — and somehow the one asking the questions.",
     aspectRatio: "16:9",
-    artDirection: "a tense interrogation-room still, a single hard overhead lamp, two-way mirror, cigarette haze, the subject unsettlingly in control",
+    artDirection: "a tense interrogation-room still, a single hard overhead lamp, a dark observation window, cigarette haze, the subject unsettlingly in control",
     shots: [
-      { label: "Under the Lamp", direction: "a SINGLE frame seated under a hard overhead lamp, leaning back, completely relaxed, smiling at the two-way mirror" },
+      { label: "Under the Lamp", direction: "a SINGLE frame seated under a hard overhead lamp, leaning back, completely relaxed, smiling at the dark observation window" },
       { label: "Leaning Across", direction: "a SINGLE medium frame leaning across the steel table toward the lens, hands folded, quietly threatening" },
       { label: "Cuffs Off", direction: "a SINGLE close frame of the subject casually holding an opened pair of handcuffs, eyebrow raised" },
-      { label: "Mirror Stare", direction: "a SINGLE frame standing nose-to-glass at the two-way mirror, staring through it as if they can see everyone" },
+      { label: "Through the Glass", direction: "a SINGLE frame standing close to the dark observation window, staring into it as if they can see everyone behind it" },
       { label: "Walking Out", direction: "a SINGLE full-body frame strolling out of the interrogation room, door swinging, never looking back" },
     ],
   }),
