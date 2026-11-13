@@ -1,9 +1,11 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { Feather, Star, Search, Image, Archive, PersonStanding, MessageCircle, MessagesSquare, BrainCircuit, Crosshair, ClipboardList, Users, Clock, UserCheck, Flame, Beer, Gem, FileText, SearchCode, Settings, RefreshCw, Copy, ChevronDown, ChevronRight, X, Loader2, Sparkles, Globe, Zap, Shield, Eye, Radio, Lock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { callAI, callAIWithSearch, callDeepSearch, investigate, checkedFetch } from "./api.js";
 import { AccessOverlay, useAccessGate } from "./AccessGate.jsx";
+import { menuPosition } from "./menu-position.js";
 
 // ─── THEME DEFINITIONS ───
 const themes = {
@@ -543,15 +545,108 @@ function Lightbox({ src, onClose }) {
 }
 
 // ─── PROVIDER SELECTOR COMPONENT ───
+// The menu is rendered in a portal on document.body with fixed positioning, so it always sits
+// above the cards (each card uses backdrop-filter, which creates its own stacking context and
+// used to trap the menu underneath the next card). Picking a provider group keeps the menu open
+// so the model can be chosen right away; picking a model closes it.
 function ProviderSelector({ provider, model, onProviderChange, onModelChange, theme, compact = false, menuDirection = "down" }) {
   const t = themes[theme];
   const providerDef = PROVIDERS[provider];
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState(null);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
   const opensUpward = menuDirection === "up";
+
+  const place = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setPos(menuPosition(rect, { width: window.innerWidth, height: window.innerHeight }, opensUpward));
+  }, [opensUpward]);
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    place();
+    const onScrollOrResize = () => place();
+    const onPointer = (event) => {
+      if (buttonRef.current?.contains(event.target) || menuRef.current?.contains(event.target)) return;
+      setOpen(false);
+    };
+    const onKey = (event) => { if (event.key === "Escape") setOpen(false); };
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, place]);
+
+  const menu = open && pos ? (
+    <div
+      ref={menuRef}
+      className="rounded-md shadow-xl overflow-y-auto"
+      style={{ position: "fixed", zIndex: 2000, ...pos, backgroundColor: t.bgContainer, border: `1px solid ${t.border}`, fontSize: compact ? "0.7rem" : "0.75rem" }}
+      role="listbox"
+      data-testid="provider-menu"
+    >
+      {Object.entries(PROVIDERS).map(([pid, pdef]) => (
+        <div key={pid}>
+          <button
+            type="button"
+            className="w-full px-3 py-1.5 font-bold text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1 text-left"
+            style={{
+              color: pid === provider ? pdef.color : t.textSecondary,
+              backgroundColor: pid === provider ? pdef.color + "11" : "transparent",
+            }}
+            onClick={() => {
+              onProviderChange(pid);
+              onModelChange(pdef.models[0].id);
+              // Stay open so the model list for the new group can be picked right away.
+            }}
+          >
+            <span>{pdef.icon}</span> {pdef.name}
+          </button>
+          {pid === provider && pdef.models.map(m => (
+            <button
+              type="button"
+              key={m.id}
+              className="w-full pl-8 pr-3 py-1 cursor-pointer text-xs text-left"
+              style={{
+                color: m.id === model ? pdef.color : t.textSecondary,
+                backgroundColor: m.id === model ? pdef.color + "11" : "transparent",
+                fontWeight: m.id === model ? 700 : 400,
+              }}
+              onClick={() => { onModelChange(m.id); setOpen(false); }}
+              role="option"
+              aria-selected={m.id === model}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      ))}
+      <div className="border-t px-3 py-2 text-[10px] leading-snug" style={{ borderColor: t.border, color: t.textSecondary }}>
+        <strong style={{ color: t.accentGold }}>MODEL KEY</strong> · 🧠 reasoning · 🔥 uncensored / open creative · 👁 vision · ⚡ faster route · 🔎 live web research · 🎬 video / media preview
+      </div>
+      <button
+        type="button"
+        className="w-full border-t px-3 py-1.5 text-xs cursor-pointer text-left"
+        style={{ borderColor: t.border, color: t.textSecondary }}
+        onClick={() => setOpen(false)}
+      >
+        Close
+      </button>
+    </div>
+  ) : null;
 
   return (
     <div className="relative inline-flex items-center gap-1" style={{ fontSize: compact ? "0.7rem" : "0.75rem" }}>
       <button
+        ref={buttonRef}
         type="button"
         className="flex items-center gap-1 rounded-md px-2 py-1 cursor-pointer select-none"
         style={{ backgroundColor: providerDef.color + "22", border: `1px solid ${providerDef.color}44`, color: providerDef.color }}
@@ -563,61 +658,7 @@ function ProviderSelector({ provider, model, onProviderChange, onModelChange, th
         <span className="font-bold">{providerDef.name}</span>
         <ChevronDown size={10} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
       </button>
-      {open && (
-        <div
-          className={`absolute left-0 rounded-md shadow-xl z-50 min-w-[240px] overflow-y-auto ${opensUpward ? "bottom-full mb-1" : "top-full mt-1"}`}
-          style={{ backgroundColor: t.bgContainer, border: `1px solid ${t.border}`, maxHeight: "min(60vh, 420px)" }}
-          role="listbox"
-        >
-          {Object.entries(PROVIDERS).map(([pid, pdef]) => (
-            <div key={pid}>
-              <button
-                type="button"
-                className="w-full px-3 py-1.5 font-bold text-xs uppercase tracking-wider cursor-pointer flex items-center gap-1 text-left"
-                style={{
-                  color: pid === provider ? pdef.color : t.textSecondary,
-                  backgroundColor: pid === provider ? pdef.color + "11" : "transparent",
-                }}
-                onClick={() => {
-                  onProviderChange(pid);
-                  onModelChange(pdef.models[0].id);
-                  setOpen(false);
-                }}
-              >
-                <span>{pdef.icon}</span> {pdef.name}
-              </button>
-              {pid === provider && pdef.models.map(m => (
-                <button
-                  type="button"
-                  key={m.id}
-                  className="w-full pl-8 pr-3 py-1 cursor-pointer text-xs text-left"
-                  style={{
-                    color: m.id === model ? pdef.color : t.textSecondary,
-                    backgroundColor: m.id === model ? pdef.color + "11" : "transparent",
-                    fontWeight: m.id === model ? 700 : 400,
-                  }}
-                  onClick={() => { onModelChange(m.id); setOpen(false); }}
-                  role="option"
-                  aria-selected={m.id === model}
-                >
-                  {m.name}
-                </button>
-              ))}
-            </div>
-          ))}
-          <div className="border-t px-3 py-2 text-[10px] leading-snug" style={{ borderColor: t.border, color: t.textSecondary }}>
-            <strong style={{ color: t.accentGold }}>MODEL KEY</strong> · 🧠 reasoning · 🔥 uncensored / open creative · 👁 vision · ⚡ faster route · 🔎 live web research · 🎬 video / media preview
-          </div>
-          <button
-            type="button"
-            className="w-full border-t px-3 py-1.5 text-xs cursor-pointer text-left"
-            style={{ borderColor: t.border, color: t.textSecondary }}
-            onClick={() => setOpen(false)}
-          >
-            Close
-          </button>
-        </div>
-      )}
+      {menu && createPortal(menu, document.body)}
     </div>
   );
 }
