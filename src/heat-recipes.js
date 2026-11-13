@@ -201,7 +201,7 @@ export const HEAT_RECIPES = [
       { label: "Lounger Lean", direction: "a SINGLE three-quarter frame stretched on a lounger, sheer cover-up and sun hat, cocktail in hand" },
       { label: "Wet Hair Glance", direction: "a SINGLE close portrait with slicked-back wet hair and water droplets, a slow knowing look" },
       { label: "Cabana Curtain", direction: "a SINGLE frame drawing back a white cabana curtain, half in shadow, an unspoken invitation" },
-      { label: "Night Swim", direction: "a SINGLE wide frame under underwater pool light at night, the subject at the far edge, glowing reflections, mysterious" },
+      { label: "Night Swim", direction: "a SINGLE wide frame under underwater pool light at night, the subject at the far edge, rippling turquoise light, mysterious" },
     ],
   }),
 ];
