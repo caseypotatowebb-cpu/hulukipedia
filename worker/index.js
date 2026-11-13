@@ -165,8 +165,9 @@ export default {
             models: [
               "zai-org-glm-5-2", "olafangensan-glm-4.7-flash-heretic",
               "venice-uncensored-role-play", "venice-uncensored-1-2",
-              "qwen-3-7-plus", "qwen-3-6-plus", "kimi-k2-6", "grok-4-5", "grok-4-3",
-              "gemini-3-6-flash", "mistral-small-2603", "deepseek-v4-pro",
+              "qwen-3-7-plus", "qwen-3-6-plus", "kimi-k2-6", "kimi-k2-5", "grok-4-20", "grok-4-20-multi-agent", "grok-4-5", "grok-4-3",
+              // mistral-small-2603 hidden 2026-11-13 (not in Venice /api/v1/models).
+              "gemini-3-6-flash", "deepseek-v4-pro",
               "openai-gpt-4o-2024-11-20", "aion-labs-aion-3-0", "aion-labs-aion-3-0-mini", "qwen3-vl-235b-a22b",
             ],
           },
@@ -192,7 +193,7 @@ export default {
             id: "openrouter",
             name: "OpenRouter",
             capabilities: ["text"],
-            models: ["anthropic/claude-sonnet-4.5", "anthropic/claude-opus-4.5", "google/gemini-3.1-pro-preview", "google/gemini-3.7-flash", "x-ai/grok-4.6", "x-ai/grok-4.3"],
+            models: ["anthropic/claude-sonnet-4.5", "anthropic/claude-opus-4.5", "google/gemini-3.1-pro-preview", "google/gemini-3.7-flash", "x-ai/grok-4.6", "x-ai/grok-4.3", "moonshotai/kimi-k2.5", "moonshotai/kimi-k2"],
           },
           {
             id: "openai",
@@ -216,7 +217,7 @@ export default {
             id: "xai",
             name: "Grok (xAI)",
             capabilities: ["text", "search"],
-            models: ["grok-4.20-0309-non-reasoning", "grok-4.20-0309-reasoning", "grok-4.20-multi-agent-0309", "grok-4.6", "grok-4.5", "grok-4.3"],
+            models: ["grok-4.20-0309-non-reasoning", "grok-4.20-0309-reasoning", "grok-4.20-multi-agent-0309", "grok-4.3"], // grok-4.6 / grok-4.5 hidden 2026-11-13 (not in xAI /v1/models)
           },
         ],
       }, 200, reqOrigin);

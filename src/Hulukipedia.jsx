@@ -57,10 +57,15 @@ const PROVIDERS = {
       { id: "qwen-3-7-plus", name: "Qwen 3.7 Plus 🧠👁" },
       { id: "qwen-3-6-plus", name: "Qwen 3.6 Plus Uncensored 🔥🧠👁" },
       { id: "kimi-k2-6", name: "Kimi K2.6 🧠👁" },
+      { id: "kimi-k2-5", name: "Kimi K2.5 🧠" },
+      { id: "grok-4-20", name: "Grok 4.20 (via Venice) 🧠" },
+      { id: "grok-4-20-multi-agent", name: "Grok 4.20 Multi-Agent (via Venice) 🧠" },
       { id: "grok-4-5", name: "Grok 4.5 🧠👁" },
       { id: "grok-4-3", name: "Grok 4.3 🧠👁" },
       { id: "gemini-3-6-flash", name: "Gemini 3.6 Flash ⚡" },
-      { id: "mistral-small-2603", name: "Mistral Small 4 🧠👁" },
+      // Hidden 2026-11-13: mistral-small-2603 is no longer in Venice's /api/v1/models list.
+      // Mistral Small 4 stays available through the Mistral Studio provider below.
+      // { id: "mistral-small-2603", name: "Mistral Small 4 🧠👁" },
       { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro 🧠" },
       { id: "openai-gpt-4o-2024-11-20", name: "GPT-4o (Compatibility) 👁" },
       { id: "aion-labs-aion-3-0", name: "Aion 3.0 🧠" },
@@ -100,6 +105,8 @@ const PROVIDERS = {
       { id: "google/gemini-3.7-flash", name: "Gemini 3.7 Flash (OR) ⚡" },
       { id: "x-ai/grok-4.6", name: "Grok 4.6 (OR)" },
       { id: "x-ai/grok-4.3", name: "Grok 4.3 (OR)" },
+      { id: "moonshotai/kimi-k2.5", name: "Kimi K2.5 (OR) 🧠" },
+      { id: "moonshotai/kimi-k2", name: "Kimi K2 (OR)" },
     ],
   },
   openai: {
@@ -139,8 +146,11 @@ const PROVIDERS = {
       { id: "grok-4.20-0309-non-reasoning", name: "Grok 4.20 — direct default" },
       { id: "grok-4.20-0309-reasoning", name: "Grok 4.20 — reasoning 🧠" },
       { id: "grok-4.20-multi-agent-0309", name: "Grok 4.20 — multi-agent 🧠" },
-      { id: "grok-4.6", name: "Grok 4.6" },
-      { id: "grok-4.5", name: "Grok 4.5" },
+      // Hidden 2026-11-13: grok-4.6 and grok-4.5 are not in the xAI key's /v1/models or
+      // /v1/language-models list (no alias either). Grok 4.5 stays available via Venice,
+      // Grok 4.6 via OpenRouter. Re-enable here if xAI lists them again.
+      // { id: "grok-4.6", name: "Grok 4.6" },
+      // { id: "grok-4.5", name: "Grok 4.5" },
       { id: "grok-4.3", name: "Grok 4.3 — accuracy + voice" },
     ],
   },
