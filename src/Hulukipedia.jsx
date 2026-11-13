@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Feather, Star, Search, Image, Archive, PersonStanding, MessageCircle, MessagesSquare, BrainCircuit, Crosshair, ClipboardList, Users, Clock, UserCheck, Flame, Beer, Gem, FileText, SearchCode, Settings, RefreshCw, Copy, ChevronDown, ChevronRight, X, Loader2, Sparkles, Globe, Zap, Shield, Eye, Radio } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { callAI, callAIWithSearch, callDeepSearch, investigate } from "./api.js";
 
 // ─── THEME DEFINITIONS ───
 const themes = {
@@ -225,60 +226,6 @@ const ROLEPLAY_SCENARIOS = [
 
 // ─── API HELPER ───
 const API_BASE = window.location.origin;
-
-async function callAI(systemPrompt, userPrompt, provider = DEFAULT_PROVIDER, model = null, maxTokens = 2000) {
-  try {
-    const res = await fetch(`${API_BASE}/api/ai`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemPrompt, userPrompt, maxTokens, useSearch: false, provider, model }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    return data.text || "";
-  } catch (e) {
-    throw new Error(`AI generation failed: ${e.message}`);
-  }
-}
-
-async function callAIWithSearch(systemPrompt, userPrompt, provider = "venice", model = null) {
-  try {
-    const res = await fetch(`${API_BASE}/api/ai`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemPrompt, userPrompt, maxTokens: 2000, useSearch: true, provider, model }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    return data.text || "";
-  } catch (e) {
-    throw new Error(`Search-enhanced generation failed: ${e.message}`);
-  }
-}
-
-async function callDeepSearch(query, systemPrompt = null) {
-  try {
-    const res = await fetch(`${API_BASE}/api/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, systemPrompt }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error(err.error || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    return { text: data.text || "", citations: data.citations || [] };
-  } catch (e) {
-    throw new Error(`Deep search failed: ${e.message}`);
-  }
-}
 
 async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pro", aspectRatio = "1:1", resolution = "2K", width = null, height = null) {
   try {
@@ -1228,16 +1175,15 @@ export default function Hulukipedia() {
     const userPrompt = `Investigative question:\n${question}`;
 
     try {
-      if (investigatorWeb && investigatorProvider === "perplexity") {
-        const result = await callDeepSearch(question, systemPrompt);
-        setInvestigatorResult({ text: result.text, citations: result.citations || [], provider: investigatorProvider, model: investigatorModel, web: true });
-      } else {
-        const searchCapable = ["anthropic", "venice", "xai"].includes(investigatorProvider);
-        const text = investigatorWeb && searchCapable
-          ? await callAIWithSearch(systemPrompt, userPrompt, investigatorProvider, investigatorModel)
-          : await callAI(systemPrompt, userPrompt, investigatorProvider, investigatorModel, 2500);
-        setInvestigatorResult({ text, citations: [], provider: investigatorProvider, model: investigatorModel, web: investigatorWeb && searchCapable });
-      }
+      const result = await investigate({
+        question,
+        systemPrompt,
+        userPrompt,
+        web: investigatorWeb,
+        provider: investigatorProvider,
+        model: investigatorModel,
+      });
+      setInvestigatorResult(result);
     } catch (error) {
       setInvestigatorError(error.message || "The investigation could not be completed.");
     } finally {

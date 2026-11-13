@@ -238,8 +238,8 @@ async function callVenice(env, systemPrompt, userPrompt, maxTokens, model, useSe
   }
 
   if (!res.ok) {
-    const errMsg = data?.error?.message || data?.error || data?.detail || `Venice error: ${res.status}`;
-    return jsonResponse({ error: errMsg }, res.status, origin);
+    const errMsg = asErrorText(data?.error?.message || data?.error || data?.detail, `Venice error: ${res.status}`);
+    return jsonResponse({ error: errMsg }, upstreamHttpStatus(res.status), origin);
   }
 
   const text = data.choices?.[0]?.message?.content || "";
@@ -738,8 +738,8 @@ async function handleImageProxy(request, env, origin) {
     }
 
     if (!res.ok) {
-      const errMsg = data?.error?.message || data?.error || data?.detail || `Venice image error: ${res.status}`;
-      return jsonResponse({ error: errMsg }, res.status, origin);
+      const errMsg = asErrorText(data?.error?.message || data?.error || data?.detail, `Venice image error: ${res.status}`);
+      return jsonResponse({ error: errMsg }, upstreamHttpStatus(res.status), origin);
     }
 
     const imageBase64 = data.images?.[0] || "";
@@ -789,7 +789,10 @@ async function handleSceneCheck(request, env, origin) {
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => null);
-    if (!res.ok) return jsonResponse({ error: data?.error?.message || data?.error || `Venice vision error: ${res.status}` }, res.status, origin);
+    if (!res.ok) {
+      const errMsg = asErrorText(data?.error?.message || data?.error, `Venice vision error: ${res.status}`);
+      return jsonResponse({ error: errMsg }, upstreamHttpStatus(res.status), origin);
+    }
 
     const raw = data?.choices?.[0]?.message?.content || "";
     const jsonBlock = raw.match(/\{[\s\S]*\}/)?.[0] || raw;
@@ -901,8 +904,8 @@ async function callVeniceSearch(env, query, systemPrompt, model, origin) {
   }
 
   if (!res.ok) {
-    const errMsg = data?.error?.message || data?.error || `Venice search error: ${res.status}`;
-    return jsonResponse({ error: errMsg }, res.status, origin);
+    const errMsg = asErrorText(data?.error?.message || data?.error, `Venice search error: ${res.status}`);
+    return jsonResponse({ error: errMsg }, upstreamHttpStatus(res.status), origin);
   }
 
   const text = data.choices?.[0]?.message?.content || "";
@@ -914,6 +917,28 @@ async function callVeniceSearch(env, query, systemPrompt, model, origin) {
 // ═══════════════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════════════
+
+// Provider error bodies are sometimes objects. The UI puts `error` into Error(),
+// which renders an object as "[object Object]". Upstream 401/403 here means the
+// server key was rejected, so the browser should see a gateway failure.
+function asErrorText(value, fallback) {
+  if (typeof value === "string" && value) return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value && typeof value === "object") {
+    try {
+      const serialized = JSON.stringify(value);
+      if (serialized && serialized !== "null") return serialized;
+    } catch {
+      /* leave the fallback in place */
+    }
+  }
+  return fallback;
+}
+
+function upstreamHttpStatus(status) {
+  if (status === 401 || status === 403) return 502;
+  return status;
+}
 
 function corsHeaders(origin) {
   return {
