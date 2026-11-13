@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { callAI, callAIWithSearch, callDeepSearch, investigate, checkedFetch } from "./api.js";
 import { AccessOverlay, useAccessGate } from "./AccessGate.jsx";
 import { menuPosition } from "./menu-position.js";
+import { HEAT_CONSTRAINT, HEAT_GROUP_LABEL, HEAT_RECIPES, isHeatRecipe, starlingHeatNote } from "./heat-recipes.js";
 
 // ─── THEME DEFINITIONS ───
 const themes = {
@@ -1052,7 +1053,10 @@ const VISUAL_SCENE_RECIPES = [
       { label: "Reflective Pause", direction: "a quieter seated or leaning moment that lets mood, wardrobe texture, and inner life carry the image" },
       { label: "Last Call", direction: "a striking final image as the character leaves, turns back, or takes possession of the space; glamorous, adult, and non-explicit" },
     ],
+    group: HEAT_GROUP_LABEL,
   },
+  // After Dark · Heat batch (Nov 13 2026), defined in ./heat-recipes.js.
+  ...HEAT_RECIPES,
 ];
 
 function buildVisualScenePrompt(identityAnchor, recipe, shot, visualContext, wardrobeDirection = "", frameIndex = 0) {
@@ -1072,8 +1076,10 @@ function buildVisualScenePrompt(identityAnchor, recipe, shot, visualContext, war
     ? `Director's brief: ${brief.trim()}.`
     : "Director's brief: make choices that feel natural and true to the subject's established personality and world.";
   const matureConstraint = recipe.id === "after-dark"
-    ? " All depicted people are adults. Keep the atmosphere mature, consensual, character-forward, and visibly agentic; never use nudity, coercion, or underage coding."
-    : "";
+    ? " All depicted people are adults. Keep the atmosphere mature, consensual, character-forward, and visibly agentic; never use nudity, coercion, or underage coding." + starlingHeatNote(visualContext?.mode)
+    : isHeatRecipe(recipe)
+      ? HEAT_CONSTRAINT + starlingHeatNote(visualContext?.mode)
+      : "";
   const contractClosing = contract.hasCounterpart
     ? `FINAL CAST CHECK: ${visualContext.subjectName} and ${contract.counterpart} are both required adult people in this single frame. If either is missing, the image is wrong.`
     : `FINAL SUBJECT CHECK: ${visualContext.subjectName} is the required primary subject. Do not substitute a generic lookalike or duplicate them.`;
@@ -1480,6 +1486,7 @@ export default function Hulukipedia() {
     const dimensions = ASPECT_DIMENSIONS[recipe.aspectRatio] || ASPECT_DIMENSIONS["1:1"];
     const selectedVoltage = SCENE_VOLTAGES.find(item => item.id === visualVoltage) || SCENE_VOLTAGES[0];
     const visualContext = {
+      mode,
       subjectName: subject.name,
       brief: visualBrief,
       counterpart: visualCoStar,
@@ -2282,7 +2289,10 @@ ${rpSpeechRules}`;
                       className="w-full rounded text-sm px-2 py-2"
                       style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textPrimary }}
                     >
-                      {availableVisualRecipes.map(recipe => <option key={recipe.id} value={recipe.id}>{recipe.label}</option>)}
+                      {availableVisualRecipes.filter(recipe => !recipe.group).map(recipe => <option key={recipe.id} value={recipe.id}>{recipe.label}</option>)}
+                      <optgroup label={`🔥 ${HEAT_GROUP_LABEL}`}>
+                        {availableVisualRecipes.filter(recipe => recipe.group === HEAT_GROUP_LABEL).map(recipe => <option key={recipe.id} value={recipe.id}>{recipe.label}</option>)}
+                      </optgroup>
                     </select>
                     <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>{selectedVisualRecipe.description}</div>
                   </div>
