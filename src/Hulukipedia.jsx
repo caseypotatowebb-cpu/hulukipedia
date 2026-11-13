@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Feather, Star, Search, Image, Archive, PersonStanding, MessageCircle, MessagesSquare, BrainCircuit, Crosshair, ClipboardList, Users, Clock, UserCheck, Flame, Beer, Gem, FileText, SearchCode, Settings, RefreshCw, Copy, ChevronDown, ChevronRight, X, Loader2, Sparkles, Globe, Zap, Shield, Eye, Radio } from "lucide-react";
+import { Feather, Star, Search, Image, Archive, PersonStanding, MessageCircle, MessagesSquare, BrainCircuit, Crosshair, ClipboardList, Users, Clock, UserCheck, Flame, Beer, Gem, FileText, SearchCode, Settings, RefreshCw, Copy, ChevronDown, ChevronRight, X, Loader2, Sparkles, Globe, Zap, Shield, Eye, Radio, Lock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { callAI, callAIWithSearch, callDeepSearch, investigate } from "./api.js";
+import { callAI, callAIWithSearch, callDeepSearch, investigate, checkedFetch } from "./api.js";
+import { AccessOverlay, useAccessGate } from "./AccessGate.jsx";
 
 // ─── THEME DEFINITIONS ───
 const themes = {
@@ -229,7 +230,7 @@ const API_BASE = window.location.origin;
 
 async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pro", aspectRatio = "1:1", resolution = "2K", width = null, height = null) {
   try {
-    const res = await fetch(`${API_BASE}/api/image`, {
+    const res = await checkedFetch(`${API_BASE}/api/image`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, negativePrompt, model, aspectRatio, resolution, width, height }),
@@ -247,7 +248,7 @@ async function callImageGen(prompt, negativePrompt = "", model = "nano-banana-pr
 
 async function callSceneCheck(image, contract) {
   try {
-    const res = await fetch(`${API_BASE}/api/scene-check`, {
+    const res = await checkedFetch(`${API_BASE}/api/scene-check`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ image, contract }),
@@ -1031,6 +1032,7 @@ function buildVisualScenePrompt(identityAnchor, recipe, shot, visualContext, war
 
 // ─── MAIN COMPONENT ───
 export default function Hulukipedia() {
+  const { access, handleLogin, handleLock } = useAccessGate();
   const [view, setView] = useState("search");
   const [theme, setTheme] = useState("hulu");
   const [mode, setMode] = useState(null);
@@ -1782,7 +1784,21 @@ ${rpSpeechRules}`;
 
       <div className="max-w-5xl mx-auto p-4" style={{ position: "relative", zIndex: 10 }}>
         {/* ═══ HEADER ═══ */}
-        <header className="text-center mb-8 pt-6">
+        {access.configured && !access.granted && (
+          <AccessOverlay theme={t} onSubmit={handleLogin} />
+        )}
+
+        <header className="text-center mb-8 pt-6" style={{ position: "relative" }}>
+          {access.configured && access.granted && (
+            <button
+              type="button"
+              onClick={handleLock}
+              className="absolute right-0 top-6 flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-md"
+              style={{ color: t.textSecondary, border: `1px solid ${t.border}`, background: t.bgSection }}
+            >
+              <Lock size={14} /> Lock
+            </button>
+          )}
           <h1
             style={{
               fontFamily: "'Satisfy', cursive",
