@@ -757,14 +757,14 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model,
 // Shared imaginative scene controls. Raven and Starling use the same creative instruments;
 // Starling labels its scenes as imaginative rather than presenting invented private life as fact.
 const SCENE_LENSES = [
-  { id: "observation", label: "Observation", note: "Read the room like a novelist: the glances, the fidgets, and what each person chooses not to say." },
-  { id: "confrontation", label: "Confrontation", note: "A real fight with real stakes: two clear points of view, and nobody folds easily." },
-  { id: "private", label: "Private Conversation", note: "A closed door, no script, and room for both people to tell the truth or dodge it." },
-  { id: "chemistry", label: "Chemistry", note: "Adult attraction reined in by humor and restraint, with both people choosing every move." },
-  { id: "temptation", label: "Deal / Temptation", note: "An offer on the table (a bargain, an invitation, a line to cross) that tests desire against judgment." },
-  { id: "after-hours", label: "After Hours", note: "Adult nightlife, glamour, a quiet corner, and a moment that could tip into something else." },
-  { id: "aftermath", label: "Aftermath", note: "The ringing quiet after a choice, a fight, a public scene, or a private mistake." },
-  { id: "custom", label: "Custom Scene", note: "You hold the pen; the system builds your idea into a scene with a full emotional arc." },
+  { id: "observation", label: "Observation", note: "Read the room through behavior, glances, and what each person chooses not to say." },
+  { id: "confrontation", label: "Confrontation", note: "A disagreement with real stakes, distinct points of view, and no easy capitulation." },
+  { id: "private", label: "Private Conversation", note: "An intimate, unscripted moment where the setting gives both people room to be honest or evasive." },
+  { id: "chemistry", label: "Chemistry", note: "Adult attraction, restraint, humor, and charged attention with agency on both sides." },
+  { id: "temptation", label: "Deal / Temptation", note: "A proposition, bargain, invitation, or moral complication that tests desire and judgment." },
+  { id: "after-hours", label: "After Hours", note: "Adult nightlife, glamour, privacy, and the tension of a moment that could become something else." },
+  { id: "aftermath", label: "Aftermath", note: "The quiet after a choice, argument, public moment, or private mistake." },
+  { id: "custom", label: "Custom Scene", note: "Your direction leads; the system turns it into an emotionally complete scene." },
 ];
 
 const SCENE_RELATIONSHIPS = [
@@ -773,14 +773,14 @@ const SCENE_RELATIONSHIPS = [
 ];
 
 const SCENE_VOLTAGES = [
-  { id: "grounded", label: "Grounded", note: "Everyday weather; human-sized pressure." },
-  { id: "simmering", label: "Simmering", note: "A lid on the pot; subtext does the work." },
-  { id: "charged", label: "Charged", note: "Eyes keep catching, and neither person is neutral." },
-  { id: "intimate", label: "Intimate", note: "Close range, shared secrets, nowhere to hide." },
-  { id: "provocative", label: "Provocative", note: "Teasing, dares, open invitations, and a deliberate push against the usual guardrails." },
-  { id: "volatile", label: "Volatile", note: "Desire, anger, or fear keeps swinging the room from hot to cold." },
-  { id: "decadent", label: "Decadent", note: "Velvet, candlelight, confidence, appetite, and a room built for temptation." },
-  { id: "custom", label: "Custom", note: "Set the exact heat and texture yourself in the director note." },
+  { id: "grounded", label: "Grounded", note: "Naturalistic, human-sized pressure." },
+  { id: "simmering", label: "Simmering", note: "Subtext and restraint doing the work." },
+  { id: "charged", label: "Charged", note: "Attention is hard to hide and neither person is neutral." },
+  { id: "intimate", label: "Intimate", note: "Close range, private knowledge, emotional exposure." },
+  { id: "provocative", label: "Provocative", note: "Teasing, risk, invitation, and a deliberate push against the usual guardrails." },
+  { id: "volatile", label: "Volatile", note: "Desire, anger, or fear keeps changing the temperature in the room." },
+  { id: "decadent", label: "Decadent", note: "Rich atmosphere, confidence, appetite, and a setting built for temptation." },
+  { id: "custom", label: "Custom", note: "Use the director note to define the exact heat and texture." },
 ];
 
 function buildSceneLabContext(scene, subjectName, mode, outputType) {
@@ -895,10 +895,10 @@ const ASPECT_DIMENSIONS = {
 };
 
 const WARDROBE_SYSTEMS = [
-  { id: "continuity", label: "Signature Continuity", note: "One signature look, worn from the first frame to the last." },
-  { id: "two-look", label: "Two-Look Arc", note: "One look to open, then a single deliberate change for the back half." },
-  { id: "variations", label: "Editorial Variations", note: "Same style family, with a new layer or accent in every frame." },
-  { id: "custom", label: "Custom Wardrobe Brief", note: "Write the wardrobe plan in your own words before you launch." },
+  { id: "continuity", label: "Signature Continuity", note: "One coherent signature look across every selected frame." },
+  { id: "two-look", label: "Two-Look Arc", note: "Opening look transitions once into a deliberate second look." },
+  { id: "variations", label: "Editorial Variations", note: "Distinct but coherent variations within one style family." },
+  { id: "custom", label: "Custom Wardrobe Brief", note: "You decide the wardrobe logic in your own words before launch." },
 ];
 
 function getWardrobeDirection(systemId, customBrief, index, count) {
@@ -916,9 +916,9 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "editorial",
     label: "Editorial Lookbook",
-    description: "Magazine-ready shots where every outfit, stance, and camera angle is on purpose.",
+    description: "Polished visual-marketing shots with clear styling, posture, and camera intention.",
     aspectRatio: "3:4",
-    artDirection: "a cohesive high-end editorial lookbook, natural anatomy, glossy-magazine polish, wardrobe and location chosen like a stylist's mood board",
+    artDirection: "a cohesive high-end editorial lookbook, natural anatomy, visual marketing polish, an intentional wardrobe and environment",
     shots: [
       { label: "Full-Length Hero", direction: "a SINGLE full-length hero frame; the subject is standing in a poised, balanced stance, camera at a natural fashion-editorial distance" },
       { label: "Three-Quarter Detail", direction: "a SINGLE three-quarter-length frame; the subject is leaning naturally against a location-appropriate surface, not standing straight toward camera; face and styling clearly readable" },
@@ -930,9 +930,9 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "turnaround",
     label: "Character Turnaround",
-    description: "Walk all the way around them: front, profile, and three-quarter views, same face every time.",
+    description: "Useful, identity-consistent coverage across the front, profile, and three-quarter views.",
     aspectRatio: "3:4",
-    artDirection: "a clean, cinematic character-sheet set like a costume department's reference wall, lighting and wardrobe locked across every angle",
+    artDirection: "a clean but cinematic character-lookbook environment with consistent lighting and wardrobe across every angle",
     shots: [
       { label: "Front View", direction: "full-length front view, balanced posture, hands naturally placed, clear silhouette" },
       { label: "Three-Quarter View", direction: "full-length three-quarter view, natural shift of weight, face and silhouette both readable" },
@@ -944,65 +944,65 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "motion",
     label: "Motion & Presence",
-    description: "Stride, turn, and gesture: a body in motion instead of another row of headshots.",
+    description: "Dynamic body language and real-world movement instead of repeated headshots.",
     aspectRatio: "16:9",
-    artDirection: "a kinetic, photorealistic scene with believable motion, hair and hems caught mid-swing, deep environment, and cinematic composition",
+    artDirection: "a kinetic, photorealistic scene with believable motion, environmental depth, and cinematic composition",
     shots: [
       { label: "Approaching Frame", direction: "walking toward camera through the scene, natural stride, full body visible" },
       { label: "Side Motion", direction: "side-on motion frame, purposeful movement, environment streaking subtly behind the subject" },
-      { label: "Over-the-Shoulder Pause", direction: "over-the-shoulder pause, the subject glancing back as if someone just called their name" },
-      { label: "Action Detail", direction: "mid-action medium shot catching the one gesture their friends would recognize anywhere" },
-      { label: "After the Moment", direction: "quiet aftermath frame, the subject at rest and catching their breath, the air still settling around them" },
+      { label: "Over-the-Shoulder Pause", direction: "over-the-shoulder pause, subject glances back with a readable expression" },
+      { label: "Action Detail", direction: "mid-action medium shot that captures a characteristic gesture or interaction" },
+      { label: "After the Moment", direction: "quiet aftermath frame, subject at rest after motion, strong atmosphere and character presence" },
     ],
   },
   {
     id: "candid",
     label: "Candid Day Out",
-    description: "Warm, documentary-style moments: sunlight, errands, a real person out in the world.",
+    description: "Warm, documentary-style scenes that make the subject feel like a person in the world.",
     aspectRatio: "3:2",
-    artDirection: "a natural-light documentary scene with candid human behavior, a lived-in place of scuffed floors and handwritten signs, and editorial realism",
+    artDirection: "a natural-light documentary scene with candid human behavior, lived-in environment, and editorial realism",
     shots: [
       { label: "Arrival", direction: "arriving at the location, full or three-quarter body framing, spontaneous body language" },
-      { label: "Small Interaction", direction: "a candid small exchange (paying for coffee, asking directions, sharing a joke) that reveals personality without posing for camera" },
-      { label: "Quiet Moment", direction: "a quieter medium frame, the subject absorbed in something nearby: a bookstall, a menu, a view" },
+      { label: "Small Interaction", direction: "a candid social or environmental interaction that reveals personality without posing for camera" },
+      { label: "Quiet Moment", direction: "a quieter medium frame, the subject focused on something in the environment" },
       { label: "Walking Away", direction: "walking-away or rear three-quarter candid frame, natural clothing movement and setting detail" },
-      { label: "Candid Portrait", direction: "unforced portrait caught between moments, mid-laugh or mid-thought, realistic environmental depth" },
+      { label: "Candid Portrait", direction: "unforced portrait caught between moments, soft expression, realistic environmental depth" },
     ],
   },
   {
     id: "cinematic",
     label: "Cinematic Evening",
-    description: "Streetlamps, neon, and long shadows: a story-led set that looks like a film still.",
+    description: "A dramatic, story-led set with practical lights, atmosphere, and expressive framing.",
     aspectRatio: "16:9",
-    artDirection: "a cinematic evening scene lit by practical lamps and signage, wet-pavement atmosphere, deliberate warm-cool color contrast, and grounded photorealism",
+    artDirection: "a cinematic evening scene with practical lighting, rich environmental atmosphere, intentional color contrast, and grounded photorealism",
     shots: [
-      { label: "Establishing Arrival", direction: "wide establishing shot placing the subject in a vivid evening setting as the last blue light leaves the sky" },
-      { label: "Mid-Scene Portrait", direction: "medium scene portrait, passing light sliding across the face, tense or thoughtful expression" },
-      { label: "Three-Quarter Drama", direction: "three-quarter full-body dramatic frame, a strong silhouette cut against the light, natural pose" },
-      { label: "Ambient Detail", direction: "medium detail frame on an object that carries the story: a ticket stub, a buzzing phone, a half-finished drink" },
-      { label: "Closing Image", direction: "striking final image, the subject moving on into the night or pausing in a pool of cinematic light" },
+      { label: "Establishing Arrival", direction: "wide establishing shot that situates the subject in a vivid evening setting" },
+      { label: "Mid-Scene Portrait", direction: "medium scene portrait, active environmental light, tense or reflective expression" },
+      { label: "Three-Quarter Drama", direction: "three-quarter full-body dramatic frame, strong silhouette and natural pose" },
+      { label: "Ambient Detail", direction: "medium detail frame with an object or setting element that supports the story" },
+      { label: "Closing Image", direction: "striking final image, subject moving through the environment or pausing under cinematic light" },
     ],
   },
   {
     id: "signature",
     label: "Signature World",
-    description: "Drop a fictional character into the world, gear, and iconic moment that made them.",
+    description: "Put a fictional character in the environment, action, and iconography that defines them.",
     aspectRatio: "16:9",
-    artDirection: "a canon-faithful signature-world scene, cinematic but believable, keeping the defining costume, tools, setting, and emotional tone a fan would check for",
+    artDirection: "a canon-sensitive signature-world scene, cinematic but believable, preserving defining costume, tools, setting, and emotional tone",
     shots: [
-      { label: "World Arrival", direction: "wide arrival image, the character stepping into the place fans would know at a glance" },
-      { label: "Iconic Action", direction: "characteristic, non-violent action or interaction that shows what they do best and who they are" },
-      { label: "Relationship to Place", direction: "three-quarter environmental portrait of the subject at home in their world, as if they built it" },
-      { label: "Quiet Icon", direction: "calmer medium shot with an iconic prop or motif at hand, the character doing what they always do" },
-      { label: "Final Story Beat", direction: "a closing beat that lands like the last shot before the credits, clear and emotionally resonant" },
+      { label: "World Arrival", direction: "wide arrival image that establishes the character in their defining environment" },
+      { label: "Iconic Action", direction: "characteristic, non-violent action or interaction that reveals competence and identity" },
+      { label: "Relationship to Place", direction: "three-quarter environmental portrait showing how the subject inhabits their world" },
+      { label: "Quiet Icon", direction: "calmer medium shot with an iconic prop or environmental motif, authentic character behavior" },
+      { label: "Final Story Beat", direction: "a memorable, emotionally resonant closing beat with cinematic visual clarity" },
     ],
   },
   {
     id: "activity",
     label: "Activity Continuity",
-    description: "Follow one activity from warm-up to cool-down: a new angle each beat, the same person throughout.",
+    description: "Follow one clear activity through visibly different, identity-consistent angles and beats.",
     aspectRatio: "16:9",
-    artDirection: "a coherent photorealistic activity story with a single location, continuous wardrobe, believable body mechanics, real effort in the face, and clean directional light",
+    artDirection: "a coherent photorealistic activity story with a single location, continuous wardrobe, believable body mechanics, and clean directional light",
     shots: [
       { label: "Before the Move", direction: "a focused pre-activity portrait; the subject is preparing, stretching, checking equipment, or gathering themselves, never already mid-stride" },
       { label: "Front Momentum", direction: "a full-body front three-quarter frame in unmistakable motion toward the camera, with natural limbs, clear activity mechanics, and a readable face" },
@@ -1014,9 +1014,9 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "campaign",
     label: "Campaign / Product Story",
-    description: "A billboard-ready sequence for a lifestyle brand, a character campaign, or a story-first product shoot.",
+    description: "A polished sequence for lifestyle marketing, a character campaign, or a story-first product shoot.",
     aspectRatio: "3:2",
-    artDirection: "a high-end campaign with one confident color story, editorial polish, real lifestyle behavior, and the subject as the gravity every eye falls toward",
+    artDirection: "a high-end visual campaign with a cohesive color story, editorial polish, authentic lifestyle behavior, and the subject as the unmistakable center of attention",
     shots: [
       { label: "Key Art", direction: "a confident full or three-quarter key-art frame, clean visual hierarchy, subject and setting immediately legible" },
       { label: "In Use", direction: "a candid but intentional interaction with an object, service, garment, or environment that supports the campaign without looking like an advertisement mockup" },
@@ -1028,13 +1028,13 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "duo",
     label: "Duo Chemistry",
-    description: "Two adults, one frame: friendship, rivalry, teamwork, romantic tension, or a history neither will discuss.",
+    description: "Two adult characters sharing a scene: friendship, rivalry, teamwork, romantic tension, or a complicated history.",
     aspectRatio: "16:9",
     requiresCoStar: true,
     artDirection: "a cinematic two-person scene with distinct adult faces, natural physical spacing, readable relationship energy, and no duplicate bodies or mirrored copies",
     shots: [
       { label: "First Read", direction: "a two-shot that establishes who has the social upper hand, who is watching whom, and the emotional distance between them" },
-      { label: "Shared Action", direction: "both adults working one simple shared task or problem (a jammed lock, a map, a stubborn engine), body language doing the talking" },
+      { label: "Shared Action", direction: "both adults engaged in a simple shared activity or problem, body language doing as much work as dialogue would" },
       { label: "Side by Side", direction: "a composed side-by-side frame with contrasting posture, styling, or expression that makes their relationship legible" },
       { label: "Private Reaction", direction: "a closer emotional frame with one person in focus and the other still visibly present, capturing an unspoken reaction" },
       { label: "Relationship Beat", direction: "a closing image that lands the relationship: alliance, tension, affection, rivalry, or unfinished business" },
@@ -1043,15 +1043,15 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "after-dark",
     label: "After Dark Editorial",
-    description: "Velvet ropes, low light, adult glamour, and a character who stays fully themselves and in charge.",
+    description: "Adult nightlife, glamour, and private atmosphere without losing character or agency.",
     aspectRatio: "16:9",
-    artDirection: "an adult after-hours editorial with cinematic nightlife, confident styling, a mature atmosphere of low lamps and late music, a clear sense of agency, and non-explicit sensuality",
+    artDirection: "an adult after-hours editorial with cinematic nightlife, confident styling, mature atmosphere, a clear sense of agency, and non-explicit sensuality",
     shots: [
-      { label: "Night Arrival", direction: "a dramatic full-body arrival under a lit awning at night, confident styling, walking in as if the place was expecting them" },
-      { label: "Room Read", direction: "a three-quarter interior frame, poised and self-directed, the private room told in details: a half-drained glass, a lamp turned low" },
-      { label: "Close Tension", direction: "a close cinematic character frame with a charged but non-explicit expression, true-to-character attitude, and warm practical light on the face" },
-      { label: "Reflective Pause", direction: "a quieter seated or leaning moment where mood, the texture of silk or wool, and inner life carry the image" },
-      { label: "Last Call", direction: "a striking final image as the character leaves, turns back, or claims the room as their own; glamorous, adult, and non-explicit" },
+      { label: "Night Arrival", direction: "a dramatic full-body arrival beneath practical night lighting, confident styling, and a destination that feels intentional" },
+      { label: "Room Read", direction: "a three-quarter interior frame with a poised, self-directed posture and visual clues about the private atmosphere" },
+      { label: "Close Tension", direction: "a close cinematic character frame with a charged but non-explicit expression, accurate personality, and rich practical light" },
+      { label: "Reflective Pause", direction: "a quieter seated or leaning moment that lets mood, wardrobe texture, and inner life carry the image" },
+      { label: "Last Call", direction: "a striking final image as the character leaves, turns back, or takes possession of the space; glamorous, adult, and non-explicit" },
     ],
     group: HEAT_GROUP_LABEL,
   },
