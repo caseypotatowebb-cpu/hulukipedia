@@ -179,61 +179,61 @@ const SECTION_DEFAULTS = {
 const ROLEPLAY_DEFAULT_PROVIDER = "xai";
 const ROLEPLAY_DEFAULT_MODEL = "grok-4.20-0309-non-reasoning";
 const ROLEPLAY_ALTERNATES = [
-  { provider: "xai", model: "grok-4.20-0309-reasoning", label: "Grok 4.20 Reasoning 🧠 — deliberate character analysis" },
-  { provider: "xai", model: "grok-4.3", label: "Grok 4.3 — accuracy + voice" },
-  { provider: "anthropic", model: "claude-opus-4-6", label: "Claude Opus 4.6 — flagship character depth" },
-  { provider: "anthropic", model: "claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5 — intimate nuance" },
-  { provider: "mistral", model: "mistral-medium-2604", label: "Mistral Medium 3.5 🧠 — textured scenes" },
-  { provider: "venice", model: "venice-uncensored-role-play", label: "Venice RP 🔥 — open-ended character play" },
+  { provider: "xai", model: "grok-4.20-0309-reasoning", label: "Grok 4.20 Reasoning 🧠 — thinks before it speaks" },
+  { provider: "xai", model: "grok-4.3", label: "Grok 4.3 — sharp facts, true voice" },
+  { provider: "anthropic", model: "claude-opus-4-6", label: "Claude Opus 4.6 — the deepest well of character" },
+  { provider: "anthropic", model: "claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5 — reads between the lines" },
+  { provider: "mistral", model: "mistral-medium-2604", label: "Mistral Medium 3.5 🧠 — grain, weather, texture" },
+  { provider: "venice", model: "venice-uncensored-role-play", label: "Venice RP 🔥 — open floor, any direction" },
 ];
 
 const ROLEPLAY_SCENARIOS = [
   {
     id: "open-room",
     label: "Open Room",
-    note: "No imposed premise — begin wherever the conversation naturally wants to go.",
-    direction: "There is no forced plot. Let the other person establish the immediate topic, while you answer with natural attention, boundaries, and voice.",
+    note: "No premise, no props. The door is open; let the conversation pick the room.",
+    direction: "There is no plot waiting in the wings. Let the other person set the first topic, and meet it with real attention, your own boundaries, and your own voice.",
   },
   {
     id: "first-meeting",
     label: "First Meeting",
-    note: "Curiosity, friction, and the first impression that sticks.",
-    direction: "You have just met the other person in a plausible setting. Let first impressions, guardedness, curiosity, and social instincts shape the exchange.",
+    note: "A handshake, a once-over, and the first impression that won't wash off.",
+    direction: "You have just met the other person somewhere believable: a green room, a stalled elevator, a long line. Let first impressions, guardedness, curiosity, and social instinct steer the exchange.",
   },
   {
     id: "after-fallout",
     label: "After the Fallout",
-    note: "A private conversation after the thing neither side can pretend did not happen.",
-    direction: "The conversation happens after a consequential disagreement, public embarrassment, loss, or failure. Do not melodramatize; let avoidance, honesty, and what remains unsaid create the pressure.",
+    note: "Cold coffee, a closed door, and the thing neither of you can pretend away.",
+    direction: "The conversation comes after a real rupture: a bitter disagreement, a public embarrassment, a loss, or a failure. No melodrama; let dodged eye contact, hard honesty, and what stays unsaid build the pressure.",
   },
   {
     id: "mission-problem",
     label: "Mission / Problem",
-    note: "Two people have to face a hard problem together — character first, procedures second.",
-    direction: "A time-sensitive but non-tactical problem needs attention. Center the character's judgment, values, friction, and improvisation; never turn the exchange into real-world operational guidance.",
+    note: "The clock is running and you're stuck with each other. Character first, procedure second.",
+    direction: "A problem with a clock on it, but nothing tactical, lands in your lap. Center the character's judgment, values, friction, and improvisation; never turn the exchange into real-world operational guidance.",
   },
   {
     id: "off-duty",
     label: "Off-Duty",
-    note: "Coffee, a walk, a ride home, rehearsal break, hotel lobby — life between the plot beats.",
-    direction: "The scene is an ordinary, low-pressure moment between obligations. Let small behavior, humor, habits, and a lived-in setting reveal character instead of forcing a dramatic confession.",
+    note: "Coffee to go, a ride home, a hotel lobby at 1 a.m. — life between the plot beats.",
+    direction: "The scene is an ordinary lull between obligations, shoes off and guard half down. Let small habits, humor, and a lived-in setting reveal character instead of forcing a dramatic confession.",
   },
   {
     id: "rival-spark",
     label: "Rival Spark",
-    note: "Teasing, competition, and chemistry with an actual point of view behind it.",
-    direction: "The other person is a capable equal, rival, or thorn in your side. Let the dialogue carry playful challenge, ego, respect, and tension without flattening either person into generic flirting.",
+    note: "Sparring smiles, a running score, and chemistry with a real point of view behind it.",
+    direction: "The other person is a capable equal, a rival, or the thorn in your side you'd miss if it were gone. Let the dialogue carry playful challenge, ego, grudging respect, and tension without flattening either person into generic flirting.",
   },
   {
     id: "confessional",
     label: "Confessional",
-    note: "A quiet question that makes it harder to hide behind the usual mask.",
-    direction: "The environment is private enough for a difficult question or admission. Keep the response human-sized, voice-accurate, and emotionally earned; nobody owes instant vulnerability.",
+    note: "One quiet question, low light, and the usual mask starts to slip.",
+    direction: "The room is private enough for a hard question or an admission. Keep the answer human-sized, true to voice, and emotionally earned; nobody owes instant vulnerability.",
   },
   {
     id: "after-hours",
     label: "After Hours",
-    note: "Mature chemistry, nightlife, and private atmosphere without reducing the subject to a prop.",
+    note: "Last call, low lamps, mature chemistry, and a subject who is never anyone's prop.",
     direction: "This is an after-hours scene between consenting adults. Allow mature flirtation, glamour, tension, and personal boundaries, but keep the subject's agency, personality, and dialogue in charge. Do not describe explicit sexual acts.",
   },
 ];
@@ -757,14 +757,14 @@ function IntelEntry({ entry, category, subject, details, theme, provider, model,
 // Shared imaginative scene controls. Raven and Starling use the same creative instruments;
 // Starling labels its scenes as imaginative rather than presenting invented private life as fact.
 const SCENE_LENSES = [
-  { id: "observation", label: "Observation", note: "Read the room through behavior, glances, and what each person chooses not to say." },
-  { id: "confrontation", label: "Confrontation", note: "A disagreement with real stakes, distinct points of view, and no easy capitulation." },
-  { id: "private", label: "Private Conversation", note: "An intimate, unscripted moment where the setting gives both people room to be honest or evasive." },
-  { id: "chemistry", label: "Chemistry", note: "Adult attraction, restraint, humor, and charged attention with agency on both sides." },
-  { id: "temptation", label: "Deal / Temptation", note: "A proposition, bargain, invitation, or moral complication that tests desire and judgment." },
-  { id: "after-hours", label: "After Hours", note: "Adult nightlife, glamour, privacy, and the tension of a moment that could become something else." },
-  { id: "aftermath", label: "Aftermath", note: "The quiet after a choice, argument, public moment, or private mistake." },
-  { id: "custom", label: "Custom Scene", note: "Your direction leads; the system turns it into an emotionally complete scene." },
+  { id: "observation", label: "Observation", note: "Read the room like a novelist: the glances, the fidgets, and what each person chooses not to say." },
+  { id: "confrontation", label: "Confrontation", note: "A real fight with real stakes: two clear points of view, and nobody folds easily." },
+  { id: "private", label: "Private Conversation", note: "A closed door, no script, and room for both people to tell the truth or dodge it." },
+  { id: "chemistry", label: "Chemistry", note: "Adult attraction reined in by humor and restraint, with both people choosing every move." },
+  { id: "temptation", label: "Deal / Temptation", note: "An offer on the table (a bargain, an invitation, a line to cross) that tests desire against judgment." },
+  { id: "after-hours", label: "After Hours", note: "Adult nightlife, glamour, a quiet corner, and a moment that could tip into something else." },
+  { id: "aftermath", label: "Aftermath", note: "The ringing quiet after a choice, a fight, a public scene, or a private mistake." },
+  { id: "custom", label: "Custom Scene", note: "You hold the pen; the system builds your idea into a scene with a full emotional arc." },
 ];
 
 const SCENE_RELATIONSHIPS = [
@@ -773,14 +773,14 @@ const SCENE_RELATIONSHIPS = [
 ];
 
 const SCENE_VOLTAGES = [
-  { id: "grounded", label: "Grounded", note: "Naturalistic, human-sized pressure." },
-  { id: "simmering", label: "Simmering", note: "Subtext and restraint doing the work." },
-  { id: "charged", label: "Charged", note: "Attention is hard to hide and neither person is neutral." },
-  { id: "intimate", label: "Intimate", note: "Close range, private knowledge, emotional exposure." },
-  { id: "provocative", label: "Provocative", note: "Teasing, risk, invitation, and a deliberate push against the usual guardrails." },
-  { id: "volatile", label: "Volatile", note: "Desire, anger, or fear keeps changing the temperature in the room." },
-  { id: "decadent", label: "Decadent", note: "Rich atmosphere, confidence, appetite, and a setting built for temptation." },
-  { id: "custom", label: "Custom", note: "Use the director note to define the exact heat and texture." },
+  { id: "grounded", label: "Grounded", note: "Everyday weather; human-sized pressure." },
+  { id: "simmering", label: "Simmering", note: "A lid on the pot; subtext does the work." },
+  { id: "charged", label: "Charged", note: "Eyes keep catching, and neither person is neutral." },
+  { id: "intimate", label: "Intimate", note: "Close range, shared secrets, nowhere to hide." },
+  { id: "provocative", label: "Provocative", note: "Teasing, dares, open invitations, and a deliberate push against the usual guardrails." },
+  { id: "volatile", label: "Volatile", note: "Desire, anger, or fear keeps swinging the room from hot to cold." },
+  { id: "decadent", label: "Decadent", note: "Velvet, candlelight, confidence, appetite, and a room built for temptation." },
+  { id: "custom", label: "Custom", note: "Set the exact heat and texture yourself in the director note." },
 ];
 
 function buildSceneLabContext(scene, subjectName, mode, outputType) {
@@ -895,10 +895,10 @@ const ASPECT_DIMENSIONS = {
 };
 
 const WARDROBE_SYSTEMS = [
-  { id: "continuity", label: "Signature Continuity", note: "One coherent signature look across every selected frame." },
-  { id: "two-look", label: "Two-Look Arc", note: "Opening look transitions once into a deliberate second look." },
-  { id: "variations", label: "Editorial Variations", note: "Distinct but coherent variations within one style family." },
-  { id: "custom", label: "Custom Wardrobe Brief", note: "You decide the wardrobe logic in your own words before launch." },
+  { id: "continuity", label: "Signature Continuity", note: "One signature look, worn from the first frame to the last." },
+  { id: "two-look", label: "Two-Look Arc", note: "One look to open, then a single deliberate change for the back half." },
+  { id: "variations", label: "Editorial Variations", note: "Same style family, with a new layer or accent in every frame." },
+  { id: "custom", label: "Custom Wardrobe Brief", note: "Write the wardrobe plan in your own words before you launch." },
 ];
 
 function getWardrobeDirection(systemId, customBrief, index, count) {
@@ -916,9 +916,9 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "editorial",
     label: "Editorial Lookbook",
-    description: "Polished visual-marketing shots with clear styling, posture, and camera intention.",
+    description: "Magazine-ready shots where every outfit, stance, and camera angle is on purpose.",
     aspectRatio: "3:4",
-    artDirection: "a cohesive high-end editorial lookbook, natural anatomy, visual marketing polish, an intentional wardrobe and environment",
+    artDirection: "a cohesive high-end editorial lookbook, natural anatomy, glossy-magazine polish, wardrobe and location chosen like a stylist's mood board",
     shots: [
       { label: "Full-Length Hero", direction: "a SINGLE full-length hero frame; the subject is standing in a poised, balanced stance, camera at a natural fashion-editorial distance" },
       { label: "Three-Quarter Detail", direction: "a SINGLE three-quarter-length frame; the subject is leaning naturally against a location-appropriate surface, not standing straight toward camera; face and styling clearly readable" },
@@ -930,9 +930,9 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "turnaround",
     label: "Character Turnaround",
-    description: "Useful, identity-consistent coverage across the front, profile, and three-quarter views.",
+    description: "Walk all the way around them: front, profile, and three-quarter views, same face every time.",
     aspectRatio: "3:4",
-    artDirection: "a clean but cinematic character-lookbook environment with consistent lighting and wardrobe across every angle",
+    artDirection: "a clean, cinematic character-sheet set like a costume department's reference wall, lighting and wardrobe locked across every angle",
     shots: [
       { label: "Front View", direction: "full-length front view, balanced posture, hands naturally placed, clear silhouette" },
       { label: "Three-Quarter View", direction: "full-length three-quarter view, natural shift of weight, face and silhouette both readable" },
@@ -944,65 +944,65 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "motion",
     label: "Motion & Presence",
-    description: "Dynamic body language and real-world movement instead of repeated headshots.",
+    description: "Stride, turn, and gesture: a body in motion instead of another row of headshots.",
     aspectRatio: "16:9",
-    artDirection: "a kinetic, photorealistic scene with believable motion, environmental depth, and cinematic composition",
+    artDirection: "a kinetic, photorealistic scene with believable motion, hair and hems caught mid-swing, deep environment, and cinematic composition",
     shots: [
       { label: "Approaching Frame", direction: "walking toward camera through the scene, natural stride, full body visible" },
       { label: "Side Motion", direction: "side-on motion frame, purposeful movement, environment streaking subtly behind the subject" },
-      { label: "Over-the-Shoulder Pause", direction: "over-the-shoulder pause, subject glances back with a readable expression" },
-      { label: "Action Detail", direction: "mid-action medium shot that captures a characteristic gesture or interaction" },
-      { label: "After the Moment", direction: "quiet aftermath frame, subject at rest after motion, strong atmosphere and character presence" },
+      { label: "Over-the-Shoulder Pause", direction: "over-the-shoulder pause, the subject glancing back as if someone just called their name" },
+      { label: "Action Detail", direction: "mid-action medium shot catching the one gesture their friends would recognize anywhere" },
+      { label: "After the Moment", direction: "quiet aftermath frame, the subject at rest and catching their breath, the air still settling around them" },
     ],
   },
   {
     id: "candid",
     label: "Candid Day Out",
-    description: "Warm, documentary-style scenes that make the subject feel like a person in the world.",
+    description: "Warm, documentary-style moments: sunlight, errands, a real person out in the world.",
     aspectRatio: "3:2",
-    artDirection: "a natural-light documentary scene with candid human behavior, lived-in environment, and editorial realism",
+    artDirection: "a natural-light documentary scene with candid human behavior, a lived-in place of scuffed floors and handwritten signs, and editorial realism",
     shots: [
       { label: "Arrival", direction: "arriving at the location, full or three-quarter body framing, spontaneous body language" },
-      { label: "Small Interaction", direction: "a candid social or environmental interaction that reveals personality without posing for camera" },
-      { label: "Quiet Moment", direction: "a quieter medium frame, the subject focused on something in the environment" },
+      { label: "Small Interaction", direction: "a candid small exchange (paying for coffee, asking directions, sharing a joke) that reveals personality without posing for camera" },
+      { label: "Quiet Moment", direction: "a quieter medium frame, the subject absorbed in something nearby: a bookstall, a menu, a view" },
       { label: "Walking Away", direction: "walking-away or rear three-quarter candid frame, natural clothing movement and setting detail" },
-      { label: "Candid Portrait", direction: "unforced portrait caught between moments, soft expression, realistic environmental depth" },
+      { label: "Candid Portrait", direction: "unforced portrait caught between moments, mid-laugh or mid-thought, realistic environmental depth" },
     ],
   },
   {
     id: "cinematic",
     label: "Cinematic Evening",
-    description: "A dramatic, story-led set with practical lights, atmosphere, and expressive framing.",
+    description: "Streetlamps, neon, and long shadows: a story-led set that looks like a film still.",
     aspectRatio: "16:9",
-    artDirection: "a cinematic evening scene with practical lighting, rich environmental atmosphere, intentional color contrast, and grounded photorealism",
+    artDirection: "a cinematic evening scene lit by practical lamps and signage, wet-pavement atmosphere, deliberate warm-cool color contrast, and grounded photorealism",
     shots: [
-      { label: "Establishing Arrival", direction: "wide establishing shot that situates the subject in a vivid evening setting" },
-      { label: "Mid-Scene Portrait", direction: "medium scene portrait, active environmental light, tense or reflective expression" },
-      { label: "Three-Quarter Drama", direction: "three-quarter full-body dramatic frame, strong silhouette and natural pose" },
-      { label: "Ambient Detail", direction: "medium detail frame with an object or setting element that supports the story" },
-      { label: "Closing Image", direction: "striking final image, subject moving through the environment or pausing under cinematic light" },
+      { label: "Establishing Arrival", direction: "wide establishing shot placing the subject in a vivid evening setting as the last blue light leaves the sky" },
+      { label: "Mid-Scene Portrait", direction: "medium scene portrait, passing light sliding across the face, tense or thoughtful expression" },
+      { label: "Three-Quarter Drama", direction: "three-quarter full-body dramatic frame, a strong silhouette cut against the light, natural pose" },
+      { label: "Ambient Detail", direction: "medium detail frame on an object that carries the story: a ticket stub, a buzzing phone, a half-finished drink" },
+      { label: "Closing Image", direction: "striking final image, the subject moving on into the night or pausing in a pool of cinematic light" },
     ],
   },
   {
     id: "signature",
     label: "Signature World",
-    description: "Put a fictional character in the environment, action, and iconography that defines them.",
+    description: "Drop a fictional character into the world, gear, and iconic moment that made them.",
     aspectRatio: "16:9",
-    artDirection: "a canon-sensitive signature-world scene, cinematic but believable, preserving defining costume, tools, setting, and emotional tone",
+    artDirection: "a canon-faithful signature-world scene, cinematic but believable, keeping the defining costume, tools, setting, and emotional tone a fan would check for",
     shots: [
-      { label: "World Arrival", direction: "wide arrival image that establishes the character in their defining environment" },
-      { label: "Iconic Action", direction: "characteristic, non-violent action or interaction that reveals competence and identity" },
-      { label: "Relationship to Place", direction: "three-quarter environmental portrait showing how the subject inhabits their world" },
-      { label: "Quiet Icon", direction: "calmer medium shot with an iconic prop or environmental motif, authentic character behavior" },
-      { label: "Final Story Beat", direction: "a memorable, emotionally resonant closing beat with cinematic visual clarity" },
+      { label: "World Arrival", direction: "wide arrival image, the character stepping into the place fans would know at a glance" },
+      { label: "Iconic Action", direction: "characteristic, non-violent action or interaction that shows what they do best and who they are" },
+      { label: "Relationship to Place", direction: "three-quarter environmental portrait of the subject at home in their world, as if they built it" },
+      { label: "Quiet Icon", direction: "calmer medium shot with an iconic prop or motif at hand, the character doing what they always do" },
+      { label: "Final Story Beat", direction: "a closing beat that lands like the last shot before the credits, clear and emotionally resonant" },
     ],
   },
   {
     id: "activity",
     label: "Activity Continuity",
-    description: "Follow one clear activity through visibly different, identity-consistent angles and beats.",
+    description: "Follow one activity from warm-up to cool-down: a new angle each beat, the same person throughout.",
     aspectRatio: "16:9",
-    artDirection: "a coherent photorealistic activity story with a single location, continuous wardrobe, believable body mechanics, and clean directional light",
+    artDirection: "a coherent photorealistic activity story with a single location, continuous wardrobe, believable body mechanics, real effort in the face, and clean directional light",
     shots: [
       { label: "Before the Move", direction: "a focused pre-activity portrait; the subject is preparing, stretching, checking equipment, or gathering themselves, never already mid-stride" },
       { label: "Front Momentum", direction: "a full-body front three-quarter frame in unmistakable motion toward the camera, with natural limbs, clear activity mechanics, and a readable face" },
@@ -1014,9 +1014,9 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "campaign",
     label: "Campaign / Product Story",
-    description: "A polished sequence for lifestyle marketing, a character campaign, or a story-first product shoot.",
+    description: "A billboard-ready sequence for a lifestyle brand, a character campaign, or a story-first product shoot.",
     aspectRatio: "3:2",
-    artDirection: "a high-end visual campaign with a cohesive color story, editorial polish, authentic lifestyle behavior, and the subject as the unmistakable center of attention",
+    artDirection: "a high-end campaign with one confident color story, editorial polish, real lifestyle behavior, and the subject as the gravity every eye falls toward",
     shots: [
       { label: "Key Art", direction: "a confident full or three-quarter key-art frame, clean visual hierarchy, subject and setting immediately legible" },
       { label: "In Use", direction: "a candid but intentional interaction with an object, service, garment, or environment that supports the campaign without looking like an advertisement mockup" },
@@ -1028,13 +1028,13 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "duo",
     label: "Duo Chemistry",
-    description: "Two adult characters sharing a scene: friendship, rivalry, teamwork, romantic tension, or a complicated history.",
+    description: "Two adults, one frame: friendship, rivalry, teamwork, romantic tension, or a history neither will discuss.",
     aspectRatio: "16:9",
     requiresCoStar: true,
     artDirection: "a cinematic two-person scene with distinct adult faces, natural physical spacing, readable relationship energy, and no duplicate bodies or mirrored copies",
     shots: [
       { label: "First Read", direction: "a two-shot that establishes who has the social upper hand, who is watching whom, and the emotional distance between them" },
-      { label: "Shared Action", direction: "both adults engaged in a simple shared activity or problem, body language doing as much work as dialogue would" },
+      { label: "Shared Action", direction: "both adults working one simple shared task or problem (a jammed lock, a map, a stubborn engine), body language doing the talking" },
       { label: "Side by Side", direction: "a composed side-by-side frame with contrasting posture, styling, or expression that makes their relationship legible" },
       { label: "Private Reaction", direction: "a closer emotional frame with one person in focus and the other still visibly present, capturing an unspoken reaction" },
       { label: "Relationship Beat", direction: "a closing image that lands the relationship: alliance, tension, affection, rivalry, or unfinished business" },
@@ -1043,15 +1043,15 @@ const VISUAL_SCENE_RECIPES = [
   {
     id: "after-dark",
     label: "After Dark Editorial",
-    description: "Adult nightlife, glamour, and private atmosphere without losing character or agency.",
+    description: "Velvet ropes, low light, adult glamour, and a character who stays fully themselves and in charge.",
     aspectRatio: "16:9",
-    artDirection: "an adult after-hours editorial with cinematic nightlife, confident styling, mature atmosphere, a clear sense of agency, and non-explicit sensuality",
+    artDirection: "an adult after-hours editorial with cinematic nightlife, confident styling, a mature atmosphere of low lamps and late music, a clear sense of agency, and non-explicit sensuality",
     shots: [
-      { label: "Night Arrival", direction: "a dramatic full-body arrival beneath practical night lighting, confident styling, and a destination that feels intentional" },
-      { label: "Room Read", direction: "a three-quarter interior frame with a poised, self-directed posture and visual clues about the private atmosphere" },
-      { label: "Close Tension", direction: "a close cinematic character frame with a charged but non-explicit expression, accurate personality, and rich practical light" },
-      { label: "Reflective Pause", direction: "a quieter seated or leaning moment that lets mood, wardrobe texture, and inner life carry the image" },
-      { label: "Last Call", direction: "a striking final image as the character leaves, turns back, or takes possession of the space; glamorous, adult, and non-explicit" },
+      { label: "Night Arrival", direction: "a dramatic full-body arrival under a lit awning at night, confident styling, walking in as if the place was expecting them" },
+      { label: "Room Read", direction: "a three-quarter interior frame, poised and self-directed, the private room told in details: a half-drained glass, a lamp turned low" },
+      { label: "Close Tension", direction: "a close cinematic character frame with a charged but non-explicit expression, true-to-character attitude, and warm practical light on the face" },
+      { label: "Reflective Pause", direction: "a quieter seated or leaning moment where mood, the texture of silk or wool, and inner life carry the image" },
+      { label: "Last Call", direction: "a striking final image as the character leaves, turns back, or claims the room as their own; glamorous, adult, and non-explicit" },
     ],
     group: HEAT_GROUP_LABEL,
   },
@@ -1244,7 +1244,7 @@ export default function Hulukipedia() {
       });
       setInvestigatorResult(result);
     } catch (error) {
-      setInvestigatorError(error.message || "The investigation could not be completed.");
+      setInvestigatorError(error.message || "The investigation hit a wall and couldn't finish.");
     } finally {
       setInvestigatorLoading(false);
     }
@@ -1475,7 +1475,7 @@ export default function Hulukipedia() {
     if (!visualPlanReady) {
       const wardrobeMissing = visualWardrobeSystem === "custom" && !visualWardrobeBrief.trim();
       setVisualSetError(wardrobeMissing
-        ? "Add your custom wardrobe direction before launching this planned set."
+        ? "Write your custom wardrobe direction before you launch this set."
         : `Select exactly ${visualBatchSize} planned angle${visualBatchSize === 1 ? "" : "s"} before generation.`);
       return;
     }
@@ -1965,7 +1965,7 @@ ${rpSpeechRules}`;
                   <SearchCode size={18} style={{ color: t.accentGold }} />
                   <h2 className="font-bold" style={{ color: t.accentGold, letterSpacing: "0.08em" }}>ASK THE ARCHIVE</h2>
                 </div>
-                <p className="text-xs mt-1" style={{ color: t.textSecondary }}>A direct investigative lane for questions, leads, comparisons, and creative research—no dossier required.</p>
+                <p className="text-xs mt-1" style={{ color: t.textSecondary }}>Bring a question, a lead, a comparison, or a creative hunch and follow it wherever it goes. No dossier required.</p>
               </div>
               <ProviderSelector
                 provider={investigatorProvider}
@@ -2051,7 +2051,7 @@ ${rpSpeechRules}`;
           <div className="max-w-lg mx-auto p-6 shadow-xl" style={cardStyle}>
             <h3 className="text-xl font-bold mb-2" style={{ color: t.accentGold }}>Confirm Your Target</h3>
             <p className="text-sm mb-4" style={{ color: t.textSecondary }}>
-              Multiple matches found. Select the correct entity:
+              More than one match came back. Which one are you after?
             </p>
             <div className="space-y-2">
               {clarifications.map((c, i) => (
@@ -2176,7 +2176,7 @@ ${rpSpeechRules}`;
                       onClick={() => setImageSearchEnabled(!imageSearchEnabled)}
                       className="w-full text-xs py-1 rounded font-bold flex items-center justify-center gap-1"
                       style={{ backgroundColor: imageSearchEnabled ? t.highlight : t.bgMain, color: imageSearchEnabled ? t.accentHover : t.textSecondary, border: `1px solid ${t.border}` }}
-                      title="When enabled, the AI will search the web for what this person/character looks like before generating the image prompt"
+                      title="When on, the AI looks up what this person or character actually looks like before it writes the image prompt"
                     >
                       <Globe size={12} /> Web Search {imageSearchEnabled ? "ON" : "OFF"}
                     </button>
@@ -2202,7 +2202,7 @@ ${rpSpeechRules}`;
                 <div className="md:col-span-2" style={sectionStyle}>
                   <SectionHeader icon={<Archive size={16} />} title="Confirmed Intel" sectionKey="intel" />
                   <p className="text-xs italic mb-2" style={{ color: t.textSecondary }}>
-                    Click any item to verify & expand with web search
+                    Click any line to check it against the web and dig deeper
                   </p>
                   <div className="min-h-[200px]" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: "0.8rem" }}>
                     {loading.intel || loading.enhance ? (
@@ -2229,7 +2229,7 @@ ${rpSpeechRules}`;
                         </div>
                       ))
                     ) : (
-                      <span style={{ color: t.textSecondary }}>No intel generated yet.</span>
+                      <span style={{ color: t.textSecondary }}>No intel yet. The file is still empty.</span>
                     )}
                   </div>
                   <div className="mt-3 flex gap-2 flex-wrap">
@@ -2277,7 +2277,7 @@ ${rpSpeechRules}`;
                   </span>
                 </div>
                 <p className="text-xs mb-3" style={{ color: t.textSecondary }}>
-                  Generate independent images with a shared subject anchor and different poses, angles, or moments. Each result opens separately in the lightbox.
+                  Shoot a set: one subject, many frames, each with its own pose, angle, or moment. Click any frame to open it full size.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -2313,7 +2313,7 @@ ${rpSpeechRules}`;
                       ))}
                     </div>
                     <div className="text-[10px] mt-1 leading-snug" style={{ color: t.textSecondary }}>
-                      Select how many images you want before choosing the exact coverage below.
+                      Pick how many frames you want first, then choose exactly which shots below.
                     </div>
                   </div>
 
@@ -2425,7 +2425,7 @@ ${rpSpeechRules}`;
                       <div className="space-y-1 rounded px-2 py-2 text-[10px]" style={{ backgroundColor: t.bgMain, border: `1px solid ${t.border}`, color: t.textSecondary }}>
                         {selectedVisualShots.map((shot, index) => <div key={shot.label}><span style={{ color: t.accentGold }}>{String(index + 1).padStart(2, "0")}</span> · {shot.label} · {getWardrobeDirection(visualWardrobeSystem, visualWardrobeBrief, index, selectedVisualShots.length).replace("Wardrobe plan: ", "")}</div>)}
                       </div>
-                    ) : <div className="text-[10px] rounded px-2 py-2" style={{ backgroundColor: t.bgMain, color: t.textSecondary, border: `1px solid ${t.border}` }}>No frames selected yet.</div>}
+                    ) : <div className="text-[10px] rounded px-2 py-2" style={{ backgroundColor: t.bgMain, color: t.textSecondary, border: `1px solid ${t.border}` }}>No frames picked yet. Choose at least one shot above.</div>}
                   </div>
                   {visualWardrobeSystem === "custom" && (
                     <div className="md:col-span-2">
@@ -2445,7 +2445,7 @@ ${rpSpeechRules}`;
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <div className="text-xs font-bold uppercase tracking-widest" style={{ color: t.accentGold }}>04 · Cast & relationship contract</div>
-                      <div className="text-[10px] mt-1" style={{ color: t.textSecondary }}>Name a second adult whenever the frame must show a real relationship. Their presence becomes a requirement, not scenery.</div>
+                      <div className="text-[10px] mt-1" style={{ color: t.textSecondary }}>Name a second adult when the frame needs a real relationship in it. Once named, they are cast, not scenery.</div>
                     </div>
                     {visualCoStar.trim() && <span className="text-[10px] rounded px-2 py-1 font-bold" style={{ backgroundColor: t.highlight, color: t.accentGold, border: `1px solid ${t.border}` }}>CAST LOCK ON</span>}
                   </div>
@@ -2579,7 +2579,7 @@ ${rpSpeechRules}`;
                   ) : physical ? (
                     <MarkdownContent text={physical} theme={theme} />
                   ) : (
-                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                    <span style={{ color: t.textSecondary }}>Still blank. Generate to fill it in.</span>
                   )}
                 </div>
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -2610,7 +2610,7 @@ ${rpSpeechRules}`;
                   ) : comm ? (
                     <MarkdownContent text={comm} theme={theme} />
                   ) : (
-                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                    <span style={{ color: t.textSecondary }}>Still blank. Generate to fill it in.</span>
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("comm", setComm, "comm")} loading={loading.comm} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
@@ -2627,7 +2627,7 @@ ${rpSpeechRules}`;
                   ) : convo ? (
                     <MarkdownContent text={convo} theme={theme} />
                   ) : (
-                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                    <span style={{ color: t.textSecondary }}>Still blank. Generate to fill it in.</span>
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("convo", setConvo, "convo")} loading={loading.convo} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
@@ -2644,7 +2644,7 @@ ${rpSpeechRules}`;
                   ) : psych ? (
                     <MarkdownContent text={psych} theme={theme} />
                   ) : (
-                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                    <span style={{ color: t.textSecondary }}>Still blank. Generate to fill it in.</span>
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("psych", setPsych, "psych")} loading={loading.psych} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
@@ -2661,7 +2661,7 @@ ${rpSpeechRules}`;
                   ) : strategic ? (
                     <MarkdownContent text={strategic} theme={theme} />
                   ) : (
-                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                    <span style={{ color: t.textSecondary }}>Still blank. Generate to fill it in.</span>
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("strategic", setStrategic, "strategic")} loading={loading.strategic} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#111" }}>
@@ -2751,7 +2751,7 @@ ${rpSpeechRules}`;
                   ) : addendum1 ? (
                     <MarkdownContent text={addendum1} theme={theme} />
                   ) : (
-                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                    <span style={{ color: t.textSecondary }}>Still blank. Generate to fill it in.</span>
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("add1", setAddendum1, "addendum1")} loading={loading.add1} className="mt-3" style={{ backgroundColor: t.accentGold, color: "#fffdf7" }}>
@@ -2772,7 +2772,7 @@ ${rpSpeechRules}`;
                   ) : addendum2 ? (
                     <MarkdownContent text={addendum2} theme={theme} />
                   ) : (
-                    <span style={{ color: t.textSecondary }}>Not yet generated.</span>
+                    <span style={{ color: t.textSecondary }}>Still blank. Generate to fill it in.</span>
                   )}
                 </div>
                 <GenBtn onClick={() => generateSection("add2", setAddendum2, "addendum2")} loading={loading.add2} className="mt-3" style={{ backgroundColor: t.highlight, color: t.accentHover, border: `1px solid ${t.border}` }}>
@@ -2864,7 +2864,7 @@ ${rpSpeechRules}`;
                 >
                   {rpMessages.length === 0 && !rpLoading && (
                     <p className="text-sm italic" style={{ color: t.textSecondary }}>
-                      Start the conversation — say hello to {subject.name}.
+                      The floor is yours. Say hello to {subject.name}.
                     </p>
                   )}
                   {rpMessages.map((m, i) => (

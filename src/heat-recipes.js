@@ -25,7 +25,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "velvet-trap",
     label: "Velvet Trap",
-    description: "Seductive fatale energy: an invitation that is clearly also a trap.",
+    description: "Fatale velvet: an invitation with the hook left in plain sight.",
     aspectRatio: "3:4",
     artDirection: "a seductive velvet-lounge editorial, deep crimson and black, low amber practicals, slow cigarette-smoke haze, a fatale who knows exactly what effect they are having",
     shots: [
@@ -39,7 +39,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "villain-era",
     label: "Villain Era",
-    description: "Menacing, regal, and unapologetic: the moment they stop pretending to be nice.",
+    description: "Regal, menacing, unapologetic: the night the nice-person mask comes off for good.",
     aspectRatio: "16:9",
     artDirection: "a dark cinematic villain portrait series, storm light, cold steel and black leather, rain on glass, low camera angles that make the subject loom",
     shots: [
@@ -53,7 +53,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "red-room-confession",
     label: "Red Room Confession",
-    description: "Sinful, whispered secrets in saturated red light.",
+    description: "Sins whispered through a lattice, everything drenched in red.",
     aspectRatio: "4:5",
     artDirection: "a provocative red-gel editorial, a confessional mood, saturated crimson light, deep blacks, film grain, secrets about to be spilled",
     shots: [
@@ -67,7 +67,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "tabloid-noir",
     label: "Tabloid Noir",
-    description: "Scandal-sheet glamour, staged as a black-and-white film noir shoot.",
+    description: "Flashbulbs and scandal-sheet glamour, staged as a black-and-white 1950s noir shoot.",
     aspectRatio: "3:2",
     artDirection: "an obviously staged high-fashion film-noir editorial styled like a 1950s scandal sheet, hard flash, deep shadows, black-and-white with one accent color",
     shots: [
@@ -81,7 +81,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "boudoir-power",
     label: "Boudoir Power Play",
-    description: "Private, sensual, and in charge — silk and candlelight, never explicit.",
+    description: "Silk, candlelight, and a closed door: sensual, in charge, never explicit.",
     aspectRatio: "4:5",
     artDirection: "a moody boudoir-inspired editorial with silk, velvet and candlelight, soft shadows, sensual but fully styled wardrobe (silk robe, slip dress or tailored loungewear), power clearly with the subject",
     shots: [
@@ -95,7 +95,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "midnight-heist",
     label: "Midnight Heist",
-    description: "Dangerous, slick crime glamour; the subject is the mastermind.",
+    description: "Laser grids and vault steel; the subject planned every second of this.",
     aspectRatio: "16:9",
     artDirection: "a slick heist-thriller still series, laser grids and vault steel, cool cyan and warning red, black tactical couture, total composure",
     shots: [
@@ -109,11 +109,11 @@ export const HEAT_RECIPES = [
   heat({
     id: "gothic-seduction",
     label: "Gothic Seduction",
-    description: "Candlelit, vampiric allure with a hint of danger.",
+    description: "Candle smoke, black lace, and a smile with a little too much tooth.",
     aspectRatio: "3:4",
     artDirection: "a gothic romance editorial, candlelit stone halls, black lace and deep burgundy velvet, pale moonlight, an alluring and slightly predatory mood",
     shots: [
-      { label: "Candelabra", direction: "a SINGLE frame holding a lit candelabra in a dark corridor, light catching the eyes, beckoning" },
+      { label: "Candelabra", direction: "a SINGLE frame holding a lit candelabra in a dark corridor, candlelight catching the eyes, beckoning down the hall" },
       { label: "Stained Glass", direction: "a SINGLE full-length frame before a stained-glass window, colored light across a high-collared gown or frock coat" },
       { label: "Red Wine, Slow Sip", direction: "a SINGLE close frame taking a slow sip of dark red wine, eyes never leaving the lens" },
       { label: "On the Staircase", direction: "a SINGLE frame descending a grand stone staircase, one hand trailing the banister, train or coat-tails flowing" },
@@ -123,21 +123,21 @@ export const HEAT_RECIPES = [
   heat({
     id: "corner-office",
     label: "Corner Office Dominance",
-    description: "Power, intimidation and a little cruelty in a glass tower.",
+    description: "Forty floors up after midnight: power, intimidation, and a little cruelty.",
     aspectRatio: "16:9",
     artDirection: "a high-gloss power-dressing editorial in a glass-walled corner office at night, sharp tailoring, cold city lights, status games",
     shots: [
       { label: "Feet on the Desk", direction: "a SINGLE frame leaning back with polished shoes on a glass desk, city skyline behind, a patient predator's smile" },
       { label: "Contract and Pen", direction: "a SINGLE medium frame sliding a contract and a fountain pen toward the viewer, eyebrow raised" },
       { label: "Loosened Tie / Undone Cuff", direction: "a SINGLE three-quarter frame loosening a tie or unbuttoning a cuff at the window, night skyline glittering behind" },
-      { label: "Looking Down", direction: "a SINGLE low-angle frame standing over the camera, arms folded, unimpressed" },
+      { label: "Looking Down", direction: "a SINGLE low-angle frame standing over the camera, arms folded, unimpressed, like the meeting is already over" },
       { label: "Lights Off", direction: "a SINGLE silhouette frame hitting the light switch on the way out, a final look over the shoulder" },
     ],
   }),
   heat({
     id: "morning-after",
     label: "Morning-After Wreckage",
-    description: "Scandalous aftermath of a legendary night — glamorous, not sordid.",
+    description: "Confetti, flat champagne, and dawn after a legendary night: glamorous, not sordid.",
     aspectRatio: "3:2",
     artDirection: "a staged editorial of the morning after a legendary party, a trashed luxury suite, spilled champagne and confetti, dawn light, fully dressed in last night's evening wear",
     shots: [
@@ -151,7 +151,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "neon-predator",
     label: "Neon Predator",
-    description: "Rain-soaked menace; the subject is the hunter, never the prey.",
+    description: "Neon rain and slow menace; the subject is the hunter, never the prey.",
     aspectRatio: "9:16",
     artDirection: "a rain-soaked cyber-noir alley at night, magenta and cyan neon reflected in puddles, wet leather, steam, a calm and menacing presence",
     shots: [
@@ -159,13 +159,13 @@ export const HEAT_RECIPES = [
       { label: "Under the Umbrella", direction: "a SINGLE medium frame under a clear umbrella streaked with neon rain, eyes glowing with reflected light" },
       { label: "Hand on the Wall", direction: "a SINGLE close frame leaning one hand on a wet brick wall beside the lens, face close, a slow dangerous smile" },
       { label: "Rooftop Watcher", direction: "a SINGLE wide frame crouched on a rooftop ledge above the street, coat dripping, watching someone below" },
-      { label: "Vanishing Point", direction: "a SINGLE frame walking away into steam and neon, one last look back" },
+      { label: "Vanishing Point", direction: "a SINGLE frame walking away until steam and neon swallow the silhouette, one last look back" },
     ],
   }),
   heat({
     id: "forbidden-invitation",
     label: "Forbidden Invitation",
-    description: "A masquerade for a secret society; everyone has something to hide.",
+    description: "Gilded masks at a secret-society ball, where every guest brought something to hide.",
     aspectRatio: "16:9",
     artDirection: "an opulent masquerade at a secret-society gala, gilded masks, candlelit ballroom, black and gold couture, whispered intrigue",
     shots: [
@@ -179,13 +179,13 @@ export const HEAT_RECIPES = [
   heat({
     id: "tables-turned",
     label: "Interrogation, Tables Turned",
-    description: "Under the lamp — and somehow the one asking the questions.",
+    description: "One hard lamp, one steel table, and somehow they are the one asking the questions.",
     aspectRatio: "16:9",
     artDirection: "a tense interrogation-room still, a single hard overhead lamp, a dark observation window, cigarette haze, the subject unsettlingly in control",
     shots: [
       { label: "Under the Lamp", direction: "a SINGLE frame seated under a hard overhead lamp, leaning back, completely relaxed, smiling at the dark observation window" },
       { label: "Leaning Across", direction: "a SINGLE medium frame leaning across the steel table toward the lens, hands folded, quietly threatening" },
-      { label: "Cuffs Off", direction: "a SINGLE close frame of the subject casually holding an opened pair of handcuffs, eyebrow raised" },
+      { label: "Cuffs Off", direction: "a SINGLE close frame of the subject casually dangling an unlocked pair of handcuffs from one finger, eyebrow raised" },
       { label: "Through the Glass", direction: "a SINGLE frame standing close to the dark observation window, staring into it as if they can see everyone behind it" },
       { label: "Walking Out", direction: "a SINGLE full-body frame strolling out of the interrogation room, door swinging, never looking back" },
     ],
@@ -193,7 +193,7 @@ export const HEAT_RECIPES = [
   heat({
     id: "poolside-temptation",
     label: "Poolside Temptation",
-    description: "Sultry heat by a glowing pool at dusk; glamorous resort-wear tease.",
+    description: "Turquoise glow at dusk, palm shadows, and a slow, glamorous resort-wear tease.",
     aspectRatio: "3:2",
     artDirection: "a sultry dusk poolside editorial at a modernist villa, glowing turquoise water, palm silhouettes, golden-hour skin highlights, designer resort wear and cover-ups",
     shots: [
